@@ -1,7 +1,7 @@
 #!/bin/bash
 
-WORKSHOPS=("Calm Introduction Workshop" \
-#"Citrix Desktop on AHV Workshop" \
+WORKSHOPS=("Calm Introduction Workshop (AOS/AHV 5.6)" \
+"Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Change Cluster Input File" \
 "Quit")
@@ -34,16 +34,16 @@ function select_workshop {
   select WORKSHOP in "${WORKSHOPS[@]}"
   do
     case $WORKSHOP in
-      "Calm Introduction Workshop")
+      "Calm Introduction Workshop (AOS/AHV 5.6)")
       PE_CONFIG=stage_calmhow.sh
       PC_CONFIG=stage_calmhow_pc.sh
       break
       ;;
-      #"Citrix Desktop on AHV Workshop")
-      #PE_CONFIG=stage_citrixhow.sh
-      #PC_CONFIG=stage_citrixhow_pc.sh
-      #break
-      #;;
+      "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)")
+      PE_CONFIG=stage_citrixhow.sh
+      PC_CONFIG=stage_citrixhow_pc.sh
+      break
+      ;;
       #"Tech Summit 2018")
       #PE_CONFIG=stage_ts18.sh
       #PC_CONFIG=stage_ts18_pc.sh
@@ -75,14 +75,14 @@ function select_workshop {
 function set_workshop {
 
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
-    "Calm Introduction Workshop")
+    "Calm Introduction Workshop (AOS/AHV 5.6)")
     PE_CONFIG=stage_calmhow.sh
     PC_CONFIG=stage_calmhow_pc.sh
     ;;
-    #"Citrix Desktop on AHV Workshop")
-    #PE_CONFIG=stage_citrixhow.sh
-    #PC_CONFIG=stage_citrixhow_pc.sh
-    #;;
+    "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)")
+    PE_CONFIG=stage_citrixhow.sh
+    PC_CONFIG=stage_citrixhow_pc.sh
+    ;;
     #"Tech Summit 2018")
     #PE_CONFIG=stage_ts18.sh
     #PC_CONFIG=stage_ts18_pc.sh
@@ -125,7 +125,8 @@ Interactive Usage:        stage_workshop
 Non-interactive Usage:    stage_workshop -f cluster_list_file -w workshop_number
 
 Available Workshops:
-1) Calm Introduction Workshop
+1) Calm Introduction Workshop (AOS/AHV 5.6)
+2) Citrix XenDesktop on Nutanix AHV (AOS/AHV 5.6)
 
 See README for more information :+1:
 

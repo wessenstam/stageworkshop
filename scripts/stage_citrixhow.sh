@@ -36,6 +36,8 @@ MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
 MY_PC_SRC_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central.tar'
 MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
+MY_AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
 
 # From this point, we assume:
 # IP Range: 10.21.${MY_HPOC_NUMBER}.0/25
@@ -104,7 +106,7 @@ done
 MY_IMAGE="CentOS"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/CentOSv2.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=nfs://10.21.249.12/images/AHV/Linux/CentOSv2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -118,7 +120,35 @@ done
 MY_IMAGE="Windows2012"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/Windows2012.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=nfs://10.21.249.12/images/AHV/Windows/Windows2012 wait=true) =~ "complete" ]]; do
+  let retries++
+  if [ $retries -gt 5 ]; then
+    my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
+    acli vm.create STAGING-FAILED-${MY_IMAGE}
+    break
+  fi
+  my_log "acli image.create ${MY_IMAGE} FAILED. Retrying upload (${retries} of 5)..."
+  sleep 5
+done
+
+MY_IMAGE="Windows10"
+retries=1
+my_log "Importing ${MY_IMAGE} image"
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=nfs://10.21.249.12/images/AHV/Windows/Windows10 wait=true) =~ "complete" ]]; do
+  let retries++
+  if [ $retries -gt 5 ]; then
+    my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
+    acli vm.create STAGING-FAILED-${MY_IMAGE}
+    break
+  fi
+  my_log "acli image.create ${MY_IMAGE} FAILED. Retrying upload (${retries} of 5)..."
+  sleep 5
+done
+
+MY_IMAGE="XenDesktop-7.15-ISO"
+retries=1
+my_log "Importing ${MY_IMAGE} image"
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kIsoImage source_url=http://10.21.250.221/images/ahv/techsummit/XD715.iso wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -136,9 +166,11 @@ my_log "Removing \"Windows 10\" VM if it exists"
 acli -y vm.delete Windows\ 10\ VM delete_snapshots=true
 my_log "Removing \"CentOS\" VM if it exists"
 acli -y vm.delete CentOS\ VM delete_snapshots=true
+
 # Remove Rx-Automation-Network network
 my_log "Removing \"Rx-Automation-Network\" Network if it exists"
 acli -y net.delete Rx-Automation-Network
+
 # Create primary network
 my_log "Create primary network:"
 my_log "Name: ${MY_PRIMARY_NET_NAME}"
@@ -149,6 +181,7 @@ my_log "Pool: 10.21.${MY_HPOC_NUMBER}.50 to 10.21.${MY_HPOC_NUMBER}.125"
 acli net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=10.21.${MY_HPOC_NUMBER}.1/25
 acli net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=10.21.${MY_HPOC_NUMBER}.40,10.21.253.10 domains=${MY_DOMAIN_NAME}
 acli net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=10.21.${MY_HPOC_NUMBER}.50 end=10.21.${MY_HPOC_NUMBER}.125
+
 # Create secondary network
 if [[ ${MY_SECONDARY_NET_NAME} ]]; then
   my_log "Create secondary network:"
@@ -161,6 +194,7 @@ if [[ ${MY_SECONDARY_NET_NAME} ]]; then
   acli net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=10.21.${MY_HPOC_NUMBER}.40,10.21.253.10 domains=${MY_DOMAIN_NAME}
   acli net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=10.21.${MY_HPOC_NUMBER}.132 end=10.21.${MY_HPOC_NUMBER}.253
 fi
+
 # Create AutoDC & power on
 my_log "Create DC VM based on AutoDC image"
 acli vm.create DC num_vcpus=2 num_cores_per_vcpu=1 memory=4G
@@ -169,25 +203,58 @@ acli vm.disk_create DC clone_from_image=AutoDC
 acli vm.nic_create DC network=${MY_PRIMARY_NET_NAME} ip=10.21.${MY_HPOC_NUMBER}.40
 my_log "Power on DC VM"
 acli vm.on DC
+
 # Need to wait for AutoDC to be up (30?60secs?)
 my_log "Waiting 60sec to give DC VM time to start"
 sleep 60
+
 # Configure PE external authentication
 my_log "Configure PE external authentication"
 ncli authconfig add-directory directory-type=ACTIVE_DIRECTORY connection-type=LDAP directory-url="${MY_DOMAIN_URL}" domain="${MY_DOMAIN_FQDN}" name="${MY_DOMAIN_NAME}" service-account-username="${MY_DOMAIN_USER}" service-account-password="${MY_DOMAIN_PASS}"
+
 # Configure PE role mapping
 my_log "Configure PE role mapping"
 ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name="${MY_DOMAIN_NAME}" entity-values="${MY_DOMAIN_ADMIN_GROUP}"
+
 # Reverse Lookup Zone
 my_log "Creating Reverse Lookup Zone on DC VM"
 sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
 root@10.21.${MY_HPOC_NUMBER}.40 "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
+
+# Create custom OUs
+sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
+root@10.21.${MY_HPOC_NUMBER}.40 "apt install ldb-tools -y -q"
+
+sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
+root@10.21.${MY_HPOC_NUMBER}.40 "cat << EOF > ous.ldif
+dn: OU=Non-PersistentDesktop,DC=NTNXLAB,DC=local
+changetype: add
+objectClass: top
+objectClass: organizationalunit
+description: Non-Persistent Desktop OU
+
+dn: OU=PersistentDesktop,DC=NTNXLAB,DC=local
+changetype: add
+objectClass: top
+objectClass: organizationalunit
+description: Persistent Desktop OU
+EOF"
+
+sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
+root@10.21.${MY_HPOC_NUMBER}.40 "ldbmodify  -H /var/lib/samba/private/sam.ldb ous.ldif; service samba-ad-dc restart"
+
+# Provision local Prism account for XD MCS Plugin
+my_log "Create PE user account xd for MCS Plugin"
+ncli user create user-name=xd user-password=nutanix/4u first-name=XenDesktop last-name=Service email-id=no-reply@nutanix.com
+ncli user grant-cluster-admin-role user-name=xd
+
 # Get UUID from cluster
 my_log "Get UUIDs from cluster:"
 MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
 my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
 MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
 my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+
 # Validate EULA on PE
 my_log "Validate EULA on PE"
 curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST \
@@ -197,6 +264,7 @@ curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST \
     "companyName": "NTNX",
     "jobTitle": "SE"
 }'
+
 # Disable Pulse in PE
 my_log "Disable Pulse in PE"
 curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X PUT \
@@ -211,17 +279,35 @@ curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X PUT \
     "remindLater": null,
     "verbosityType": null
 }'
+
+# AFS Download
+my_log "Download AFS image from ${MY_AFS_SRC_URL}"
+wget -nv ${MY_AFS_SRC_URL}
+my_log "Download AFS metadata JSON from ${MY_AFS_META_URL}"
+wget -nv ${MY_AFS_META_URL}
+
+# Staging AFS
+my_log "Stage AFS"
+ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
+
+# Freeing up space
+my_log "Delete AFS sources to free some space"
+rm ${MY_AFS_SRC_URL##*/} ${MY_AFS_META_URL##*/}
+
 # Prism Central Download
 my_log "Download PC tarball from ${MY_PC_SRC_URL}"
 wget -nv ${MY_PC_SRC_URL}
 my_log "Download PC metadata JSON from ${MY_PC_META_URL}"
 wget -nv ${MY_PC_META_URL}
+
 # Staging Prism Central
 my_log "Stage Prism Central"
 ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} software-type=PRISM_CENTRAL_DEPLOY
+
 # Freeing up space
 my_log "Delete PC sources to free some space"
 rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
+
 # Deploy Prism Central
 my_log "Deploy Prism Central"
 # TODO: Parameterize DNS Servers & add secondary
@@ -254,10 +340,11 @@ curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST h
 my_log "Waiting for PC deployment to complete (Sleeping 15m)"
 sleep 900
 my_log "Sending PC configuration script"
-pc_send_file stage_calmhow_pc.sh
+pc_send_file stage_citrixhow_pc.sh
+
 # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
 my_log "Launching PC configuration script"
-pc_remote_exec "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> pcconfig.log 2>&1 &"
+pc_remote_exec "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_citrixhow_pc.sh >> pcconfig.log 2>&1 &"
 my_log "Removing sshpass"
 sudo rpm -e sshpass
 my_log "PE Configuration complete"

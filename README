@@ -1,16 +1,18 @@
 PLEASE READ BEFORE PROCEEDING!
 
-This script should be run from a host on the corporate/lab network, such as a CentOS VM running on an HPOC cluster. You may need to 'chmod +x stage_workshop.sh' to run the script.
+All clusters must be Foundationed prior to Workshop staging. Clusters should be Foundationed according to the AOS/hypervisor versions defined at the bottom of this README - older or new versions may not function as expected. When creating HPOC reservations, do not add addition images (CentOS, Windows2012, etc.) to your reservation.
 
-Alternatively it can be run from a macOS host connected to the VPN. To run this script from macOS first install Homebrew (https://brew.sh) and then run the following:
+This script should be run from a host on the corporate/lab network, such as a CentOS VM running on an HPOC cluster.
 
-> brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
+After deploying a Linux VM with connectivity to the HPOC environment, SSH to the machine and execute the following:
 
-All clusters must be Foundationed prior to Workshop staging. Clusters should be Foundationed according to the AOS/hypervisor versions defined in the Workshop - older or new versions may not function as expected.
+git clone https://github.com/nutanixworkshops/stageworkshop.git
+cd stageworkshop
+chmod +x stage_workshop.sh
 
-It is assumed that Prism 'admin' account, CVM 'nutanix' account, and AHV 'root' account share the same password.
+Next you'll need to create a text file containing your cluster IP and password details.
 
-All input files must use the following format:
+Input files must use the following format:
 
 <Nutanix Cluster #1 IP>|<Cluster #1 Password>
 <Nutanix Cluster #2 IP>|<Cluster #2 Password>
@@ -20,14 +22,19 @@ All input files must use the following format:
 For example:
 10.21.1.37|nx2Tech123!
 10.21.7.37|nx2Tech517!
-10.21.55.37|nx2Tech666!
+10.21.55.37|nx2Tech456!
 
-If you encounter issues reach out to @matt on Slack.
+Note: It is assumed that Prism 'admin' account, CVM 'nutanix' account, and AHV 'root' account share the same password.
+
+Finally, execute the script to stage the HPOC clusters defined in your text file.
 
 Interactive Usage:        stage_workshop
 Non-interactive Usage:    stage_workshop -f cluster_list_file -w workshop_number
 
 Available Workshops:
-1) Calm Introduction Workshop
-2) Citrix Desktop on AHV Workshop
-3) Tech Summit 2018
+1) Calm Introduction Workshop (AOS/AHV 5.6)
+2) Citrix Desktop on AHV Workshop (AOS/AHV 5.6)
+
+Each staging option will deploy all images required to complete a given workshop, as well as deploying a domain controller (ntnxlab.local), Prism Central, and configuring AHV networks for your Primary and Secondary VLANs.
+
+If you encounter issues reach out to @matt on Slack.
