@@ -4,6 +4,7 @@ WORKSHOPS=("Calm Introduction Workshop (AOS/AHV 5.6)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Change Cluster Input File" \
+"Validate Staged Clusters" \
 "Quit")
 
 function remote_exec {
@@ -14,6 +15,10 @@ function send_file {
   FILENAME="${1##*/}"
 
   sshpass -p $MY_PE_PASSWORD scp -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null "$1" nutanix@$MY_PE_HOST:/home/nutanix/"${FILENAME}"
+}
+
+function acli {
+	remote_exec /usr/local/nutanix/bin/acli "$@"
 }
 
 # Get list of clusters from user
@@ -51,6 +56,10 @@ function select_workshop {
       #;;
       "Change Cluster Input File")
       get_file
+      break
+      ;;
+      "Validate Staged Clusters")
+      validate_clusters
       break
       ;;
       "Quit")
@@ -117,6 +126,31 @@ function stage_clusters {
   exit
 }
 
+function validate_clusters {
+  for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
+  do
+    set -f
+    array=(${MY_LINE//|/ })
+    MY_PE_HOST=${array[0]}
+    MY_PE_PASSWORD=${array[1]}
+    array=(${MY_PE_HOST//./ })
+    MY_HPOC_NUMBER=${array[2]}
+
+    if [[ $(curl -u admin:${MY_PE_PASSWORD} -k -s -X POST --header "Content-Type: application/json" --header "Accept: aication/json" -o /dev/null -w "%{http_code}" -d "{
+      \"kind\": \"cluster\"
+    }" "https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list") != "200" ]]; then
+      echo -e "\e[1;31m${MY_PE_HOST} - Prism Central staging FAILED\e[0m"
+      echo ${MY_PE_HOST} - Review logs at ${MY_PE_HOST}:/home/nutanix/config.log and 10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/pcconfig.log
+    elif [[ $(acli vm.list) =~ "STAGING-FAILED" ]]; then
+      echo -e "\e[1;31m${MY_PE_HOST} - Image staging FAILED\e[0m"
+      echo ${MY_PE_HOST} - Review log at ${MY_PE_HOST}:/home/nutanix/config.log
+    else
+      echo -e "\e[1;32m${MY_PE_HOST} - Staging successful!\e[0m"
+    fi
+  done
+  exit
+}
+
 # Display script usage
 function usage {
   cat << EOF
@@ -146,7 +180,7 @@ while getopts ":f:w:" opt; do
     fi
     ;;
     w )
-    if [ $(($OPTARG)) -gt 0 ] && [ $(($OPTARG)) -le $((${#WORKSHOPS[@]}-2)) ]; then
+    if [ $(($OPTARG)) -gt 0 ] && [ $(($OPTARG)) -le $((${#WORKSHOPS[@]}-3)) ]; then
       # do something
       WORKSHOP_NUM=${OPTARG}
     else
