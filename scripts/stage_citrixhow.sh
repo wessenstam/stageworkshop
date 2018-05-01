@@ -145,7 +145,7 @@ until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" im
   sleep 5
 done
 
-MY_IMAGE="XenDesktop-7.15-ISO"
+MY_IMAGE="XenDesktop-7.15.iso"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
 until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kIsoImage source_url=http://10.21.250.221/images/ahv/techsummit/XD715.iso wait=true) =~ "complete" ]]; do

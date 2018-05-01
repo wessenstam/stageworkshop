@@ -12,7 +12,7 @@ git clone https://github.com/nutanixworkshops/stageworkshop.git
 cd stageworkshop
 chmod +x stage_workshop.sh
 
-Next you'll need to create a text file containing your cluster IP and password details.
+Next you'll need to create a text file (e.g. pocs.txt) containing your cluster IP and password details. It's easiest to create this file in the same directory as the stage_workshop.sh script.
 
 Input files must use the following format:
 
@@ -24,19 +24,22 @@ Input files must use the following format:
 For example:
 10.21.1.37|nx2Tech123!
 10.21.7.37|nx2Tech517!
+#10.21.5.37|nx2Tech789! <-- The script will ignore commented out clusters
 10.21.55.37|nx2Tech456!
-
-Note: It is assumed that Prism 'admin' account, CVM 'nutanix' account, and AHV 'root' account share the same password.
 
 Finally, execute the script to stage the HPOC clusters defined in your text file.
 
 Interactive Usage:        stage_workshop
 Non-interactive Usage:    stage_workshop -f cluster_list_file -w workshop_number
 
+Running the script interactively will prompt you to input the name of your text file containing your cluster IP and password details. You will then be prompted to choose a Workshop to stage.
+
 Available Workshops:
 1) Calm Introduction Workshop (AOS/AHV 5.6)
 2) Citrix Desktop on AHV Workshop (AOS/AHV 5.6)
 
 Each staging option will deploy all images required to complete a given workshop, as well as deploying a domain controller (ntnxlab.local), Prism Central, and configuring AHV networks for your Primary and Secondary VLANs.
+
+After staging (~30m), you can re-run the stage_workshop script and select "Validate Staged Clusters" to perform a quick check to ensure all images were uploaded and that Prism Central was provisioned as expected.
 
 If you encounter issues reach out to @matt on Slack.
