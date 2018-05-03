@@ -106,7 +106,7 @@ done
 MY_IMAGE="CentOS"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=nfs://10.21.249.12/images/AHV/Linux/CentOSv2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -120,7 +120,7 @@ done
 MY_IMAGE="Windows2012"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=nfs://10.21.249.12/images/AHV/Windows/Windows2012 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -134,7 +134,7 @@ done
 MY_IMAGE="Windows10"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=nfs://10.21.249.12/images/AHV/Windows/Windows10 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows10-1709-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -238,6 +238,12 @@ changetype: add
 objectClass: top
 objectClass: organizationalunit
 description: Persistent Desktop OU
+
+dn: OU=XenAppServer,DC=NTNXLAB,DC=local
+changetype: add
+objectClass: top
+objectClass: organizationalunit
+description: XenApp Server OU
 EOF"
 
 sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \

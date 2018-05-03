@@ -104,7 +104,7 @@ done
 MY_IMAGE="CentOS"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/CentOSv2.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -118,7 +118,7 @@ done
 MY_IMAGE="Windows2012"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/Windows2012.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -182,6 +182,7 @@ ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name=
 my_log "Creating Reverse Lookup Zone on DC VM"
 sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
 root@10.21.${MY_HPOC_NUMBER}.40 "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
+
 # Get UUID from cluster
 my_log "Get UUIDs from cluster:"
 MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
