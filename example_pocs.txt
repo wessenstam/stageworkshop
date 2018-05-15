@@ -1,1 +1,2 @@
-#10.21.example.37|password1!
+#10.21.10.37|password1!
+10.21.48.37|nx2Tech386!
