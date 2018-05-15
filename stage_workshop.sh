@@ -123,6 +123,7 @@ function stage_clusters {
   done
 
   echo "Progress of individual clusters can be monitored by SSHing to the cluster's virtual IP and running 'tail -f /home/nutanix/config.log'."
+  echo "e.g.: $ ssh nutanix@${MY_PE_HOST} 'tail -f /home/nutanix/config.log'."
   exit
 }
 
@@ -162,7 +163,7 @@ Available Workshops:
 1) Calm Introduction Workshop (AOS/AHV 5.6)
 2) Citrix XenDesktop on Nutanix AHV (AOS/AHV 5.6)
 
-See README for more information :+1:
+See README.md for more information :+1:
 
 EOF
 exit
