@@ -1,2 +1,1 @@
-10.21.9.37|techX2018!
-#10.21.10.37|password1!
+#10.21.example.37|password1!
