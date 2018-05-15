@@ -1,6 +1,6 @@
 PLEASE READ BEFORE PROCEEDING!
 
-This script supports staging HPOC clusters for Nutanix Workshops.
+This script supports staging HPOC clusters for [Nutanix Workshops](https://www.nutanixworkshops.com).
 
 ## Available Workshops ##
 
