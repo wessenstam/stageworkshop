@@ -1,24 +1,81 @@
 #!/bin/bash
 # Please configure according to your needs
 
+# Script file name
+MY_SCRIPT_NAME=`basename "$0"`
+# Derive HPOC number from IP 3rd byte
+#MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
+MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
+array=(${MY_CVM_IP//./ })
+MY_HPOC_NUMBER=${array[2]}
+# HPOC Password (if commented, we assume we get that from environment)
+#MY_PE_PASSWORD='nx2TechXXX!'
+MY_SP_NAME='SP01'
+MY_CONTAINER_NAME='Default'
+MY_IMG_CONTAINER_NAME='Images'
+MY_DOMAIN_FQDN='ntnxlab.local'
+MY_DOMAIN_NAME='NTNXLAB'
+MY_DOMAIN_USER='administrator@ntnxlab.local'
+MY_DOMAIN_PASS='nutanix/4u'
+MY_DOMAIN_ADMIN_GROUP='SSP Admins'
+MY_DOMAIN_URL="ldaps://10.21.${MY_HPOC_NUMBER}.40/"
+MY_PRIMARY_NET_NAME='Primary'
+MY_PRIMARY_NET_VLAN='0'
+MY_SECONDARY_NET_NAME='Secondary'
+MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
+MY_PC_SRC_URL='http://download.nutanix.com/downloads/pc/one-click-pc-deployment/5.7/pc-5.7-stable-prism_central.tar'
+MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7/v1/pc-5.7-stable-prism_central_metadata.json'
+MY_PC_SRC_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central.tar'
+MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+
+# From this point, we assume:
+# IP Range: 10.21.${MY_HPOC_NUMBER}.0/25
+# Gateway: 10.21.${MY_HPOC_NUMBER}.1
+# DNS: 10.21.253.10,10.21.253.11
+# Domain: nutanixdc.local
+# DHCP Pool: 10.21.${MY_HPOC_NUMBER}.50 - 10.21.${MY_HPOC_NUMBER}.120
+#
+# DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING!!
+
+SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
+
 # Logging function
 function my_log {
+  # Loging date format
+  #TODO: Make logging format configurable
+  #MY_LOG_DATE='date +%Y-%m-%d %H:%M:%S'
   #echo `$MY_LOG_DATE`" $1"
   echo $(date "+%Y-%m-%d %H:%M:%S") $1
 }
 
-function pc_remote_exec {
-  sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no \
-  -o GlobalKnownHostsFile=/dev/null                     \
-  -o UserKnownHostsFile=/dev/null                       \
-  nutanix@10.21.${MY_HPOC_NUMBER}.39 "$@"
-}
-
-function pc_send_file {
-  sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no \
-  -o GlobalKnownHostsFile=/dev/null                     \
-  -o UserKnownHostsFile=/dev/null                       \
-  "$1" nutanix@10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/"$1"
+function ssh_pass {
+  case "$1" in
+    'install')
+      my_log "Installing sshpass"
+      sudo rpm -ivh https://fr2.rpmfind.net/linux/epel/7/x86_64/Packages/s/sshpass-1.06-1.el7.x86_64.rpm
+      ;;
+    'remove')
+      my_log "Removing sshpass"
+      sudo rpm -e sshpass
+      ;;
+    'pc_send_file')
+      if [[ -z $2 ]]; then
+        my_log 'ssh_pass:pc_send_file:No file specified. Exiting!'
+        exit 10;
+      fi
+      my_log "Sending PC configuration script"
+      sshpass -p 'nutanix/4u' scp ${SSH_OPTS} "$2" nutanix@10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/"$2"
+      ;;
+    'pc_remote_exec')
+      if [[ -z $2 ]]; then
+        my_log 'ssh_pass:pc_remote_exec:No command specified. Exiting!'
+        exit 11;
+      fi
+      # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
+      my_log "Launching PC configuration script"
+      sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 "$2"
+      ;;
+  esac
 }
 
 function stage1
@@ -164,7 +221,7 @@ function PE_Auth
   ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name="${MY_DOMAIN_NAME}" entity-values="${MY_DOMAIN_ADMIN_GROUP}"
 }
 
-function PE_Config
+function PE_Configuration
 {
   # Reverse Lookup Zone
   my_log "Creating Reverse Lookup Zone on DC VM"
@@ -200,6 +257,9 @@ function PE_Config
       "remindLater": null,
       "verbosityType": null
   }'
+
+  my_log "PE_Configuration complete"
+
 }
 
 function PC_Init
@@ -244,50 +304,17 @@ function PC_Init
   }
 EOF
   )
-  curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST https://127.0.0.1:9440/api/nutanix/v3/prism_central -d "${MY_DEPLOY_BODY}"
+  curl -u admin:${MY_PE_PASSWORD} \
+   -k -H 'Content-Type: application/json' \
+   -X POST https://127.0.0.1:9440/api/nutanix/v3/prism_central  \
+   -d "${MY_DEPLOY_BODY}"
   my_log "Waiting for PC deployment to complete (Sleeping 15m)"
   sleep 900
 }
 
-# Loging date format
-#TODO: Make logging format configurable
-#MY_LOG_DATE='date +%Y-%m-%d %H:%M:%S'
-# Script file name
-MY_SCRIPT_NAME=`basename "$0"`
-# Derive HPOC number from IP 3rd byte
-#MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
-MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
-array=(${MY_CVM_IP//./ })
-MY_HPOC_NUMBER=${array[2]}
-# HPOC Password (if commented, we assume we get that from environment)
-#MY_PE_PASSWORD='nx2TechXXX!'
-MY_SP_NAME='SP01'
-MY_CONTAINER_NAME='Default'
-MY_IMG_CONTAINER_NAME='Images'
-MY_DOMAIN_FQDN='ntnxlab.local'
-MY_DOMAIN_NAME='NTNXLAB'
-MY_DOMAIN_USER='administrator@ntnxlab.local'
-MY_DOMAIN_PASS='nutanix/4u'
-MY_DOMAIN_ADMIN_GROUP='SSP Admins'
-MY_DOMAIN_URL="ldaps://10.21.${MY_HPOC_NUMBER}.40/"
-MY_PRIMARY_NET_NAME='Primary'
-MY_PRIMARY_NET_VLAN='0'
-MY_SECONDARY_NET_NAME='Secondary'
-MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
-MY_PC_SRC_URL='http://download.nutanix.com/downloads/pc/one-click-pc-deployment/5.7/pc-5.7-stable-prism_central.tar'
-MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7/v1/pc-5.7-stable-prism_central_metadata.json'
-MY_PC_SRC_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central.tar'
-MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+#__main()__________
+my_log "  __main()__"
 
-# From this point, we assume:
-# IP Range: 10.21.${MY_HPOC_NUMBER}.0/25
-# Gateway: 10.21.${MY_HPOC_NUMBER}.1
-# DNS: 10.21.253.10,10.21.253.11
-# Domain: nutanixdc.local
-# DHCP Pool: 10.21.${MY_HPOC_NUMBER}.50 - 10.21.${MY_HPOC_NUMBER}.120
-#
-# DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING!!
-#
 # Source Nutanix environments (for PATH and other things)
 source /etc/profile.d/nutanix_env.sh
 
@@ -298,25 +325,19 @@ if [[ -z ${MY_PE_PASSWORD+x} ]]; then
 fi
 my_log "My PID is $$"
 
-my_log "Installing sshpass"
-sudo rpm -ivh https://fr2.rpmfind.net/linux/epel/7/x86_64/Packages/s/sshpass-1.06-1.el7.x86_64.rpm
+ssh_pass 'install';
 
-#stage1;
-#images;
-#networking;
-#AutoDC;
-#PE_Auth;
-#PE_Config;
-#PC_Init;
+# stage1;
+# images;
+# networking;
+# AutoDC;
+# PE_Auth;
+# PE_Configuration;
+# PC_Init;
 
-my_log "Sending PC configuration script"
-pc_send_file stage_calmhow_pc.sh
+ssh_pass 'pc_send_file' 'stage_calmhow_pc.sh';
+ssh_pass 'pc_remote_exec' \
+ "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> pcconfig.log 2>&1 &";
+ssh_pass 'remove';
 
-# Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-my_log "Launching PC configuration script"
-pc_remote_exec "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> pcconfig.log 2>&1 &"
-
-#my_log "Removing sshpass"
-#sudo rpm -e sshpass
-
-my_log "PE Configuration complete"
+my_log "PC Configuration complete: try Validate Staged Clusters now."

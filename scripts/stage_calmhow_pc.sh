@@ -64,4 +64,4 @@ curl -u admin:${MY_PE_PASSWORD} -k -H 'Content-Type: application/json' -X PUT \
 #my_log "Upgrade PC"
 #cd /home/nutanix/install ; ./bin/cluster -i . -p upgrade
 
-my_log "PC Configuration complete"
+my_log "PC Configuration complete: try Validate Staged Clusters now."

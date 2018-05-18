@@ -7,14 +7,15 @@ WORKSHOPS=("Calm Introduction Workshop (AOS/AHV 5.6)" \
 "Validate Staged Clusters" \
 "Quit")
 
+SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
 function remote_exec {
-  sshpass -p $MY_PE_PASSWORD ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null nutanix@$MY_PE_HOST "$@"
+  sshpass -p $MY_PE_PASSWORD ssh ${SSH_OPTS} nutanix@$MY_PE_HOST "$@"
 }
 
 function send_file {
   FILENAME="${1##*/}"
 
-  sshpass -p $MY_PE_PASSWORD scp -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null "$1" nutanix@$MY_PE_HOST:/home/nutanix/"${FILENAME}"
+  sshpass -p $MY_PE_PASSWORD scp ${SSH_OPTS} "$1" nutanix@$MY_PE_HOST:/home/nutanix/"${FILENAME}"
 }
 
 function acli {
@@ -110,6 +111,8 @@ function stage_clusters {
     array=(${MY_LINE//|/ })
     MY_PE_HOST=${array[0]}
     MY_PE_PASSWORD=${array[1]}
+    array=(${MY_PE_HOST//./ })
+    MY_HPOC_NUMBER=${array[2]}
 
     # Distribute configuration scripts
     echo "Sending configuration script(s) to ${MY_PE_HOST}"
@@ -123,7 +126,9 @@ function stage_clusters {
   done
 
   echo "Progress of individual clusters can be monitored by SSHing to the cluster's virtual IP and running 'tail -f /home/nutanix/config.log'"
-  echo "e.g.: $ ssh nutanix@${MY_PE_HOST} 'tail -f /home/nutanix/config.log'."
+  echo "e.g.: $ ssh nutanix@${MY_PE_HOST} 'tail -f /home/nutanix/config.log'"
+  echo "      $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f config.log'"
+  echo "      $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 'tail -f pcconfig.log'"
   exit
 }
 
@@ -157,7 +162,7 @@ function usage {
   cat << EOF
 
 Interactive Usage:        stage_workshop
-Non-interactive Usage:    stage_workshop -f cluster_list_file -w workshop_number
+Non-interactive Usage:    stage_workshop -f [cluster_list_file] -w [workshop_number]
 
 Available Workshops:
 1) Calm Introduction Workshop (AOS/AHV 5.6)

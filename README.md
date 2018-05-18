@@ -55,7 +55,7 @@ Running the script interactively
 
 ### Non-interactive Usage ###
 
-````./stage_workshop.sh -f example_pocs.txt -w workshop_number````
+````./stage_workshop.sh -f [example_pocs.txt] -w [workshop number]````
 
 Each staging option will deploy:
 
@@ -67,6 +67,20 @@ Each staging option will deploy:
 After staging (~30m), you can re-run the stage_workshop script and select "Validate Staged Clusters" to perform a quick check to ensure all images were uploaded and that Prism Central was provisioned as expected.
 
 If you encounter issues reach out to @matt on Slack.
+
+## Validate Staged Clusters ##
+
+````
+./stage_workshop.sh
+Cluster Input File: example_pocs.txt
+1) Calm Introduction Workshop (AOS/AHV 5.6)
+2) Citrix Desktop on AHV Workshop (AOS/AHV 5.6)
+3) Change Cluster Input File
+4) Validate Staged Clusters
+5) Quit
+Select an option: 4
+10.21.44.37 - Prism Central staging FAILED
+10.21.44.37 - Review logs at 10.21.44.37:/home/nutanix/config.log and 10.21.44.39:/home/nutanix/pcconfig.log````
 
 ## Authentication: Domain Controller ##
 
