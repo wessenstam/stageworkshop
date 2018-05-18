@@ -70,6 +70,8 @@ If you encounter issues reach out to @matt on Slack.
 
 ## Validate Staged Clusters ##
 
+To be further documented, for now: an example...
+
 ````
 ./stage_workshop.sh
 Cluster Input File: example_pocs.txt
@@ -80,7 +82,8 @@ Cluster Input File: example_pocs.txt
 5) Quit
 Select an option: 4
 10.21.44.37 - Prism Central staging FAILED
-10.21.44.37 - Review logs at 10.21.44.37:/home/nutanix/config.log and 10.21.44.39:/home/nutanix/pcconfig.log````
+10.21.44.37 - Review logs at 10.21.44.37:/home/nutanix/config.log and 10.21.44.39:/home/nutanix/pcconfig.log
+````
 
 ## Authentication: Domain Controller ##
 
