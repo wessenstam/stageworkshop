@@ -64,13 +64,13 @@ Each staging option will deploy:
 - Prism Central
 - configuring AHV networks for your Primary and Secondary VLANs.
 
-After staging (~30m), you can re-run the stage_workshop script and select "Validate Staged Clusters" to perform a quick check to ensure all images were uploaded and that Prism Central was provisioned as expected.
-
 If you encounter issues reach out to @matt on Slack.
 
 ## Validate Staged Clusters ##
 
-To be further documented, for now: an example...
+After staging (~30m), you can re-run the stage_workshop script and select "Validate Staged Clusters" to perform a quick check to ensure all images were uploaded and that Prism Central was provisioned as expected.
+
+Example:
 
 ````
 ./stage_workshop.sh
