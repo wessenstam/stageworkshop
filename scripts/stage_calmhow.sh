@@ -115,7 +115,7 @@ function AuthenticationServer()
         DC_TEST=0;
         while [[ ${DC_TEST} != "/usr/bin/samba-tool" ]]; do
           ((LOOP++))
-          if (( ${LOOP} > ${ATTEMPTS} )); then
+          if (( ${LOOP} > ${ATTEMPTS} )) ; then
             my_log "${MY_IMAGE} VM stated: giving up after ${LOOP} tries."
             exit 12;
           fi
@@ -163,21 +163,28 @@ function PE_Auth
 
 function PE_Configuration
 {
-  my_log "Get UUIDs from cluster:"
-  MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
-  my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
-  MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-  my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+  PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
+   https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
+   | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
-  my_log "Validate EULA on PE"
-  curl ${CURL_OPTS} -X POST --data '{
+  if (( ${PC_TEST} == 200 )) ; then
+    my_log "[PE_Configuration.IDEMPOTENCY]: PC API responds, skipping!"
+  else
+    my_log "Get UUIDs from cluster:"
+    MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
+    my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
+    MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+    my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+
+    my_log "Validate EULA on PE"
+    curl ${CURL_OPTS} -X POST --data '{
       "username": "SE with stage_calmhow.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
-  }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/eulas/accept
+    }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/eulas/accept
 
-  echo; my_log "Disable Pulse in PE"
-  curl ${CURL_OPTS} -X PUT --data '{
+    echo; my_log "Disable Pulse in PE"
+    curl ${CURL_OPTS} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
       "enable": false,
@@ -186,78 +193,82 @@ function PE_Configuration
       "nosVersion": null,
       "remindLater": null,
       "verbosityType": null
-  }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/pulse
+    }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/pulse
 
-  echo; my_log "PE_Configuration complete"
+    echo; my_log "PE_Configuration complete"
+  fi
 }
 
 function PC_Init
 {
-  my_log "Download Prism Central metadata JSON"
-  wget --continue --no-verbose ${MY_PC_META_URL}
+  PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
+   https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
+   | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
-  MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
-  MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
-  my_log "Download Prism Central tarball: ${MY_PC_SRC_URL}"
-  wget --continue --no-verbose ${MY_PC_SRC_URL}
+  if (( ${PC_TEST} == 200 )) ; then
+    my_log "[PC_Init.IDEMPOTENCY]: PC API responds, skipping!"
+  else
+    my_log "Download Prism Central metadata JSON"
+    wget --continue --no-verbose ${MY_PC_META_URL}
 
-  if (( $? > 0 )); then
-    my_log "PC_Init: error, couldn't download PC. Exiting."
-    exit 14;
-  elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5`
-       != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
-    my_log "PC_Init: error, md5sum does't match! Exiting."
-    exit 15;
-  fi
+    MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
+    MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
+    my_log "Download Prism Central tarball: ${MY_PC_SRC_URL}"
+    wget --continue --no-verbose ${MY_PC_SRC_URL}
 
-  my_log "Downloaded and passed MD5sum, staging Prism Central upload..."
-  ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} \
-    meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} \
-    software-type=PRISM_CENTRAL_DEPLOY
+    if (( $? > 0 )) ; then
+      my_log "PC_Init: error, couldn't download PC. Exiting."
+      exit 1;
+    elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
+         != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]; then
+      my_log "PC_Init: error, md5sum does't match! Exiting."
+      exit 1;
+    fi
 
-  my_log "Delete PC sources to free CVM space"
-  rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
-}
+    my_log "Downloaded and passed MD5sum, staging Prism Central upload..."
+    ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} \
+      meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} \
+      software-type=PRISM_CENTRAL_DEPLOY
 
-function PC_Deploy
+    my_log "Delete PC sources to free CVM space"
+    rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
+
+    my_log "Deploy Prism Central"
+    # TODO: Parameterize DNS Servers & add secondary
+    # TODO: make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
+    HTTP_BODY=$(cat <<EOF
 {
-  my_log "Deploy Prism Central"
-  # TODO: Parameterize DNS Servers & add secondary
-  # TODO: make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
-  HTTP_BODY=$(cat <<EOF
-{
-  "resources": {
-      "should_auto_register":true,
-      "version":"${MY_PC_VERSION}",
-      "pc_vm_list":[{
-          "data_disk_size_bytes":536870912000,
-          "nic_list":[{
-              "network_configuration":{
-                  "subnet_mask":"255.255.255.128",
-                  "network_uuid":"${MY_NET_UUID}",
-                  "default_gateway":"10.21.${MY_HPOC_NUMBER}.1"
-              },
-              "ip_list":["10.21.${MY_HPOC_NUMBER}.39"]
-          }],
-          "dns_server_ip_list":["10.21.${MY_HPOC_NUMBER}.40"],
-          "container_uuid":"${MY_CONTAINER_UUID}",
-          "num_sockets":8,
-          "memory_size_bytes":42949672960,
-          "vm_name":"Prism Central ${MY_PC_RELEASE}"
-      }]
-  }
+    "resources": {
+        "should_auto_register":true,
+        "version":"${MY_PC_VERSION}",
+        "pc_vm_list":[{
+            "data_disk_size_bytes":536870912000,
+            "nic_list":[{
+                "network_configuration":{
+                    "subnet_mask":"255.255.255.128",
+                    "network_uuid":"${MY_NET_UUID}",
+                    "default_gateway":"10.21.${MY_HPOC_NUMBER}.1"
+                },
+                "ip_list":["10.21.${MY_HPOC_NUMBER}.39"]
+            }],
+            "dns_server_ip_list":["10.21.${MY_HPOC_NUMBER}.40"],
+            "container_uuid":"${MY_CONTAINER_UUID}",
+            "num_sockets":8,
+            "memory_size_bytes":42949672960,
+            "vm_name":"Prism Central ${MY_PC_RELEASE}"
+        }]
+    }
 }
 EOF
-  )
-  PCD_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
-    https://127.0.0.1:9440/api/nutanix/v3/prism_central)
-  my_log "PCD_TEST=|${PCD_TEST}|"
+    )
+    PCD_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
+      https://127.0.0.1:9440/api/nutanix/v3/prism_central)
+    my_log "PCD_TEST=|${PCD_TEST}|"
+  fi
+}
 
-  PC_FILES='common.lib.sh stage_calmhow_pc.sh'
-  my_log "Send configuration scripts to PC and remove: ${PC_FILES}"
-  sshpass -p 'nutanix/4u' scp ${SSH_OPTS} ${PC_FILES} nutanix@10.21.${MY_HPOC_NUMBER}.39: \
-   && rm -f ${PC_FILES};
-
+function PC_API_Up
+{
   my_log "Waiting for PC deployment to complete..."
 
        LOOP=0;
@@ -275,9 +286,9 @@ EOF
      https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
      | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
-    if (( ${PC_TEST} == 200 )); then
+    if (( ${PC_TEST} == 200 )) ; then
       break;
-    elif (( ${LOOP} > ${ATTEMPTS} )); then
+    elif (( ${LOOP} > ${ATTEMPTS} )) ; then
       echo "Giving up after ${LOOP} tries."
       exit 11;
     else
@@ -294,7 +305,12 @@ EOF
   #   echo -e "\e[1;31m${MY_PE_HOST} - Image staging FAILED\e[0m"
   #   echo ${MY_PE_HOST} - Review log at ${MY_PE_HOST}:stage_calmhow.log
   # fi
-  my_log "PC validation successful!"
+  my_log "PC_API_Up: successful!"
+
+  PC_FILES='common.lib.sh stage_calmhow_pc.sh'
+  my_log "Send configuration scripts to PC and remove: ${PC_FILES}"
+  sshpass -p 'nutanix/4u' scp ${SSH_OPTS} ${PC_FILES} nutanix@10.21.${MY_HPOC_NUMBER}.39: \
+   && rm -f ${PC_FILES};
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   my_log "Launching PC configuration script"
@@ -364,8 +380,8 @@ CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}"
 Dependencies 'install';
 
 Stage1 && Networking && AuthenticationServer 'AutoDC' \
-&& PE_Configuration && PE_Auth && PC_Init && PC_Deploy;
+&& PE_Configuration && PE_Auth \
+&& PC_Init && PC_API_Up \
+&& Dependencies 'remove';
 # Some parallelization possible for critical path above, but not much.
 # Image uploads moved to stage_calmhow_pc
-
-Dependencies 'remove';

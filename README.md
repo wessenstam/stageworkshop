@@ -114,6 +114,10 @@ Users and groups are imported as part of the initialization:
 
 ### Tips ###
 
+When rebuilding a HPOC from rx, foundation automation takes:
+- 4 nodes@NX-3060-G5: 30 minutes
+- 3 nodes@NX-1050: 40 minutes (4 nodes would take longer?).
+
 I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/stage_calmhow.sh#L131),
  so I use that.
 

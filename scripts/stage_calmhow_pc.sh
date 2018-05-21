@@ -204,7 +204,7 @@ function PC_Init
 #  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
 #   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
-  if (( $? != 0 )); then
+  if (( $? != 0 )) ; then
    echo "Password not reset, error: $?.";# Exiting."   exit 10;
   fi
 #   HTTP_BODY=$(cat <<EOF
@@ -365,7 +365,7 @@ function Images
   nuclei image.create name=CentOS7-04282018.qcow2 \
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
-  if (( $? != 0 )); then
+  if (( $? != 0 )) ; then
    echo "Image submission error: $?.";# Exiting."   exit 10;
   fi
 
@@ -376,7 +376,7 @@ function Images
   nuclei image.create name=Windows2012R2-04282018.qcow2 \
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
-  if (( $? != 0 )); then
+  if (( $? != 0 )) ; then
    echo "Image submission error: $?.";# Exiting."   exit 10;
   fi
 
@@ -423,14 +423,14 @@ function PC_Validate {
   LOOP=0;
   PC_TEST=0;
   while [[ ${PC_TEST} != "200" ]]; do
-    ((LOOP++));
+    ((LOOP++)) ;
     PC_TEST=$(curl ${CURL_HTTP_OPTS} \
       --user admin:${MY_PE_PASSWORD} -X POST --data "{
       \"kind\": \"cluster\"
     }" https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list)
 
     my_log " PC Validation ${LOOP}: test = ${PC_TEST}"
-    if (( ${LOOP} > ${ATTEMPTS} )); then
+    if (( ${LOOP} > ${ATTEMPTS} )) ; then
       echo "Giving up after ${LOOP} tries. $PC_TEST. Exiting."
       exit 11;
     fi
