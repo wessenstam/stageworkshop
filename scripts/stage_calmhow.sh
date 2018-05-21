@@ -3,30 +3,6 @@
 # Dependencies: acli, ncli, jq, sshpass, wget, md5sum
 # Please configure according to your needs
 
-function ssh_pass {
-  case "$1" in
-    'pc_send_file')
-      if [[ -z $2 ]]; then
-        my_log 'ssh_pass:pc_send_file:No file specified. Exiting!'
-        exit 10;
-      fi
-      my_log "Sending PC configuration script"
-      sshpass -p 'nutanix/4u' \
-       scp ${SSH_OPTS} "$2" nutanix@10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/"$2" \
-       && rm -f $2;
-      ;;
-    'pc_remote_exec')
-      if [[ -z $2 ]]; then
-        my_log 'ssh_pass:pc_remote_exec:No command specified. Exiting!'
-        exit 11;
-      fi
-      # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-      my_log "Launching PC configuration script"
-      sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 "$2"
-      ;;
-  esac
-}
-
 function Stage1
 {
   if [[ `ncli cluster get-smtp-server | grep -v From | grep Address \
@@ -221,18 +197,23 @@ function PC_Init
   wget --continue --no-verbose ${MY_PC_META_URL}
 
   MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
+  MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
   my_log "Download Prism Central tarball: ${MY_PC_SRC_URL}"
   wget --continue --no-verbose ${MY_PC_SRC_URL}
+
   if (( $? > 0 )); then
     my_log "PC_Init: error, couldn't download PC. Exiting."
     exit 14;
-  elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
+  elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5`
+       != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
     my_log "PC_Init: error, md5sum does't match! Exiting."
     exit 15;
   fi
 
   my_log "Downloaded and passed MD5sum, staging Prism Central upload..."
-  ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} software-type=PRISM_CENTRAL_DEPLOY
+  ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} \
+    meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} \
+    software-type=PRISM_CENTRAL_DEPLOY
 
   my_log "Delete PC sources to free CVM space"
   rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
@@ -243,55 +224,68 @@ function PC_Deploy
   my_log "Deploy Prism Central"
   # TODO: Parameterize DNS Servers & add secondary
   # TODO: make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
-  MY_DEPLOY_BODY=$(cat <<EOF
-  {
-    "resources": {
-        "should_auto_register":true,
-        "version":"${MY_PC_VERSION}",
-        "pc_vm_list":[{
-            "data_disk_size_bytes":536870912000,
-            "nic_list":[{
-                "network_configuration":{
-                    "subnet_mask":"255.255.255.128",
-                    "network_uuid":"${MY_NET_UUID}",
-                    "default_gateway":"10.21.${MY_HPOC_NUMBER}.1"
-                },
-                "ip_list":["10.21.${MY_HPOC_NUMBER}.39"]
-            }],
-            "dns_server_ip_list":["10.21.${MY_HPOC_NUMBER}.40"],
-            "container_uuid":"${MY_CONTAINER_UUID}",
-            "num_sockets":8,
-            "memory_size_bytes":42949672960,
-            "vm_name":"Prism Central ${MY_PC_VERSION}"
-        }]
-    }
+  HTTP_BODY=$(cat <<EOF
+{
+  "resources": {
+      "should_auto_register":true,
+      "version":"${MY_PC_VERSION}",
+      "pc_vm_list":[{
+          "data_disk_size_bytes":536870912000,
+          "nic_list":[{
+              "network_configuration":{
+                  "subnet_mask":"255.255.255.128",
+                  "network_uuid":"${MY_NET_UUID}",
+                  "default_gateway":"10.21.${MY_HPOC_NUMBER}.1"
+              },
+              "ip_list":["10.21.${MY_HPOC_NUMBER}.39"]
+          }],
+          "dns_server_ip_list":["10.21.${MY_HPOC_NUMBER}.40"],
+          "container_uuid":"${MY_CONTAINER_UUID}",
+          "num_sockets":8,
+          "memory_size_bytes":42949672960,
+          "vm_name":"Prism Central ${MY_PC_RELEASE}"
+      }]
   }
+}
 EOF
   )
-  curl ${CURL_OPTS} -X POST --data "${MY_DEPLOY_BODY}" \
-    https://127.0.0.1:9440/api/nutanix/v3/prism_central
+  PCD_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
+    https://127.0.0.1:9440/api/nutanix/v3/prism_central)
+  my_log "PCD_TEST=|${PCD_TEST}|"
 
-  ssh_pass 'pc_send_file' 'common.lib.sh stage_calmhow_pc.sh';
+  PC_FILES='common.lib.sh stage_calmhow_pc.sh'
+  my_log "Send configuration scripts to PC and remove: ${PC_FILES}"
+  sshpass -p 'nutanix/4u' scp ${SSH_OPTS} ${PC_FILES} nutanix@10.21.${MY_HPOC_NUMBER}.39: \
+   && rm -f ${PC_FILES};
 
   my_log "Waiting for PC deployment to complete..."
 
-  LOOP=0;
-  PC_TEST=0;
-  while (( ${PC_TEST} != 200 )); do
-    ((LOOP++))
-    if (( ${LOOP} > ${ATTEMPTS} )); then
-      echo "Giving up after ${LOOP} tries."
-      exit 11;
-    fi
+       LOOP=0;
+    PC_TEST=0;
+  HTTP_BODY=$(cat <<EOF
+{
+  "kind": "cluster"
+}
+EOF
+  )
 
-    PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${MY_DEPLOY_BODY}" \
+  while (( LOOP++ )) ; do
+
+    PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
      https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
      | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
-    echo -e "\n__PC_TEST ${LOOP}=${PC_TEST}: sleeping ${SLEEP} seconds..."
-    sleep ${SLEEP};
-  done
+    if (( ${PC_TEST} == 200 )); then
+      break;
+    elif (( ${LOOP} > ${ATTEMPTS} )); then
+      echo "Giving up after ${LOOP} tries."
+      exit 11;
+    else
+      echo -e "\n__PC_TEST ${LOOP}=${PC_TEST}: sleeping ${SLEEP} seconds..."
+      sleep ${SLEEP};
+    fi
 
+  done
   # if [[ ${PCTEST} != "200" ]]; then
   #   echo -e "\e[1;31m${MY_PE_HOST} - Prism Central staging FAILED\e[0m"
   #   echo ${MY_PE_HOST} - Review logs at ${MY_PE_HOST}:/home/nutanix/stage_calmhow.log \
@@ -302,8 +296,10 @@ EOF
   # fi
   my_log "PC validation successful!"
 
-  ssh_pass 'pc_remote_exec' \
-   "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &";
+  # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
+  my_log "Launching PC configuration script"
+  sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
+   "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   my_log "PC Configuration complete: try Validate Staged Clusters now."
 
 }
@@ -312,7 +308,7 @@ EOF
 
 # Source Nutanix environments (for PATH and other things)
 . /etc/profile.d/nutanix_env.sh
-. scripts/common.lib.sh # source common routines
+. common.lib.sh # source common routines
 
 MY_SCRIPT_NAME=`basename "$0"`
 my_log "__main(${MY_SCRIPT_NAME})__: PID=$$"

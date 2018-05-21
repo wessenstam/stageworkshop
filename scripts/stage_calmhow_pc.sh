@@ -1,11 +1,11 @@
 #!/bin/bash
 # -x
-# Dependencies: curl, ncli, nuclei, jq, sshpass
+# Dependencies: curl, ncli, nuclei, jq #sshpass (removed, needed for remote)
 
 function PC_LDAP
 {
   my_log "Adding Directory ${LDAP_SERVER}"
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "name":"${LDAP_SERVER}",
     "domain":"ntnxlab.local",
@@ -19,12 +19,12 @@ EOF
   )
 
   DIR_TEST=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/authconfig/directories)
   my_log "DIR_TEST=|${DIR_TEST}|"
 
   my_log "Adding Roles"
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "directoryName":"${LDAP_SERVER}",
     "role":"ROLE_CLUSTER_ADMIN",
@@ -34,21 +34,21 @@ EOF
 EOF
   )
   ROLE_TEST=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
   my_log "Cluster Admin=SSP Admins, ROLE_TEST=|${ROLE_TEST}|"
 }
 
 function SSP_Auth {
   my_log "Finding ${LDAP_SERVER} uuid"
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "kind": "directory_service"
   }
 EOF
   )
   LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
   my_log "LDAP_UUID=|${LDAP_UUID}|"
@@ -56,7 +56,7 @@ EOF
   # TODO: test ldap connection
 
   my_log "Connect SSP Authentication (spec-ssp-authrole.json)..."
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "spec": {
       "name": "${LDAP_SERVER}",
@@ -89,7 +89,7 @@ EOF
 EOF
   )
   SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X PUT --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X PUT --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/directory_services/${LDAP_UUID})
   my_log "SSP_CONNECT=|${SSP_CONNECT}|"
 
@@ -99,7 +99,7 @@ EOF
 function CALM
 {
   my_log "Enable Nutanix Calm..."
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "state": "ENABLE",
     "enable_nutanix_apps": true
@@ -107,14 +107,14 @@ function CALM
 EOF
   )
   CALM=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/services/nucalm)
   my_log "CALM=|${CALM}|"
 }
 
 function PC_UI
 {
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "type":"welcome_banner",
     "key":"disable_video",
@@ -123,11 +123,11 @@ function PC_UI
 EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "welcome_banner UI_TEST=|${UI_TEST}|"
 
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "type":"disable_2048",
     "key":"disable_video",
@@ -136,11 +136,11 @@ EOF
 EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "disable_2048 UI_TEST=|${UI_TEST}|"
 
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "type":"UI_CONFIG",
     "key":"autoLogoutTime",
@@ -149,11 +149,11 @@ EOF
 EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/user_data)
   my_log "autoLogoutTime UI_TEST=|${UI_TEST}|"
 
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "type":"UI_CONFIG",
     "key":"autoLogoutGlobal",
@@ -162,11 +162,11 @@ EOF
 EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "autoLogoutGlobal UI_TEST=|${UI_TEST}|"
 
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "type":"UI_CONFIG",
     "key":"autoLogoutOverride",
@@ -175,11 +175,11 @@ EOF
 EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "autoLogoutOverride UI_TEST=|${UI_TEST}|"
 
-  MY_DEPLOY_BODY=$(cat <<EOF
+  HTTP_BODY=$(cat <<EOF
   {
     "type":"UI_CONFIG",
     "key":"welcome_banner",
@@ -188,7 +188,7 @@ EOF
 EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "welcome_banner UI_TEST=|${UI_TEST}|"
 }
@@ -201,19 +201,20 @@ function PC_Init
 
   local OLD_PW='nutanix/4u'
   my_log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
-  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
-   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
+#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
+#   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
+  ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )); then
    echo "Password not reset, error: $?.";# Exiting."   exit 10;
   fi
-#   MY_DEPLOY_BODY=$(cat <<EOF
+#   HTTP_BODY=$(cat <<EOF
 # {
 #   "oldPassword": "${OLD_PW}",
 #   "newPassword": "${MY_PE_PASSWORD}"
 # }
 # EOF
 #   )
-#   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${MY_DEPLOY_BODY}" \
+#   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${HTTP_BODY}" \
 #     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
 #   my_log "cURL reset password PC_TEST=${PC_TEST}"
 
@@ -358,21 +359,23 @@ function Images
   # TODO: Images depends on nuclei
 
   my_log "CentOS7-04282018.qcow2 image..."
-  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
-   "source /etc/profile.d/nutanix_env.sh \
-   && nuclei image.create name=CentOS7-04282018.qcow2 \
-     description='stage_calmhow_pc'\
-     source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 &"
+#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
+#   "source /etc/profile.d/nutanix_env.sh \
+#   && nuclei image.create name=CentOS7-04282018.qcow2 \
+  nuclei image.create name=CentOS7-04282018.qcow2 \
+     description='stage_calmhow_pc' \
+     source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
   if (( $? != 0 )); then
    echo "Image submission error: $?.";# Exiting."   exit 10;
   fi
 
   my_log "Windows2012R2-04282018.qcow2 image..."
-  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
-   "source /etc/profile.d/nutanix_env.sh \
-   && nuclei image.create name=Windows2012R2-04282018.qcow2 \
-     description='stage_calmhow_pc'\
-     source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 &"
+#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
+#   "source /etc/profile.d/nutanix_env.sh \
+#   && nuclei image.create name=Windows2012R2-04282018.qcow2 \
+  nuclei image.create name=Windows2012R2-04282018.qcow2 \
+     description='stage_calmhow_pc' \
+     source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
   if (( $? != 0 )); then
    echo "Image submission error: $?.";# Exiting."   exit 10;
   fi

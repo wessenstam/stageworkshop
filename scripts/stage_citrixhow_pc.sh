@@ -7,7 +7,7 @@ MY_SCRIPT_NAME=`basename "$0"`
 
 # Source Nutanix environments (for PATH and other things)
 . /etc/profile.d/nutanix_env.sh
-. scripts/common.lib.sh # source common routines
+. common.lib.sh # source common routines
 Dependencies 'install';
 
 # Derive HPOC number from IP 3rd byte

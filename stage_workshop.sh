@@ -135,7 +135,7 @@ function set_workshop {
 # Send configuration scripts to remote clusters and execute Prism Element script
 function stage_clusters {
     MY_CURL_OPTS="--header Accept:application/json --output /dev/null -w %{http_code}"
-  MY_DEPLOY_BODY=$(cat <<EOM
+  HTTP_BODY=$(cat <<EOM
 {
 "kind": "cluster"
 }
@@ -158,7 +158,7 @@ EOM
     while ((LOOP++)); do
 
       PE_TEST=$(curl ${CURL_OPTS} ${MY_CURL_OPTS} \
-       --user admin:${MY_PE_PASSWORD} -X POST --data "${MY_DEPLOY_BODY}" \
+       --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
        https://10.21.${MY_HPOC_NUMBER}.37:9440/api/nutanix/v3/clusters/list \
        | tr -d \") # wonderful addition of "" around HTTP status code by cURL
       if (( $? > 0 )); then
@@ -196,16 +196,19 @@ EOM
     remote_exec "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
   done
 
-  echo "Progress of individual clusters can be monitored by SSHing to the cluster's virtual IP and running 'tail -f stage_calmhow.log'"
-  echo "e.g.: $ ssh nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'"
-  echo "      $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'"
-  echo "      $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 'tail -f stage_calmhow_pc.log'"
+  cat <<EOM
+Progress of individual clusters can be monitored by:
+ $ ssh nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'"
+ $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
+   https://${MY_PE_HOST}:9440/
+ $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 'tail -f stage_calmhow_pc.log'
+EOM
   exit
 }
 
 function validate_clusters {
-  MY_CURL_OPTS="--header Accept:application/json --output /dev/null -w %{http_code}"
-  MY_DEPLOY_BODY=$(cat <<EOM
+  MY_CURL_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null -w %{http_code}"
+  HTTP_BODY=$(cat <<EOM
 {
   "kind": "cluster"
 }
@@ -230,8 +233,8 @@ EOM
         exit 11;
       fi
 
-      PC_TEST=$(curl ${CURL_OPTS} ${MY_CURL_OPTS} \
-       --user admin:${MY_PE_PASSWORD} -X POST -d "${MY_DEPLOY_BODY}" \
+      PC_TEST=$(curl ${MY_CURL_OPTS} \
+       --user admin:${MY_PE_PASSWORD} -X POST -d "${HTTP_BODY}" \
        https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
        | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 

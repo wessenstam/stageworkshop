@@ -89,7 +89,7 @@ Select an option: 4
 
 OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it. https://jira.nutanix.com/browse/ENG-126217 will be fixed with PC 5.6.1
 
-AutoDC was created by @johnRehnert, using Turnkey Linux, to stand up a pre-configured Samba DC.
+AutoDC was created by @John.Walker, using Turnkey Linux, to stand up a pre-configured Samba DC.
 The console runs an ncurses application which allows simple reconfiguration of domain,
 administator password, and reboots. Console credentials are root:nutanix/4u
 
@@ -112,7 +112,23 @@ Users and groups are imported as part of the initialization:
 |poweruser01-05|nutanix/4u|SSP Power Users|
 |basicuser01-05|nutanix/4u|SSP Basic Users|
 
+### Tips ###
+
+I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/stage_calmhow.sh#L131),
+ so I use that.
+
 You may wish to use ````poc_samba_user.sh```` to populate AutoDC past the initial set of users, above:
 
 1. Modify the hard-coded variables at the top if needed.
 2. $ ````export DC_IP='10.21.example.40' && scp poc*sh root@${DC_IP}: && ssh root@${DC_IP} "chmod u+x poc*sh; ./poc_samba_users.sh"````
+
+### Next Gen AutoDC ###
+
+@JohnWalker: The new one I have built has an image size of 85MB and is based on Alpine linux.
+I just need to finish the TUI interface for changing the config.
+https://gitlab.com/devnull-42/alpine-dc
+
+Mark: "Is there a web GUI type tool that we could build in? I’m thinking CPanel might be able to tackle that?"
+
+@JohnWalker: I'm building a console interface in Python that will handle that.
+I’m going to have a couple of ways. 1 would be to edit the users.csv and groups.csv.  The other would be to add users and groups individually without re-initializing the dc.
