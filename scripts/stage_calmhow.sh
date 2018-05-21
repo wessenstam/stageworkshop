@@ -220,7 +220,7 @@ function PC_Init
       my_log "PC_Init: error, couldn't download PC. Exiting."
       exit 1;
     elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
-         != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]; then
+            != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
       my_log "PC_Init: error, md5sum does't match! Exiting."
       exit 1;
     fi
