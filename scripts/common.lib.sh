@@ -5,7 +5,7 @@
 #     CURL_OPTS="${CURL_OPTS} --verbose"
 CURL_POST_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null"
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
-      SSH_OPTS='-x -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
+      SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
       SSH_OPTS="${SSH_OPTS} -q" # "-v"
 
 function my_log {
@@ -37,7 +37,7 @@ function remote_exec { # was send_file
     (( LOOP++ ))
     case "${1}" in
       'SSH' | 'ssh')
-        SSH_TEST=$(sshpass -p ${PASSWORD} ssh ${SSH_OPTS} nutanix@${HOST} "${3}")
+        SSH_TEST=$(sshpass -p ${PASSWORD} ssh -x ${SSH_OPTS} nutanix@${HOST} "${3}")
         my_log "remote_exec:SSH_TEST:${SSH_TEST}:$?"
         ;;
       'SCP' | 'scp')

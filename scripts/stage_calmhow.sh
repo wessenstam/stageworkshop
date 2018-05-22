@@ -354,7 +354,7 @@ if (( $? == 0 )) ; then
   my_log "$0: main: done!_____________________"
   echo
   my_log "Watching logs on PC..."
-  remote_exec 'PC' "tail -f stage_calmhow_pc.log"
+  remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
 else
   my_log "main:PRISM_API_Up: Error, couldn't reach PC, exit."
   exit 18

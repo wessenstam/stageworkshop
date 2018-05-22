@@ -63,4 +63,4 @@ curl ${CURL_OPTS} -X PUT \
 #my_log "Upgrade PC"
 #cd /home/nutanix/install ; ./bin/cluster -i . -p upgrade
 
-my_log "PC Configuration complete"
+my_log "PC Configuration complete on `$date`"

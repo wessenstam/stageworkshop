@@ -10,6 +10,9 @@
   - update project
   - ncli authconfig (run local from container?)
   - (localize?) and upload blueprint via nuclei?
+  - Default project environment set, enable marketplace item, launch!
+  - Karan
+  - Enabled multiple cloud account settings, then environment, then marketplace launch
 - Overall TODO:
   - refactor out all passwords, hardcoded values to variables
   - use local file repo, fall back to global
