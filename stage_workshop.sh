@@ -122,11 +122,11 @@ function stage_clusters {
     # Nutanix Controller VM
     # Permission denied, please try again.
 
-    Prism_API_Up 'PE'
+    Prism_API_Up 'PE' 1
     if (( $? == 0 )) ; then
       my_log "stage_clusters: Sending configuration script(s) to PE: ${MY_PE_HOST}"
     else
-      my_log "stage_clusters: Can't reach PE on cluster, exiting."
+      my_log "stage_clusters: ERROR: Can't reach PE on cluster, are you on VPN?"
       exit 15
     fi
 
