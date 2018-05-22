@@ -1,4 +1,6 @@
-This script supports staging HPOC clusters for [Nutanix Workshops](http://www.nutanixworkshops.com).
+This script supports staging HPoC clusters for [Nutanix Workshops](http://www.nutanixworkshops.com).
+It greatly automates the majority of the [Workshop Setup Guide](http://www.nutanixworkshops.com/en/latest/setup/).
+Now you can have push-button Calm in about an hour.
 
 # Table of Contents #
 
@@ -14,24 +16,24 @@ This script supports staging HPOC clusters for [Nutanix Workshops](http://www.nu
 
 ## Available Workshops ##
 
-1. Calm Introduction Workshop (AOS/AHV 5.6)
+1. Calm Introduction Workshop (AOS/AHV 5.5+)
 2. Citrix Desktop on AHV Workshop (AOS/AHV 5.6)
 
 ## HPoC Cluster Reservation ##
 
-Make your new https://rx.corp.nutanix.com:8443/ reservation with:
+Make your new reservation on https://rx.corp.nutanix.com:8443/ with:
 
 - __Region:__ NX-US-West region only
 - __AOS + Hypevisor:__ proper versions for your workshop, specified above
   - Older or newer versions may not function as expected
-- __OS Images:__ *do not* add addition images (CentOS, Windows2012, etc.) to your reservation
+- __OS Images:__ *do not* specify additional images (CentOS, Windows2012, etc.) to your reservation
 
 ## Staging Your HPoC ##
 
 All clusters must be Foundationed prior to Workshop staging.
 
 This script should be run from a host on the corporate/lab network,
- such as a CentOS VM running on an HPOC cluster or your laptop with VPN access.
+ such as a CentOS VM running on an HPoC cluster or your laptop with VPN access.
 Execute the following:
 
     git clone https://github.com/nutanixworkshops/stageworkshop.git
@@ -128,7 +130,7 @@ Users and groups are imported as part of the initialization:
 
 When rebuilding a HPOC from rx, foundation automation takes:
 - 4 nodes@NX-3060-G5: 30 minutes
-- 3 nodes@NX-1050: 40 minutes (4 nodes would take longer?).
+- 4 nodes@NX-1050: 40 minutes.
 
 I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/stage_calmhow.sh#L131),
  so I use that.

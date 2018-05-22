@@ -1,0 +1,34 @@
++ AutoDC:
+  + NTNXLAB, ntnxlab.local, root:nutanix/4u
+  + samba --version Version 4.2.14-Debian
++ PE:
+  + user01@ntnxlab.local auth test fine
+- PC 5.6:
+  - Revalidate PC 5.6 works
+  - Restore choice of PC 5.6 (for current bootcamp/workshop lab content) or 5.7.0.1
++ PC 5.7.0.1:
+  - update project
+  - ncli authconfig (run local from container?)
+  - (localize?) and upload blueprint via nuclei?
+- Overall TODO:
+  - refactor out all passwords, hardcoded values to variables
+  - use local file repo, fall back to global
+  - PE, PC: clear our warnings
+  - PE, PC: use RBAC user: SSP Admin?
+  + clear; MY_PE_PASSWORD='nx2Tech!'; sshpass -p "${MY_PE_PASSWORD}" ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null nutanix@10.21..37 'pkill tail; ps -efww|grep calm'
+
+# list | ls
+# edit | update
+# remove | rm
+# list-directory | ls-directory
+# create-directory | add-directory
+# edit-directory | update-directory
+# remove-directory | rm-directory
+# list-role-mappings | ls-role-mappings
+# delete-role-mapping
+# add-role-mapping
+# add-to-role-mapping-values
+# remove-from-role-mapping-values
+# get-directory-values-by-type
+# test-ldap-connection
+

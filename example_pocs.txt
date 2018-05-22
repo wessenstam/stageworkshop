@@ -1,3 +1,2 @@
 #10.21.example.37|password
 #	./stage_workshop.sh -f example_pocs.txt -w 1 #calm
-10.21.65.37|nx2Tech982!
