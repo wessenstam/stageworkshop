@@ -1,11 +1,23 @@
 This script supports staging HPOC clusters for [Nutanix Workshops](http://www.nutanixworkshops.com).
 
+# Table of Contents #
+
+1. [Available Workshops](#available-workshops)
+2. [HPoC Cluster Reservation](#hpoc-cluster-reservation)
+3. [Staging Your HPoC](#staging-your-hpoc)
+    1. [Interactive Usage](#interactive-usage)
+    2. [Non-interactive Usage](#non-interactive-usage)
+4. [Validate Staged Clusters](#validate-staged-clusters)
+5. [Authentication: Domain Controller](#authentication-domain-controller)
+    1. [Tips](#tips)
+    2. [Next Gen AutoDC](#next-gen-autodc)
+
 ## Available Workshops ##
 
 1. Calm Introduction Workshop (AOS/AHV 5.6)
 2. Citrix Desktop on AHV Workshop (AOS/AHV 5.6)
 
-## HPOC Cluster Reservation ##
+## HPoC Cluster Reservation ##
 
 Make your new https://rx.corp.nutanix.com:8443/ reservation with:
 
@@ -14,7 +26,7 @@ Make your new https://rx.corp.nutanix.com:8443/ reservation with:
   - Older or newer versions may not function as expected
 - __OS Images:__ *do not* add addition images (CentOS, Windows2012, etc.) to your reservation
 
-## Staging Your HPOC ##
+## Staging Your HPoC ##
 
 All clusters must be Foundationed prior to Workshop staging.
 

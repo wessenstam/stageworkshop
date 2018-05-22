@@ -455,6 +455,8 @@ Dependencies 'install' \
 
 if (( $? == 0 )) ; then
   Dependencies 'remove';
+  my_log "$0: main: done!_____________________"
+  echo
 else
   my_log "main: error: failed to reach cluster PE, exit."
   exit 19

@@ -5,7 +5,8 @@
 #     CURL_OPTS="${CURL_OPTS} --verbose"
 CURL_POST_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null"
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
-      SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
+      SSH_OPTS='-x -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
+      SSH_OPTS='-q' # '-v'
 
 function my_log {
   #TODO: Make logging format configurable
@@ -72,7 +73,14 @@ function Dependencies {
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
         # probably on NTNX CVM or PCVM = CentOS7
         if [[ -z `which sshpass` ]]; then
-          sudo rpm -ivh https://fr2.rpmfind.net/linux/epel/7/x86_64/Packages/s/sshpass-1.06-1.el7.x86_64.rpm
+          sudo rpm -ivh http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
+          # https://pkgs.org/download/sshpass
+          # https://sourceforge.net/projects/sshpass/files/sshpass/
+          #sudo rpm -ivh https://fr2.rpmfind.net/linux/epel/7/x86_64/Packages/s/sshpass-1.06-1.el7.x86_64.rpm
+          if (( $? > 0 )) ; then
+            my_log "Dependencies: ERROR: can't install sshpass."
+            exit 98
+          fi
         else
           my_log "Dependencies: found sshpass"
         fi
@@ -80,6 +88,10 @@ function Dependencies {
         if [[ -z `which jq` ]]; then
           wget --quiet https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
           && chmod u+x jq-linux64 && ln -s jq-linux64 jq;
+          if (( $? > 0 )) ; then
+            my_log "Dependencies: ERROR: can't install jq."
+            exit 98
+          fi
         else
           my_log "Dependencies: found jq"
         fi
@@ -88,6 +100,10 @@ function Dependencies {
       if [[ `uname -s` == "Darwin" ]]; then #MacOS
         if [[ -z `which sshpass` ]]; then
           brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb;
+          if (( $? > 0 )) ; then
+            my_log "Dependencies: ERROR: can't install sshpass."
+            exit 98
+          fi
         else
           my_log "Dependencies: found sshpass"
         fi
@@ -136,19 +152,18 @@ function Prism_API_Up
     fi
     if (( ${PRISM_TEST} == 401 )) && [[ ${1} == 'PC' ]] ; then
       PASSWORD='Nutanix/4u'
-      my_log "Fallback: try initial password next cycle..."
+      my_log "PRISM_API_Up@${1}: Fallback: try initial password next cycle..."
     fi
 
     if (( ${PRISM_TEST} == 200 )) ; then
-      my_log "PRISM_API_Up: successful"
+      my_log "PRISM_API_Up@${1}: successful"
       return 0
       break
     elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-      # TODO: make a zero or non-zero return instead of exit
-      my_log "PRISM_API_Up: Giving up after ${LOOP} tries."
+      my_log "PRISM_API_Up@${1}: Giving up after ${LOOP} tries."
       return 11
     else
-      my_log "__PRISM_API_Up ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleep ${SLEEP} seconds..."
+      my_log "__PRISM_API_Up@${1} ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleep ${SLEEP} seconds..."
       sleep ${SLEEP}
     fi
   done
