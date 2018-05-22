@@ -122,7 +122,7 @@ function stage_clusters {
     # Nutanix Controller VM
     # Permission denied, please try again.
 
-    Prism_API_Up 'PE' 1
+    Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
       my_log "stage_clusters: Sending configuration script(s) to PE: ${MY_PE_HOST}"
     else

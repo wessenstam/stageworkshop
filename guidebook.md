@@ -10,7 +10,7 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 
 ## Procedure ##
 
-0. Crank some tunes!
+0. Crank some tunes and record the start time!
 1. *Browse* to: https://github.com/mlavi/stageworkshop
    - I will submit a pull request shortly to merge my work.
 1. *Launch a new terminal*: Change font size for demo, create/change to a new directory.
