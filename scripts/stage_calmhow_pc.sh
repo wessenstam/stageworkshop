@@ -205,7 +205,7 @@ function PC_Init
 #   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )) ; then
-   echo "Password not reset, error: $?.";# Exiting."   exit 10;
+   my_log "Password not reset, error: $?.";# Exiting."   exit 10;
   fi
 #   HTTP_BODY=$(cat <<EOF
 # {
@@ -366,7 +366,7 @@ function Images
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
   if (( $? != 0 )) ; then
-   echo "Image submission error: $?.";# Exiting."   exit 10;
+   my_log "Image submission error: $?.";# Exiting."   exit 10;
   fi
 
   my_log "Windows2012R2-04282018.qcow2 image..."
@@ -377,7 +377,7 @@ function Images
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
   if (( $? != 0 )) ; then
-   echo "Image submission error: $?.";# Exiting."   exit 10;
+   my_log "Image submission error: $?.";# Exiting."   exit 10;
   fi
 
   # MY_IMAGE="CentOS"
@@ -409,7 +409,7 @@ function Images
   #   sleep 5
   # done
 
-  # Remove existing VMs, if any (Mark says: unlikely for a new cluster!)
+  # Remove existing VMs, if any (Mark says: unlikely for a new cluster)
   # my_log "Removing \"Windows 2012\" VM if it exists"
   # acli -y vm.delete Windows\ 2012\ VM delete_snapshots=true
   # my_log "Removing \"Windows 10\" VM if it exists"
@@ -418,54 +418,18 @@ function Images
   # acli -y vm.delete CentOS\ VM delete_snapshots=true
 }
 
-function PC_Validate {
-  my_log "PC Configuration complete: Validating PC now..."
-  LOOP=0;
-  PC_TEST=0;
-  while [[ ${PC_TEST} != "200" ]]; do
-    ((LOOP++)) ;
-    PC_TEST=$(curl ${CURL_HTTP_OPTS} \
-      --user admin:${MY_PE_PASSWORD} -X POST --data "{
-      \"kind\": \"cluster\"
-    }" https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list)
-
-    my_log " PC Validation ${LOOP}: test = ${PC_TEST}"
-    if (( ${LOOP} > ${ATTEMPTS} )) ; then
-      echo "Giving up after ${LOOP} tries. $PC_TEST. Exiting."
-      exit 11;
-    fi
-    echo "SLEEP ${SLEEP}"; sleep ${SLEEP}
-    # if [[ ${PC_TEST} != "200" ]]; then
-    #   echo -e "\e[1;31m${MY_PE_HOST} - Prism Central staging FAILED\e[0m"
-    #   echo ${MY_PE_HOST} - Review logs at ${MY_PE_HOST}:/home/nutanix/stage_calmhow.log \
-    #    and 10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/stage_calmhow_pc.log
-    # elif [[ $(acli vm.list) =~ "STAGING-FAILED" ]]; then
-    #   echo -e "\e[1;31m${MY_PE_HOST} - Image staging FAILED\e[0m"
-    #   echo ${MY_PE_HOST} - Review log at ${MY_PE_HOST}:/home/nutanix/stage_calmhow.log
-    # fi
-  done
-
-  my_log "PC validation successful!"
-}
 #__main()____________
 
 # Source Nutanix environments (for PATH and other things such as ncli)
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
 
-MY_SCRIPT_NAME=`basename "$0"` # Script file name
-my_log "__main(${MY_SCRIPT_NAME})__: PID=$$"
+my_log `basename "$0"`": __main__: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   my_log "Error: MY_PE_PASSWORD environment variable NOT provided, exiting."
   exit 10;
 fi
-      ATTEMPTS=2
-#     CURL_OPTS="${CURL_OPTS} --verbose"
-CURL_POST_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null"
-CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
-   LDAP_SERVER='AutoDC'
-         SLEEP=10
 
 if [[ -z ${MY_HPOC_NUMBER} ]]; then
   # Derive HPOC number from IP 3rd byte
@@ -475,10 +439,23 @@ if [[ -z ${MY_HPOC_NUMBER} ]]; then
   MY_HPOC_NUMBER=${array[2]}
 fi
 
-Dependencies 'install';
+   ATTEMPTS=2
+#  CURL_OPTS="${CURL_OPTS} --verbose"
+LDAP_SERVER='AutoDC'
+      SLEEP=10
 
-PC_Init && PC_UI && PC_LDAP;
-SSP_Auth;
-CALM && Images && PC_Validate;
+Dependencies 'install' \
+&& PC_Init \
+&& PC_UI \
+&& PC_LDAP \
+&& SSP_Auth \
+&& CALM \
+&& Images \
+&& Prism_API_Up 'PC'
 
-Dependencies 'remove';
+if (( $? == 0 )) ; then
+  Dependencies 'remove';
+else
+  my_log "main: error: failed to reach cluster PE, exit."
+  exit 19
+fi

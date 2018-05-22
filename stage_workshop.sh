@@ -16,37 +16,6 @@ ATTEMPTS=40;
    SLEEP=60;
 #CURL_OPTS="${CURL_OPTS} --verbose"
 
-function remote_exec {
-  sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} "$@"
-}
-
-function send_file {
-  local ATTEMPTS=3;
-        FILENAME="${1##*/}"
-            LOOP=0;
-
-  while (( LOOP++ < ${ATTEMPTS} )); do
-    if (( ${LOOP} == ${ATTEMPTS} )); then
-      echo "send_file: giving up after ${LOOP} tries."
-      exit 11;
-    fi
-
-    SCP_TEST=$(sshpass -p ${MY_PE_PASSWORD} scp ${SSH_OPTS} $1 nutanix@${MY_PE_HOST}:)
-
-    if (( $? == 0 )); then
-      my_log "send_file: ${1}: done!"
-      break;
-    else
-      echo "send_file ${LOOP}/${ATTEMPTS}: SCP_TEST=$?|${SCP_TEST}| SLEEPing ${SLEEP}...";
-      sleep ${SLEEP};
-    fi
-  done
-}
-
-function acli {
-	remote_exec /usr/local/nutanix/bin/acli "$@"
-}
-
 # Get list of clusters from user
 function get_file {
   read -p 'Cluster Input File: ' CLUSTER_LIST
@@ -59,8 +28,8 @@ function get_file {
   select_workshop
 }
 
-# Get workshop selection from user, set script files to send to remote clusters
 function select_workshop {
+  # Get workshop selection from user, set script files to send to remote clusters
   PS3='Select an option: '
   select WORKSHOP in "${WORKSHOPS[@]}"
   do
@@ -134,13 +103,6 @@ function set_workshop {
 
 # Send configuration scripts to remote clusters and execute Prism Element script
 function stage_clusters {
-    MY_CURL_OPTS="--header Accept:application/json --output /dev/null -w %{http_code}"
-  HTTP_BODY=$(cat <<EOM
-{
-"kind": "cluster"
-}
-EOM
-  )
 
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
   do
@@ -153,28 +115,6 @@ EOM
 
     #TODO: Check rx cluster foundation status, then PE API login success to proceed!
     # 12 failed SSH login attempts registered, but it took more time than successful email.
-
-    LOOP=0;
-    while ((LOOP++)); do
-
-      PE_TEST=$(curl ${CURL_OPTS} ${MY_CURL_OPTS} \
-       --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-       https://10.21.${MY_HPOC_NUMBER}.37:9440/api/nutanix/v3/clusters/list \
-       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-      if (( $? > 0 )); then
-        echo
-      fi
-
-      if (( ${LOOP} == ${ATTEMPTS} )); then
-        echo "- PE_TEST: Giving up after ${LOOP} tries."
-        exit 11;
-      elif (( ${PE_TEST} -ne 200 )); then
-        echo "- PE_TEST ${LOOP}/${ATTEMPTS}=${PE_TEST}: sleeping ${SLEEP} seconds..."
-        sleep ${SLEEP}
-      fi
-
-    done
-
     # rx: 20180518 21:38:52 INFO All 140 cluster services are up
     # we move from: ssh: connect to host 10.21.20.37 port 22: Operation timed out
     # lost connection
@@ -182,39 +122,36 @@ EOM
     # Nutanix Controller VM
     # Permission denied, please try again.
 
-    # Distribute configuration scripts
-    echo "Sending configuration script(s) to ${MY_PE_HOST}"
+    Prism_API_Up 'PE'
+    if (( $? == 0 )) ; then
+      my_log "stage_clusters: Sending configuration script(s) to PE: ${MY_PE_HOST}"
+    else
+      my_log "stage_clusters: Can't reach PE on cluster, exiting."
+      exit 15
+    fi
+
     cd scripts
     if [ ! -z ${PC_CONFIG} ]; then
-      send_file "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
+      remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
     else
-      send_file "common.lib.sh ${PE_CONFIG}"
+      remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG}"
     fi
 
     # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-    echo "Executing configuration script on ${MY_PE_HOST}"
-    remote_exec "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
-  done
+    my_log "Executing configuration script on PE: ${MY_PE_HOST}"
+    remote_exec 'SSH' 'PE' "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
-  cat <<EOM
+    cat <<EOM
 Progress of individual clusters can be monitored by:
- $ ssh nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'"
  $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
    https://${MY_PE_HOST}:9440/
  $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 'tail -f stage_calmhow_pc.log'
 EOM
+  done
   exit
 }
 
 function validate_clusters {
-  MY_CURL_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null -w %{http_code}"
-  HTTP_BODY=$(cat <<EOM
-{
-  "kind": "cluster"
-}
-EOM
-  )
-
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
   do
     set -f
@@ -224,25 +161,12 @@ EOM
     array=(${MY_PE_HOST//./ })
     MY_HPOC_NUMBER=${array[2]}
 
-    LOOP=0;
-    PC_TEST=0;
-    while (( ${PC_TEST} != 200 )); do
-      ((LOOP++))
-      if (( ${LOOP} > ${ATTEMPTS} )); then
-        echo "Giving up after ${LOOP} tries."
-        exit 11;
-      fi
-
-      PC_TEST=$(curl ${MY_CURL_OPTS} \
-       --user admin:${MY_PE_PASSWORD} -X POST -d "${HTTP_BODY}" \
-       https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
-       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-
-      echo -e "\n__PC_TEST ${LOOP}=${PC_TEST}: sleeping ${SLEEP} seconds...\n"
-      sleep ${SLEEP};
-    done
-    echo "Success: I can find a cluster(s) on PC!"
-
+    Prism_API_Up 'PE'
+    if (( $? == 0 )) ; then
+      my_log "validate_clusters: Success: execute PC API on cluster ${MY_HPOC_NUMBER}"
+    else
+      my_log "validate_clusters: Failure: cannot validate PC API on cluster ${MY_HPOC_NUMBER}"
+    fi
   done
 }
 
@@ -263,6 +187,7 @@ EOF
 exit
 }
 
+#__main__
 # Check if file passed via command line, otherwise prompt for cluster list file
 while getopts ":f:w:" opt; do
   case ${opt} in

@@ -7,7 +7,7 @@ function Stage1
 {
   if [[ `ncli cluster get-smtp-server | grep -v From | grep Address \
       | awk -F: '{print $2}' | tr -d '[:space:]'` == "${SMTP_SERVER_ADDRESS}" ]]; then
-    my_log "[Stage1.IDEMPOTENCY]: SMTP already set, skipping!"
+    my_log "[Stage1.IDEMPOTENCY]: SMTP already set, skipping"
   else
     my_log "Configure SMTP"
     ncli cluster set-smtp-server address=${SMTP_SERVER_ADDRESS} from-email-address=cluster@nutanix.com port=25
@@ -25,7 +25,7 @@ function Stage1
 
     my_log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
     (ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
-        && echo "Container ${MY_IMG_CONTAINER_NAME} already exists" \
+        && my_log "Container ${MY_IMG_CONTAINER_NAME} already exists" \
         || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
 
     # Set external IP address:
@@ -39,7 +39,7 @@ function Stage1
 function Networking
 {
   if [[ ! -z `acli net.list | grep Primary` ]]; then
-    my_log "[Networking.IDEMPOTENCY]: Primary network set, skipping!"
+    my_log "[Networking.IDEMPOTENCY]: Primary network set, skipping"
   else
     my_log "Removing Rx-Automation-Network if it exists"
     acli -y net.delete Rx-Automation-Network
@@ -71,7 +71,7 @@ function Networking
 function AuthenticationServer()
 {
   if [[ -z ${1} ]]; then
-    echo "AuthenticationServer Error: please provide a choice."
+    my_log "AuthenticationServer Error: please provide a choice. Exiting."
     exit 13;
   else
     MY_IMAGE=${1}
@@ -79,27 +79,32 @@ function AuthenticationServer()
 
   case "${MY_IMAGE}" in
     'ActiveDirectory')
-      echo "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
+      my_log "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
       ;;
     'AutoDC')
       if [[ -z $(ncli vm list name=${MY_IMAGE} | grep '\[None\]') ]]; then
         # TODO: weak detection, conditional on text API.
-        my_log "[AuthenticationServer.IDEMPOTENCY]: VM ${MY_IMAGE} exists, skipping!"
+        my_log "[AuthenticationServer.IDEMPOTENCY]: VM ${MY_IMAGE} exists, skipping"
       else
-        retries=1
         my_log "Importing ${MY_IMAGE} image..."
-        until [[ $(acli image.create ${MY_IMAGE} \
-          container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage \
-          source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true) =~ "complete" ]]; do
+        local AUTH_SERVER_CREATE=0;
+        local               LOOP=0;
+        while true ; do
+          (( LOOP++ ))
+          AUTH_SERVER_CREATE=$(acli image.create ${MY_IMAGE} \
+            container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage \
+            source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true)
 
-          let retries++
-          if [ $retries -gt 5 ]; then
-            my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
+          if [[ ${AUTH_SERVER_CREATE} =~ 'complete' ]]; then
+            break;
+          elif (( ${LOOP} > ${ATTEMPTS} )) ; then
             acli vm.create STAGING-FAILED-${MY_IMAGE}
-            break
+            my_log "${MY_IMAGE} failed to upload after ${LOOP} attempts. This cluster may require manual remediation."
+            exit 13;
+          else
+            my_log "__AUTH_SERVER_CREATE ${LOOP}=${AUTH_SERVER_CREATE}: ${MY_IMAGE} failed. Sleeping ${SLEEP} seconds..."
+            sleep ${SLEEP};
           fi
-          my_log "acli image.create ${MY_IMAGE} FAILED. Retrying upload (${retries} of 5)..."
-          sleep 5
         done
 
         my_log "Create ${MY_IMAGE} VM based on ${MY_IMAGE} image"
@@ -111,30 +116,36 @@ function AuthenticationServer()
         my_log "Power on ${MY_IMAGE} VM"
         acli vm.on ${MY_IMAGE}
 
-        LOOP=0;
-        DC_TEST=0;
-        while [[ ${DC_TEST} != "/usr/bin/samba-tool" ]]; do
-          ((LOOP++))
-          if (( ${LOOP} > ${ATTEMPTS} )) ; then
-            my_log "${MY_IMAGE} VM stated: giving up after ${LOOP} tries."
-            exit 12;
+        local AUTH_SERVER_TEST=0; # TODO: candidate for remote_exec
+        local             LOOP=0;
+        while true ; do
+          (( LOOP++ ))
+          # TODO: hardcoded p/w
+          AUTH_SERVER_TEST=$(sshpass -p nutanix/4u ssh ${SSH_OPTS} \
+            root@10.21.${MY_HPOC_NUMBER}.40 "which samba-tool")
+          if (( $? > 0 )); then
+            echo
           fi
 
-          DC_TEST=$(sshpass -p nutanix/4u ssh ${SSH_OPTS} \
-            root@10.21.${MY_HPOC_NUMBER}.40 "which samba-tool")
-
-          echo -e "\n__DC_TEST ${LOOP}=${DC_TEST}: sleeping ${SLEEP} seconds..."
-          sleep ${SLEEP};
+          if [[ ${AUTH_SERVER_TEST} != "/usr/bin/samba-tool" ]]; then
+            break;
+          elif (( ${LOOP} > ${ATTEMPTS} )) ; then
+            my_log "${MY_IMAGE} VM running: giving up after ${LOOP} tries."
+            exit 12;
+          else
+            my_log "__AUTH_SERVER_TEST ${LOOP}=${AUTH_SERVER_TEST}: sleeping ${SLEEP} seconds..."
+            sleep ${SLEEP};
+          fi
         done
 
-        my_log "Creating Reverse Lookup Zone on ${MY_IMAGE} VM"
+        my_log "Creating Reverse Lookup Zone on ${MY_IMAGE} VM" # TODO: candidate for remote_exec
         sshpass -p nutanix/4u ssh ${SSH_OPTS} \
           root@10.21.${MY_HPOC_NUMBER}.40 \
           "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
       fi
       ;;
     'OpenLDAP')
-      echo "To be documented, see https://drt-it-github-prod-1.eng.nutanix.com/mark-lavi/openldap"
+      my_log "To be documented, see https://drt-it-github-prod-1.eng.nutanix.com/mark-lavi/openldap"
       ;;
   esac
 }
@@ -142,7 +153,7 @@ function AuthenticationServer()
 function PE_Auth
 {
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
-    my_log "[PE_Auth.IDEMPOTENCY]: ${MY_DOMAIN_NAME} directory already set, skipping!"
+    my_log "[PE_Auth.IDEMPOTENCY]: ${MY_DOMAIN_NAME} directory already set, skipping"
   else
     my_log "Configure PE external authentication"
     ncli authconfig add-directory \
@@ -163,12 +174,9 @@ function PE_Auth
 
 function PE_Configuration
 {
-  PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
-   https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
-   | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-
-  if (( ${PC_TEST} == 200 )) ; then
-    my_log "[PE_Configuration.IDEMPOTENCY]: PC API responds, skipping!"
+  Prism_API_Up 'PC'
+  if (( $? == 0 )) ; then
+    my_log "[PE_Configuration.IDEMPOTENCY]: PC API responds, skipping"
   else
     my_log "Get UUIDs from cluster:"
     MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
@@ -201,12 +209,9 @@ function PE_Configuration
 
 function PC_Init
 {
-  PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
-   https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
-   | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-
-  if (( ${PC_TEST} == 200 )) ; then
-    my_log "[PC_Init.IDEMPOTENCY]: PC API responds, skipping!"
+  Prism_API_Up 'PC'
+  if (( $? == 0 )) ; then
+    my_log "[PC_Init.IDEMPOTENCY]: PC API responds, skipping"
   else
     my_log "Download Prism Central metadata JSON"
     wget --continue --no-verbose ${MY_PC_META_URL}
@@ -221,7 +226,7 @@ function PC_Init
       exit 1;
     elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
             != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
-      my_log "PC_Init: error, md5sum does't match! Exiting."
+      my_log "PC_Init: error, md5sum does't match. Exiting."
       exit 1;
     fi
 
@@ -267,57 +272,16 @@ EOF
   fi
 }
 
-function PC_API_Up
-{
-  my_log "Waiting for PC deployment to complete..."
-
-       LOOP=0;
-    PC_TEST=0;
-  HTTP_BODY=$(cat <<EOF
-{
-  "kind": "cluster"
-}
-EOF
-  )
-
-  while (( LOOP++ )) ; do
-
-    PC_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
-     https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/clusters/list \
-     | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-
-    if (( ${PC_TEST} == 200 )) ; then
-      break;
-    elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-      echo "Giving up after ${LOOP} tries."
-      exit 11;
-    else
-      echo -e "\n__PC_TEST ${LOOP}=${PC_TEST}: sleeping ${SLEEP} seconds..."
-      sleep ${SLEEP};
-    fi
-
-  done
-  # if [[ ${PCTEST} != "200" ]]; then
-  #   echo -e "\e[1;31m${MY_PE_HOST} - Prism Central staging FAILED\e[0m"
-  #   echo ${MY_PE_HOST} - Review logs at ${MY_PE_HOST}:/home/nutanix/stage_calmhow.log \
-  #    and 10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/stage_calmhow_pc.log
-  # elif [[ $(acli vm.list) =~ "STAGING-FAILED" ]]; then
-  #   echo -e "\e[1;31m${MY_PE_HOST} - Image staging FAILED\e[0m"
-  #   echo ${MY_PE_HOST} - Review log at ${MY_PE_HOST}:stage_calmhow.log
-  # fi
-  my_log "PC_API_Up: successful!"
-
-  PC_FILES='common.lib.sh stage_calmhow_pc.sh'
+function PC_Deploy {
+  local PC_FILES='common.lib.sh stage_calmhow_pc.sh'
   my_log "Send configuration scripts to PC and remove: ${PC_FILES}"
-  sshpass -p 'nutanix/4u' scp ${SSH_OPTS} ${PC_FILES} nutanix@10.21.${MY_HPOC_NUMBER}.39: \
-   && rm -f ${PC_FILES};
+  remote_exec 'scp' 'PC' "${PC_FILES}" && rm -f ${PC_FILES}
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   my_log "Launching PC configuration script"
-  sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
+  remote_exec 'ssh' 'PC' \
    "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   my_log "PC Configuration complete: try Validate Staged Clusters now."
-
 }
 
 #__main()__________
@@ -326,8 +290,7 @@ EOF
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh # source common routines
 
-MY_SCRIPT_NAME=`basename "$0"`
-my_log "__main(${MY_SCRIPT_NAME})__: PID=$$"
+my_log `basename "$0"`": __main__: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD+x} ]]; then
     my_log "MY_PE_PASSWORD not provided, exiting"
@@ -377,11 +340,19 @@ CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}"
 #CURL_OPTS="${CURL_OPTS} --verbose"
     SLEEP=10
 
-Dependencies 'install';
+Dependencies 'install' \
+&& Stage1 \
+&& Networking \
+&& AuthenticationServer 'AutoDC' \
+&& PE_Configuration \
+&& PE_Auth \
+&& PC_Init \
+&& Prism_API_Up 'PC'
 
-Stage1 && Networking && AuthenticationServer 'AutoDC' \
-&& PE_Configuration && PE_Auth \
-&& PC_Init && PC_API_Up \
-&& Dependencies 'remove';
+if (( $? == 0 )) ; then
+  PC_Deploy && Dependencies 'remove';
+else
+  my_log "main:PRISM_API_Up: Error, couldn't reach PC, exiting."
+  exit 18
+fi
 # Some parallelization possible for critical path above, but not much.
-# Image uploads moved to stage_calmhow_pc

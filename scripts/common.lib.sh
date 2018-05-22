@@ -1,15 +1,65 @@
 #!/usr/bin/env bash
 
-CURL_OPTS='--insecure --header Content-Type:application/json --silent --show-error --max-time 5'
- SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
+# TODO: local override for verbose
+     CURL_OPTS='--insecure --header Content-Type:application/json --silent --show-error --max-time 5'
+CURL_POST_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null"
+CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
+      SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
 
 function my_log {
-  # Loging date format
   #TODO: Make logging format configurable
-  #MY_LOG_DATE='date +%Y-%m-%d %H:%M:%S'
-  #echo `$MY_LOG_DATE`" $1"
-
   echo $(date "+%Y-%m-%d %H:%M:%S") $1
+}
+
+function acli {
+	remote_exec 'SSH' 'PE' "/usr/local/nutanix/bin/acli \"$@\""
+}
+
+function remote_exec { # was send_file
+  local   ATTEMPTS=3
+  local       LOOP=0
+  local   SSH_TEST=0
+  local   PASSWORD="${MY_PE_PASSWORD}"
+  local LAST_OCTET=37 # default to PE
+  if [[ ${2} == 'PC' ]]; then
+    LAST_OCTET=39 # Prism Cental
+      PASSWORD='nutanix/4u' # TODO: hardcoded p/w
+  fi
+  local      HOST="10.21.${MY_HPOC_NUMBER}.${LAST_OCTET}"
+  if [[ -z ${3} ]]; then
+    my_log 'remote_exec: ERROR -- missing third argument. Exiting.'
+    exit 99
+  fi
+
+  while true ; do
+    (( LOOP++ ))
+    case "${1}" in
+      'SSH' | 'ssh')
+        SSH_TEST=$(sshpass -p ${PASSWORD} ssh ${SSH_OPTS} nutanix@${HOST} "${3}")
+        my_log "remote_exec:SSH_TEST:${SSH_TEST}:$?"
+        ;;
+      'SCP' | 'scp')
+        # local FILENAME="${1##*/}"
+        SSH_TEST=$(sshpass -p ${PASSWORD} scp ${SSH_OPTS} ${3} nutanix@${HOST}:)
+        my_log "remote_exec:SSH_TEST:${SSH_TEST}:$?"
+        ;;
+      *)
+        my_log "remote_exec:Error: improper first argument, should be ssh or scp. Exiting."
+        exit 99
+        ;;
+    esac
+
+    if (( $? == 0 )); then
+      my_log "remote_exec: |${1}|${2}|${3}| done"
+      break;
+    elif (( ${LOOP} == ${ATTEMPTS} )); then
+      my_log "remote_exec: giving up after ${LOOP} tries."
+      exit 11;
+    else
+      my_log "remote_exec ${LOOP}/${ATTEMPTS}: SSH_TEST=$?|${SSH_TEST}| ${FILENAME} SLEEPing ${SLEEP}...";
+      sleep ${SLEEP};
+    fi
+  done
 }
 
 function Dependencies {
@@ -23,14 +73,14 @@ function Dependencies {
         if [[ -z `which sshpass` ]]; then
           sudo rpm -ivh https://fr2.rpmfind.net/linux/epel/7/x86_64/Packages/s/sshpass-1.06-1.el7.x86_64.rpm
         else
-          my_log "Dependencies: found sshpass!"
+          my_log "Dependencies: found sshpass"
         fi
 
         if [[ -z `which jq` ]]; then
           wget --quiet https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
           && chmod u+x jq-linux64 && ln -s jq-linux64 jq;
         else
-          my_log "Dependencies: found jq!"
+          my_log "Dependencies: found jq"
         fi
       fi
 
@@ -38,13 +88,13 @@ function Dependencies {
         if [[ -z `which sshpass` ]]; then
           brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb;
         else
-          my_log "Dependencies: found sshpass!"
+          my_log "Dependencies: found sshpass"
         fi
 
         if [[ -z `which jq` ]]; then
           brew install jq;
         else
-          my_log "Dependencies: found jq!"
+          my_log "Dependencies: found jq"
         fi
       fi
       ;;
@@ -57,4 +107,46 @@ function Dependencies {
       fi
       ;;
     esac
+}
+
+function Prism_API_Up
+{
+  #my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
+  local       LOOP=0;
+  local PRISM_TEST=0;
+  local LAST_OCTET=39; # default to PC
+  if [[ ${1} == 'PE' ]]; then
+    LAST_OCTET=37;
+  fi
+
+  while true ; do
+    (( LOOP++ ))
+    PRISM_TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} \
+      -X POST --data '{ "kind": "cluster" }' \
+      https://10.21.${MY_HPOC_NUMBER}.${LAST_OCTET}:9440/api/nutanix/v3/clusters/list \
+      | tr -d \") # wonderful addition of "" around HTTP status code by cURL
+
+    if (( $? > 0 )); then
+      echo
+    fi
+    if (( ${PRISM_TEST} == 200 )) ; then
+      my_log "PRISM_API_Up: successful"
+      return 0
+    elif (( ${LOOP} > ${ATTEMPTS} )) ; then
+      # TODO: make a zero or non-zero return instead of exit
+      my_log "PRISM_API_Up: Giving up after ${LOOP} tries."
+      return 11
+    else
+      my_log "__PRISM_API_Up ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleeping ${SLEEP} seconds..."
+      sleep ${SLEEP}
+    fi
+  done
+  # if [[ ${PCTEST} != "200" ]]; then
+  #   echo -e "\e[1;31m${MY_PE_HOST} - Prism Central staging FAILED\e[0m"
+  #   echo ${MY_PE_HOST} - Review logs at ${MY_PE_HOST}:/home/nutanix/stage_calmhow.log \
+  #    and 10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/stage_calmhow_pc.log
+  # elif [[ $(acli vm.list) =~ "STAGING-FAILED" ]]; then
+  #   echo -e "\e[1;31m${MY_PE_HOST} - Image staging FAILED\e[0m"
+  #   echo ${MY_PE_HOST} - Review log at ${MY_PE_HOST}:stage_calmhow.log
+  # fi
 }
