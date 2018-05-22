@@ -2,7 +2,7 @@
 
 ## Prerequisites ##
 1. Tested on Mac, probably works on Linux.
-2. Open a terminal: install git, jq, and sshpass.
+2. A terminal, command line: git, jq, and sshpass.
 
 ### Acknowledgements ###
 
@@ -13,12 +13,12 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 0. Crank some tunes!
 1. *Browse* to: https://github.com/mlavi/stageworkshop
    - I will submit a pull request shortly to merge my work.
-1. *Launch a new terminal*: and create/change to a new directory.
+1. *Launch a new terminal*: Change font size for demo, create/change to a new directory.
 
-        git clone https://github.com/mlavi/stageworkshop.git
+        git clone https://github.com/mlavi/stageworkshop.git ; tree
 1. Review HPoC reservation details in rx:
    0. __Browser:__ Highlight the HPoC #, commit that to memory: it is used for octet update. Copy the PE admin password.
-   0. __Terminal:__ Change font size for demo. Update the *octet* and *password* in ````example_pocs.txt```` and save.
+   0. __Terminal:__ Update the *octet* and *password* in ````example_pocs.txt```` and save.
       - *OPTIONAL:* Make a mistake with the octet to show a failure mode.
    0. __Browser:__ Choose the PE URL to show unavailable during foundation process.
 1. Side by side: (screens because split desktop doesn't work well enough)
@@ -57,11 +57,12 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
         - Show VM name, zoom in to show macros.
         - Choose local image uploaded to cluster to save time versus the dynamic imported image.
         - Show user centos in cloud-init and @@{your_public_key}@@ macro.
-        - Show package install task
+        - Show package install task: uncomment install work
         - Show service tab: Deployment Config
-          - *bug* redundant!
+          - *bug* service > service is redundant!
         - Save, Launch!
   4. __Application Launch:__
     - Name application deployment: marklavi-beachhead-took-X-minutes
     - Terminal: find start time, find end time.
       - *BUG:* time zones of server, cloud-init?
+    - Show logical deployment, open terminal, audit logs
