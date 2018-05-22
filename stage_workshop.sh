@@ -34,7 +34,7 @@ function select_workshop {
   select WORKSHOP in "${WORKSHOPS[@]}"
   do
     case $WORKSHOP in
-      "Calm Introduction Workshop (AOS/AHV 5.6)")
+      "Calm Introduction Workshop (AOS/AHV 5.5+)")
         PE_CONFIG=stage_calmhow.sh
         PC_CONFIG=stage_calmhow_pc.sh
         break
