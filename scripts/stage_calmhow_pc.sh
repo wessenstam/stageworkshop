@@ -4,7 +4,7 @@
 
 function PC_LDAP
 {
-  my_log "Adding Directory ${LDAP_SERVER}"
+  my_log "Add Directory ${LDAP_SERVER}"
   HTTP_BODY=$(cat <<EOF
   {
     "name":"${LDAP_SERVER}",
@@ -23,7 +23,7 @@ EOF
     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/authconfig/directories)
   my_log "DIR_TEST=|${DIR_TEST}|"
 
-  my_log "Adding Roles"
+  my_log "Add Roles"
   HTTP_BODY=$(cat <<EOF
   {
     "directoryName":"${LDAP_SERVER}",
@@ -40,7 +40,7 @@ EOF
 }
 
 function SSP_Auth {
-  my_log "Finding ${LDAP_SERVER} uuid"
+  my_log "Find ${LDAP_SERVER} uuid"
   HTTP_BODY=$(cat <<EOF
   {
     "kind": "directory_service"
@@ -205,7 +205,7 @@ function PC_Init
 #   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )) ; then
-   my_log "Password not reset, error: $?.";# Exiting."   exit 10;
+   my_log "Password not reset, error: $?.";# Exit."   exit 10;
   fi
 #   HTTP_BODY=$(cat <<EOF
 # {
@@ -366,7 +366,7 @@ function Images
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
   if (( $? != 0 )) ; then
-   my_log "Image submission error: $?.";# Exiting."   exit 10;
+   my_log "Image submission error: $?.";# Exit."   exit 10;
   fi
 
   my_log "Windows2012R2-04282018.qcow2 image..."
@@ -377,12 +377,12 @@ function Images
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
   if (( $? != 0 )) ; then
-   my_log "Image submission error: $?.";# Exiting."   exit 10;
+   my_log "Image submission error: $?.";# Exit."   exit 10;
   fi
 
   # MY_IMAGE="CentOS"
   # retries=1
-  # echo; my_log "Importing ${MY_IMAGE} image"
+  # echo; my_log "Import ${MY_IMAGE} image"
   # until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
   #   # acli image.create CentOS container="Images" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/CentOSv2.qcow2 wait=true
   #   let retries++
@@ -391,13 +391,13 @@ function Images
   #     acli vm.create STAGING-FAILED-${MY_IMAGE}
   #     break
   #   fi
-  #   my_log "acli image.create ${MY_IMAGE} FAILED. Retrying upload (${retries} of 5)..."
+  #   my_log "acli image.create ${MY_IMAGE} FAILED. Retry upload (${retries} of 5)..."
   #   sleep 5
   # done
   #
   # MY_IMAGE="Windows2012"
   # retries=1
-  # echo; my_log "Importing ${MY_IMAGE} image"
+  # echo; my_log "Import ${MY_IMAGE} image"
   # until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
   #   let retries++
   #   if [ $retries -gt 5 ]; then
@@ -405,7 +405,7 @@ function Images
   #     acli vm.create STAGING-FAILED-${MY_IMAGE}
   #     break
   #   fi
-  #   my_log "acli image.create ${MY_IMAGE} FAILED. Retrying upload (${retries} of 5)..."
+  #   my_log "acli image.create ${MY_IMAGE} FAILED. Retry upload (${retries} of 5)..."
   #   sleep 5
   # done
 
@@ -427,7 +427,7 @@ function Images
 my_log `basename "$0"`": __main__: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
-  my_log "Error: MY_PE_PASSWORD environment variable NOT provided, exiting."
+  my_log "Error: MY_PE_PASSWORD environment variable NOT provided, exit."
   exit 10;
 fi
 

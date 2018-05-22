@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# TODO: local override for verbose
+# TODO: lost local override for verbose
      CURL_OPTS='--insecure --header Content-Type:application/json --silent --show-error --max-time 5'
 CURL_POST_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null"
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
@@ -8,11 +8,11 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
 
 function my_log {
   #TODO: Make logging format configurable
-  echo $(date "+%Y-%m-%d %H:%M:%S") $1
+  echo $(date "+%Y-%m-%d %H:%M:%S")"|${1}"
 }
 
 function acli {
-	remote_exec 'SSH' 'PE' "/usr/local/nutanix/bin/acli \"$@\""
+	remote_exec 'SSH' 'PE' "/usr/local/nutanix/bin/acli $@"
 }
 
 function remote_exec { # was send_file
@@ -27,7 +27,7 @@ function remote_exec { # was send_file
   fi
   local      HOST="10.21.${MY_HPOC_NUMBER}.${LAST_OCTET}"
   if [[ -z ${3} ]]; then
-    my_log 'remote_exec: ERROR -- missing third argument. Exiting.'
+    my_log 'remote_exec: ERROR -- missing third argument. Exit.'
     exit 99
   fi
 
@@ -44,7 +44,7 @@ function remote_exec { # was send_file
         my_log "remote_exec:SSH_TEST:${SSH_TEST}:$?"
         ;;
       *)
-        my_log "remote_exec:Error: improper first argument, should be ssh or scp. Exiting."
+        my_log "remote_exec:Error: improper first argument, should be ssh or scp. Exit."
         exit 99
         ;;
     esac
@@ -56,7 +56,7 @@ function remote_exec { # was send_file
       my_log "remote_exec: giving up after ${LOOP} tries."
       exit 11;
     else
-      my_log "remote_exec ${LOOP}/${ATTEMPTS}: SSH_TEST=$?|${SSH_TEST}| ${FILENAME} SLEEPing ${SLEEP}...";
+      my_log "remote_exec ${LOOP}/${ATTEMPTS}: SSH_TEST=$?|${SSH_TEST}| ${FILENAME} SLEEP ${SLEEP}...";
       sleep ${SLEEP};
     fi
   done
@@ -65,7 +65,7 @@ function remote_exec { # was send_file
 function Dependencies {
   case "$1" in
     'install')
-      my_log "Installing Dependencies"
+      my_log "Install Dependencies"
       export PATH=${PATH}:${HOME}
 
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
@@ -113,15 +113,19 @@ function Prism_API_Up
 {
   #my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
   local       LOOP=0;
+  local   PASSWORD=${MY_PE_PASSWORD};
   local PRISM_TEST=0;
   local LAST_OCTET=39; # default to PC
   if [[ ${1} == 'PE' ]]; then
     LAST_OCTET=37;
   fi
+  if [[ ! -z ${2} ]]; then
+    local ATTEMPTS=${2}
+  fi
 
   while true ; do
     (( LOOP++ ))
-    PRISM_TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} \
+    PRISM_TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${PASSWORD} \
       -X POST --data '{ "kind": "cluster" }' \
       https://10.21.${MY_HPOC_NUMBER}.${LAST_OCTET}:9440/api/nutanix/v3/clusters/list \
       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
@@ -129,15 +133,21 @@ function Prism_API_Up
     if (( $? > 0 )); then
       echo
     fi
+    if (( ${PRISM_TEST} == 401 )) && [[ ${1} == 'PC' ]] ; then
+      PASSWORD='Nutanix/4u'
+      my_log "Fallback: try initial password next cycle..."
+    fi
+
     if (( ${PRISM_TEST} == 200 )) ; then
       my_log "PRISM_API_Up: successful"
       return 0
+      break
     elif (( ${LOOP} > ${ATTEMPTS} )) ; then
       # TODO: make a zero or non-zero return instead of exit
       my_log "PRISM_API_Up: Giving up after ${LOOP} tries."
       return 11
     else
-      my_log "__PRISM_API_Up ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleeping ${SLEEP} seconds..."
+      my_log "__PRISM_API_Up ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleep ${SLEEP} seconds..."
       sleep ${SLEEP}
     fi
   done
