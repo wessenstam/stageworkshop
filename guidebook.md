@@ -40,45 +40,45 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 
       - Show PE Authentication: test above user with the default password.
       - View All Tasks, wait until software is uploading
-  6. __Terminal:__ Show that we're waiting...approximately 17 minutes (fast forward)
-
-      - Highlight automation scripts sent to PC
-
+  6. __Terminal:__ Show that we're waiting...approximately 17 minutes (fast forward). Highlight automation scripts sent to PC.
   7. __Browser:__ from PE, show VM table, go to home and show PE registered to PC, launch PC and login as admin.
 
     * *BUG:* Can't login as a SSP admin = adminuser05@ntnxlab.local
     * Show Authentication, show role mapping, show images.
-0. Push button Calm!
 
-  1. __PC> Apps:__ click lower left ? to show Calm 5.7
+1. Push button Calm!
 
-      * *BUG* why a ? in the UI?
-  2. __Projects:__ Default: add the following:
+    1. __PC> Apps:__ click lower left ? to show Calm 5.7
 
-    - Description: "Freedom to Cloud",
-    - Roles: assign and save,
-    - Local and Cloud,
-    - choose PoC AHV cluster,
-    - Network: enable VLANs,
-    - and Save.
-  3. __Blueprints:__ Upload blueprint: ````beachhead-centos7-calm5.7.0.1.json```` in default project.
+        * *BUG* why a ? in the UI?
+    2. __Projects:__ Default: add the following:
 
-    - Resize icon
-    - Pull left tab open, note public key in AHVCluster application profile, zoom to show end of the value.
-    - __Credentials:__ upload private key, note user centos, save, back.
-    - __Service = Webtier:__
+      - Description: "Freedom to Cloud",
+      - Roles: assign and save,
+      - Local and Cloud,
+      - choose PoC AHV cluster,
+      - Network: enable VLANs,
+      - and Save.
+    3. __Blueprints:__ Upload blueprint: ````beachhead-centos7-calm5.7.0.1.json```` in default project.
+
+      - Resize icon
+      - Pull left tab open, note public key in AHVCluster application profile, zoom to show end of the value.
+      - __Credentials:__ upload private key, note user centos, save, back.
+      - __Service = Webtier:__
     
-        - Show VM name, zoom in to show macros.
-        - Choose local image uploaded to cluster to save time versus the dynamic imported image.
-        - Show user centos in cloud-init and @@{your_public_key}@@ macro.
-        - Show package install task: uncomment install work
-        - Show service tab: Deployment Config
-          - *bug* service > service is redundant!
+          - Show VM name, zoom in to show macros.
+          - Choose local image uploaded to cluster to save time versus the dynamic imported image.
+          - Show user centos in cloud-init and @@{your_public_key}@@ macro.
+          - Show package install task: uncomment install work
+          - Show service tab: Deployment Config
+          
+            - *bug* service > service is redundant!
         - Save, Launch!
-  4. __Application Launch:__
+    4. __Application Launch:__
 
-    - Name application deployment: marklavi-beachhead-took-X-minutes
-    - Terminal: find start time, find end time.
+      - Name application deployment: marklavi-beachhead-took-X-minutes
+      - Terminal: find start time, find end time.
 
-      - *BUG:* time zones of server, cloud-init?
-    - Show logical deployment, open terminal, audit logs
+        - *BUG:* time zones of server, cloud-init?
+        
+      - Show logical deployment, open terminal, audit logs
