@@ -86,11 +86,12 @@ function Dependencies {
         fi
 
         if [[ -z `which jq` ]]; then
-          wget --quiet https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64 \
-          && chmod u+x jq-linux64 && ln -s jq-linux64 jq;
+          curl --retry 3 --show-error --max-time 5 https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
           if (( $? > 0 )) ; then
             my_log "Dependencies: ERROR: can't install jq."
             exit 98
+          else
+            chmod u+x jq-linux64 && ln -s jq-linux64 jq
           fi
         else
           my_log "Dependencies: found jq"
