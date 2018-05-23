@@ -202,6 +202,15 @@ function PE_Configure
       "verbosityType": null
     }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/pulse
 
+    #echo; my_log "Create PE Banner Login" # TODO: for PC, login banner
+    # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
+    # curl ${CURL_OPTS} -X POST --data \
+    #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
+    #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
+    #curl ${CURL_OPTS} -X POST --data
+    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${MY_HPOC_NUMBER}' password = '${MY_PE_PASSWORD}'"}' \
+    #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
+
     echo; my_log "PE_Configure complete"
   fi
 }
