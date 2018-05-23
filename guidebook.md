@@ -30,10 +30,10 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 
           ./stage_workshop.sh -f example_pocs.txt -w 1 #calm
 
-        - In the terminal, copy and paste the command to monitor the ````stage_calmhow.sh```` progress on a CVM.
+   3. After the automation is uploaded to the cluster CVM, copy and paste the command to monitor the ````stage_calmhow.sh```` progress.
 
-  3. __Browser:__ Reload the PE URL, accept security override, login as admin and password to PE EULA.
-  4. __Terminal:__ Once PE UI configured, reload browser to show EULA bypassed or decline EULA.
+   3. __Browser:__ Reload the PE URL, accept security override, login as admin and password to PE EULA.
+   4. __Terminal:__ Once PE UI configured, reload browser to show EULA bypassed or decline EULA.
 
       - *BUG:* Once Authentication Server is up, you can login as a SSP admin = adminuser05@ntnxlab.local
   5. __Browser:__
