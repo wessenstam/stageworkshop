@@ -76,7 +76,6 @@ function Dependencies {
           sudo rpm -ivh http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
           # https://pkgs.org/download/sshpass
           # https://sourceforge.net/projects/sshpass/files/sshpass/
-          #sudo rpm -ivh https://fr2.rpmfind.net/linux/epel/7/x86_64/Packages/s/sshpass-1.06-1.el7.x86_64.rpm
           if (( $? > 0 )) ; then
             my_log "Dependencies: ERROR: can't install sshpass."
             exit 98
@@ -86,9 +85,10 @@ function Dependencies {
         fi
 
         if [[ -z `which jq` ]]; then
-          curl --retry 3 --show-error --max-time 5 https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+          curl --remote-name --location --retry 3 --show-error \
+            https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
           if (( $? > 0 )) ; then
-            my_log "Dependencies: ERROR: can't install jq."
+            my_log "Dependencies: ERROR: can't download jq."
             exit 98
           else
             chmod u+x jq-linux64 && ln -s jq-linux64 jq
