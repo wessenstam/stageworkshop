@@ -127,7 +127,7 @@ function Dependencies {
     esac
 }
 
-function Prism_API_Up
+function Check_Prism_API_Up
 {
   #my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
   local       LOOP=0;

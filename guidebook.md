@@ -8,34 +8,102 @@
 
 The entire Global Technical Sales Enablement team has delivered an amazing amount of content and automation for Nutanix TechSummits and Workshops. Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants. Thank you!
 
+## For the Impatient ##
+
+    export MY_HPOC=10.21.X.37 && export MY_PE_PASSWORD='nx2Tech###!' \
+    && git clone https://github.com/mlavi/stageworkshop.git && cd _ \
+    && echo "${MY_HPOC}|${MY_PE_PASSWORD}" >> poc.txt && echo “Start foundation now” \
+    && ./stage_workshop.sh -f poc.txt -w 1 #calm
+    sleep 60*70 && lynx https://admin@${MY_HPOC}:9440/
+
+### Timing ###
+
+We'll round up to the nearest half minute.
+
+1. 30 min = RX Foundation times to PE up (approximate)
+
+  - NX-3060-G5 = 25 minutes
+  - NX-1060 = 30 minutes
+
+2. 0.5 min = ./stage_workshop.sh
+
+3. 28 min = PE:stage_calmhow.sh
+
+| Function | Run1@5/24 (minutes) |
+| :------------- | :------------- |
+| __start__ | 11:26:53 |
+| Dependencies 'install' | 1 |
+| PE_Init | 1 |
+| Network_Configure | 0.5 |
+| AuthenticationServer 'AutoDC' | 2 |
+| PE_Configure | 0.5 |
+| PE_Auth | 0.5 |
+| PC_Init | 7.5 |
+| Check_Prism_API_Up 'PC' | 16 |
+| PC_Configure | 0.5 |
+| Dependencies 'remove' | 0.5 |
+| __end__ | 11:54:28 |
+
+4. 1.5 min = PC:stage_calmhow_pc.sh
+
+| Function | Run1@5/24 (minutes) |
+| :------------- | :------------- |
+| __start (localtime)__ | 04:54:27 |
+| Dependencies 'install' | 0.5 |
+| PC_Init | 0.5 |
+| PC_UI | 0.5 |
+| PC_LDAP | 0.5 |
+| SSP_Auth | 0.5 |
+| CALM | 0.5 |
+| Images | background |
+| Check_Prism_API_Up 'PC' | 0.5 |
+| Dependencies 'remove' | 0.5 |
+| __end (localtime)__ | 04:55:57 |
+
+5. 2 min: manual configuration of Calm default project.
+
 ## Procedure ##
 
 0. Crank some tunes and record the start time!
-1. *Browse* to: https://github.com/mlavi/stageworkshop
-   - I will submit a pull request shortly to merge my work.
-1. *Launch a new terminal*: Change font size for demo, create/change to a new directory.
+1. __Browse (tab1)__ to this page = https://github.com/mlavi/stageworkshop/blob/master/guidebook.md
 
-        git clone https://github.com/mlavi/stageworkshop.git && cd stageworkshop
-1. Review HPoC reservation details in rx:
+    - I have submitted [a pull request](https://github.com/nutanixworkshops/stageworkshop/pull/1) to merge my work.
+2. __Browse (tab2)__ to review HPoC reservation details in https://rx.corp.nutanix.com:8443/
 
-   1. __Browser:__ Copy the cluster External IP, memorize the PE admin password.
-   1. __Terminal:__ Create ````example_pocs.txt````, paste the IP, follow with |, the password, and save.
-      - *OPTIONAL:* Make a mistake with the octet to show a failure mode.
-   1. __Browser:__ Choose the PE URL to show unavailable during foundation process.
+    1. Find the __Cluster External IP__ and the __PE admin password__:
+    we will use both of these in a moment.
+    2. Memorize the HPOC number (third octet of the External IPv4)
+    and prepare to copy by highlighting the __PE admin password__
+    or merely memorize the three digits of __PE admin password__.
+    3. *Browse (tab3)* to the PE URL to show unavailable before or during foundation process.
+    4. *Launch a new terminal*:
+
+        1. Change terminal font size for demo.
+        2. Cut and paste the first line the follows to create, and change to the repository directory
+            - or cut and paste the entire code block if you're comfortable editing the command line,
+            - otherwise copy one line at a time and substitute __Cluster External IP__
+            on the ````MY_HPOC```` assignment line or change that ````X```` you cleverly memorized
+            and paste the __PE admin password__ onto the ````MY_PE_PASSWORD```` line
+            or change the ````###```` you cleverly memorized.
+
+        git clone https://github.com/mlavi/stageworkshop.git && cd $_
+        export MY_HPOC=10.21.X.37 \
+        && export MY_PE_PASSWORD='nx2Tech###!' \
+        && echo "${MY_HPOC}|${MY_PE_PASSWORD}" >> example_pocs.txt
+
+        - *OPTIONAL:* Make a mistake with the HPoC octet to show a failure mode.
+        - That's it, you're done! Just sit back and wait, periodically
+        reload browser tab3, or follow the log output on PE and PC...
 
 1. Side by side: (screens because split desktop doesn't work well enough)
 
-   1. __Browser:__ RX automation: cluster foundation status
-   2. __Terminal:__ cut and paste from example_pocs.txt:
+   1. __Browser (tab 2):__ Open RX automation cluster foundation status detail page, it will be tab4.
+   2. __Terminal:__ After the automation is uploaded to the cluster CVM, copy and paste the command to monitor the ````stage_calmhow.sh```` progress.
 
-          ./stage_workshop.sh -f example_pocs.txt -w 1 #calm
+   3. __Browser (tab3):__ Reload the PE URL, accept security override, login as admin and password to PE EULA.
+   4. __Terminal:__ Once PE UI configured, reload browser tab3 to show EULA bypassed or click on the decline EULA button to return to login prompt.
 
-   3. After the automation is uploaded to the cluster CVM, copy and paste the command to monitor the ````stage_calmhow.sh```` progress.
-
-   3. __Browser:__ Reload the PE URL, accept security override, login as admin and password to PE EULA.
-   4. __Terminal:__ Once PE UI configured, reload browser to show EULA bypassed or decline EULA.
-
-      - *BUG:* Once Authentication Server is up, you can login as a SSP admin = adminuser05@ntnxlab.local
+      - *BUG:* Once Authentication Server is up, you should be able to login as a SSP admin = adminuser05@ntnxlab.local
   5. __Browser:__
 
       - Show PE Authentication: test above user with the default password.
@@ -65,13 +133,13 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
       - Pull left tab open, note public key in AHVCluster application profile, zoom to show end of the value.
       - __Credentials:__ upload private key, note user centos, save, back.
       - __Service = Webtier:__
-    
+
           - Show VM name, zoom in to show macros.
           - Choose local image uploaded to cluster to save time versus the dynamic imported image.
           - Show user centos in cloud-init and @@{your_public_key}@@ macro.
           - Show package install task: uncomment install work
           - Show service tab: Deployment Config
-          
+
             - *bug* service > service is redundant!
         - Save, Launch!
     4. __Application Launch:__
@@ -80,5 +148,5 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
       - Terminal: find start time, find end time.
 
         - *BUG:* time zones of server, cloud-init?
-        
+
       - Show logical deployment, open terminal, audit logs

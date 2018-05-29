@@ -451,7 +451,7 @@ Dependencies 'install' \
 && SSP_Auth \
 && CALM \
 && Images \
-&& Prism_API_Up 'PC'
+&& Check_Prism_API_Up 'PC'
 
 if (( $? == 0 )) ; then
   Dependencies 'remove';

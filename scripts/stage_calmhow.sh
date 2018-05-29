@@ -3,29 +3,29 @@
 # Dependencies: acli, ncli, jq, sshpass, wget, md5sum
 # Please configure according to your needs
 
-function Stage1
+function PE_Init
 {
   if [[ `ncli cluster get-params | grep 'External Data' | \
          awk -F: '{print $2}' | tr -d '[:space:]'` == "10.21.${MY_HPOC_NUMBER}.38" ]]; then
-    my_log "[Stage1.IDEMPOTENCY]: Data Services IP set, skip"
+    my_log "[${FUNCNAME[0]}.IDEMPOTENCY]: Data Services IP set, skip"
   else
-    my_log "Configure SMTP"
+    my_log "${FUNCNAME[0]}.Configure SMTP"
     ncli cluster set-smtp-server address=${SMTP_SERVER_ADDRESS} from-email-address=cluster@nutanix.com port=25
 
-    my_log "Configure NTP"
+    my_log "${FUNCNAME[0]}.Configure NTP"
     ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
-    my_log "Rename default container to ${MY_CONTAINER_NAME}"
+    my_log "${FUNCNAME[0]}.Rename default container to ${MY_CONTAINER_NAME}"
     default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
     ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
 
-    my_log "Rename default storage pool to ${MY_SP_NAME}"
+    my_log "${FUNCNAME[0]}.Rename default storage pool to ${MY_SP_NAME}"
     default_sp=$(ncli storagepool ls | grep 'Name' | cut -d ':' -f 2 | sed s/' '//g)
     ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
 
-    my_log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
+    my_log "${FUNCNAME[0]}.Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
     (ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
-        && my_log "Container ${MY_IMG_CONTAINER_NAME} exists" \
+        && my_log "${FUNCNAME[0]}.Container ${MY_IMG_CONTAINER_NAME} exists" \
         || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
 
     # Set external IP address:
@@ -179,7 +179,7 @@ function PE_Configure
   MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
   my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 
-  Prism_API_Up 'PC' 0
+  Check_Prism_API_Up 'PC' 0
   if (( $? == 0 )) ; then
     my_log "[PE_Configure.IDEMPOTENCY]: PC API responds, skip"
   else
@@ -217,7 +217,7 @@ function PE_Configure
 
 function PC_Init
 {
-  Prism_API_Up 'PC' 0
+  Check_Prism_API_Up 'PC' 0
   if (( $? == 0 )) ; then
     my_log "[PC_Init.IDEMPOTENCY]: PC API responds, skip."
   else
@@ -349,13 +349,13 @@ CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}"
     SLEEP=60
 
 Dependencies 'install' \
-&& Stage1 \
+&& PE_Init \
 && Network_Configure \
 && AuthenticationServer 'AutoDC' \
 && PE_Configure \
 && PE_Auth \
 && PC_Init \
-&& Prism_API_Up 'PC'
+&& Check_Prism_API_Up 'PC'
 # Some parallelization possible for critical path above, but not much.
 
 if (( $? == 0 )) ; then
@@ -365,6 +365,6 @@ if (( $? == 0 )) ; then
   my_log "Watching logs on PC..."
   remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
 else
-  my_log "main:PRISM_API_Up: Error, couldn't reach PC, exit."
+  my_log "main:Check_Prism_API_Up: Error, couldn't reach PC, exit."
   exit 18
 fi

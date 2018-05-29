@@ -129,7 +129,7 @@ function stage_clusters {
       my_log "stage_clusters: ERROR: Can't reach PE on cluster, are you on VPN?"
       exit 15
     fi
-
+exit
     cd scripts
     if [ ! -z ${PC_CONFIG} ]; then
       remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
