@@ -6,7 +6,8 @@
 . scripts/common.lib.sh # source common routines
 Dependencies 'install';
 
-WORKSHOPS=("Calm Introduction Workshop (AOS/AHV 5.6)" \
+WORKSHOPS=("Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)" \
+"Calm Introduction Workshop (AOS/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Change Cluster Input File" \
@@ -79,19 +80,28 @@ function select_workshop {
 function set_workshop {
 
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
-    "Calm Introduction Workshop (AOS/AHV 5.6)")
-      PE_CONFIG=stage_calmhow.sh
-      PC_CONFIG=stage_calmhow_pc.sh
+    "Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)")
+          PE_CONFIG=stage_calmhow.sh
+          PC_CONFIG=stage_calmhow_pc.sh
+      MY_PC_VERSION=5.7.0.1
       stage_clusters
       ;;
-    "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)")
-      PE_CONFIG=stage_citrixhow.sh
-      PC_CONFIG=stage_citrixhow_pc.sh
+    "Calm Introduction Workshop (AOS/AHV PC 5.6.x)")
+          PE_CONFIG=stage_calmhow.sh
+          PC_CONFIG=stage_calmhow_pc.sh
+      MY_PC_VERSION=5.6
+      stage_clusters
+      ;;
+    "Citrix Desktop on AHV Workshop (AOS/AHV PC 5.6)")
+          PE_CONFIG=stage_citrixhow.sh
+          PC_CONFIG=stage_citrixhow_pc.sh
+      MY_PC_VERSION=5.6
       stage_clusters
       ;;
     "Tech Summit 2018")
-      PE_CONFIG=stage_ts18.sh
-      PC_CONFIG=stage_ts18_pc.sh
+          PE_CONFIG=stage_ts18.sh
+          PC_CONFIG=stage_ts18_pc.sh
+      MY_PC_VERSION=5.6
       stage_clusters
       ;;
     "Validate Staged Clusters")
@@ -122,15 +132,18 @@ function stage_clusters {
     # Nutanix Controller VM
     # Permission denied, please try again.
 
-    Prism_API_Up 'PE' 60
+    Check_Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
       my_log "stage_clusters: Sending configuration script(s) to PE: ${MY_PE_HOST}"
     else
       my_log "stage_clusters: ERROR: Can't reach PE on cluster, are you on VPN?"
       exit 15
     fi
-exit
-    cd scripts
+
+    if [[ `pwd | awk -F/ '{print $NF}'` != 'scripts' ]]; then
+      cd scripts
+    fi
+
     if [ ! -z ${PC_CONFIG} ]; then
       remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
     else
@@ -139,7 +152,7 @@ exit
 
     # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
     my_log "Executing configuration script on PE: ${MY_PE_HOST}"
-    remote_exec 'SSH' 'PE' "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
+    remote_exec 'SSH' 'PE' "MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
 Progress of individual clusters can be monitored by:
@@ -161,7 +174,7 @@ function validate_clusters {
     array=(${MY_PE_HOST//./ })
     MY_HPOC_NUMBER=${array[2]}
 
-    Prism_API_Up 'PE'
+    Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then
       my_log "validate_clusters: Success: execute PC API on cluster ${MY_HPOC_NUMBER}"
     else

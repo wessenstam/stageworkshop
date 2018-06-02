@@ -38,16 +38,15 @@
   - Karan
   - Enabled multiple cloud account settings, then environment, then marketplace launch
 - Overall TODO:
-  - file Calm bugs from guide, DC timeout 10(not 60)
-  - complete test_fuctions caller perhaps?
-  - order of last tail before removal
-  - Dependencies: assert list
-  - curl -L -O -C - URL = resume, move PC download up and save time, pkill curl on second try
+  - move PC download up and save time, pkill curl on second try
+  - file Calm bugs from guide
+  - complete test_functions.sh caller perhaps? vs insert function prefix on each my_log call.
   - refactor out all passwords, hardcoded values to variables
   - use local file repo, fall back to global
   - PE, PC: clear our warnings
   - Bash test framework for unit tests
   - Runit/rundeck? http://bashdb.sourceforge.net/
+  - nutanix@PC Linux account password change?
 
   + clear; MY_PE_PASSWORD='nx2Tech!'; sshpass -p "${MY_PE_PASSWORD}" ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null nutanix@10.21..37 'pkill tail; ps -efww|grep calm'
 

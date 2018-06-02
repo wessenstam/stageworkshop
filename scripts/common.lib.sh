@@ -65,6 +65,14 @@ function remote_exec { # was send_file
 }
 
 function Dependencies {
+  if [[ -z ${1} ]]; then
+    my_log "${FUNCNAME[0]}.error: missing install or remove verb."
+    exit 20
+  elif [[ -z ${2} ]]; then
+    my_log "${FUNCNAME[0]}.error: missing package name."
+    exit 21
+  fi
+
   case "$1" in
     'install')
       my_log "Install Dependencies"
@@ -72,50 +80,65 @@ function Dependencies {
 
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
         # probably on NTNX CVM or PCVM = CentOS7
-        if [[ -z `which sshpass` ]]; then
-          sudo rpm -ivh http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
-          # https://pkgs.org/download/sshpass
-          # https://sourceforge.net/projects/sshpass/files/sshpass/
-          if (( $? > 0 )) ; then
-            my_log "Dependencies: ERROR: can't install sshpass."
-            exit 98
-          fi
-        else
-          my_log "Dependencies: found sshpass"
-        fi
+        case "${2}" in
+          sshpass )
+            if [[ -z `which ${2}` ]]; then
+              sudo rpm -ivh http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
+              # https://pkgs.org/download/sshpass
+              # https://sourceforge.net/projects/sshpass/files/sshpass/
+              if (( $? > 0 )) ; then
+                my_log "${FUNCNAME[0]}.error: can't install ${2}."
+                exit 98
+              fi
+            else
+              my_log "${FUNCNAME[0]}.success: found ${2}."
+            fi
+            ;;
+          jq )
+            if [[ -z `which ${2}` ]]; then
+              curl --remote-name --location --retry 3 --show-error \
+                https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+              if (( $? > 0 )) ; then
+                my_log "${FUNCNAME[0]}.error: can't install ${2}."
+                exit 98
+              else
+                chmod u+x jq-linux64 && ln -s jq-linux64 jq
+              fi
+            else
+              my_log "${FUNCNAME[0]}.success: found ${2}."
+            fi
+            ;;
+        esac
+      elif [[ `uname -s` == "Darwin" ]]; then
+        #MacOS
+        case "${2}" in
+          sshpass )
+            if [[ -z `which ${2}` ]]; then
+              brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb;
+              if (( $? > 0 )) ; then
+                my_log "${FUNCNAME[0]}.error: can't install ${2}."
+                exit 98
+              fi
+            else
+              my_log "${FUNCNAME[0]}.success: found ${2}."
+            fi
+            ;;
+          jq )
+            if [[ -z `which ${2}` ]]; then
+              brew install jq
 
-        if [[ -z `which jq` ]]; then
-          curl --remote-name --location --retry 3 --show-error \
-            https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
-          if (( $? > 0 )) ; then
-            my_log "Dependencies: ERROR: can't download jq."
-            exit 98
-          else
-            chmod u+x jq-linux64 && ln -s jq-linux64 jq
-          fi
-        else
-          my_log "Dependencies: found jq"
-        fi
-      fi
-
-      if [[ `uname -s` == "Darwin" ]]; then #MacOS
-        if [[ -z `which sshpass` ]]; then
-          brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb;
-          if (( $? > 0 )) ; then
-            my_log "Dependencies: ERROR: can't install sshpass."
-            exit 98
-          fi
-        else
-          my_log "Dependencies: found sshpass"
-        fi
-
-        if [[ -z `which jq` ]]; then
-          brew install jq;
-        else
-          my_log "Dependencies: found jq"
-        fi
-      fi
+              if (( $? > 0 )) ; then
+                my_log "${FUNCNAME[0]}.error: can't install ${2}."
+                exit 98
+              fi
+            else
+              my_log "${FUNCNAME[0]}.success: found ${2}."
+            fi
+            ;;
+        esac
+      fi #MacOS
       ;;
+
     'remove')
       my_log "Dependencies: removing..."
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
@@ -124,6 +147,7 @@ function Dependencies {
         rm -f jq jq-linux64
       fi
       ;;
+      # FEATURE: don't remove Dependencies on Mac. :)
     esac
 }
 

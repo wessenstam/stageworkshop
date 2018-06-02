@@ -1,6 +1,6 @@
 #!/bin/bash
 # -x
-# Dependencies: acli, ncli, jq, sshpass, wget, md5sum
+# Dependencies: acli, ncli, jq, sshpass, curl, md5sum
 # Please configure according to your needs
 
 function PE_Init
@@ -88,6 +88,7 @@ function AuthenticationServer()
         my_log "Import ${MY_IMAGE} image..."
         local AUTH_SERVER_CREATE=0;
         local               LOOP=0;
+        local              SLEEP=7;
         while true ; do
           (( LOOP++ ))
           AUTH_SERVER_CREATE=$(acli "image.create ${MY_IMAGE} \
@@ -219,22 +220,22 @@ function PC_Init
 {
   Check_Prism_API_Up 'PC' 0
   if (( $? == 0 )) ; then
-    my_log "[PC_Init.IDEMPOTENCY]: PC API responds, skip."
+    my_log "[${FUNCNAME[0]}.IDEMPOTENCY]: PC API responds, skip."
   else
     my_log "Download PC-metadata.json"
-    wget --continue --no-verbose ${MY_PC_META_URL}
+    curl --remote-name --location --retry 3 --show-error ${MY_PC_META_URL}
 
     MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
     MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
     my_log "Download PC.tar: ${MY_PC_SRC_URL}"
-    wget --continue --no-verbose ${MY_PC_SRC_URL}
+    curl --remote-name --location --retry 3 --show-error ${MY_PC_SRC_URL}
 
     if (( $? > 0 )) ; then
-      my_log "PC_Init: error, couldn't download PC. Exit."
+      my_log "${FUNCNAME[0]}.error, couldn't download PC. Exit."
       exit 1;
     elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
             != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
-      my_log "PC_Init: error, md5sum does't match. Exit."
+      my_log "${FUNCNAME[0]}.error, md5sum does't match. Exit."
       exit 1;
     fi
 
@@ -288,7 +289,7 @@ function PC_Configure {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   my_log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-   "MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
+   "MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   my_log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
@@ -296,13 +297,17 @@ function PC_Configure {
 
 # Source Nutanix environments (for PATH and other things)
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh # source common routines
+. common.lib.sh # source common routines, global variables
 
-my_log `basename "$0"`": __main__: PID=$$"
+my_log `basename "$0"`": ${FUNCNAME[0]}: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD+x} ]]; then
-    my_log "MY_PE_PASSWORD not provided, exit"
-    exit -1
+  my_log "${FUNCNAME[0]}.ERROR: MY_PE_PASSWORD not provided, exit"
+  exit -1
+fi
+if [[ -z ${MY_PC_VERSION+x} ]]; then
+  my_log "${FUNCNAME[0]}.ERROR: MY_PC_VERSION not provided, exit"
+  exit -1
 fi
 
 # Derive HPOC number from IP 3rd byte
@@ -325,15 +330,21 @@ MY_PRIMARY_NET_NAME='Primary'
 MY_PRIMARY_NET_VLAN='0'
 MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
+SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+
 MY_PC_VERSION="5.6"
-#MY_PC_SRC_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central.tar'
-MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+MY_PC_VERSION="5.7"
 # https://portal.nutanix.com/#/page/releases/prismDetails
 # > Additional Releases (on lower left side)
 # Choose the URLs from: PC 1-click deploy from PE
-MY_PC_VERSION="5.7"
-MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
-SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+case ${MY_PC_VERSION} in
+  5.6 )
+    MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+    ;;
+  5.7 | 5.7.0.1 )
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
+    ;;
+esac
 
 # From this point, we assume:
 # IP Range: 10.21.${MY_HPOC_NUMBER}.0/25
@@ -348,7 +359,7 @@ CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}"
 #CURL_OPTS="${CURL_OPTS} --verbose"
     SLEEP=60
 
-Dependencies 'install' \
+Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_Init \
 && Network_Configure \
 && AuthenticationServer 'AutoDC' \
@@ -362,8 +373,8 @@ if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove';
   my_log "$0: main: done!_____________________"
   echo
-  my_log "Watching logs on PC..."
-  remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
+  #my_log "Watching logs on PC..."
+  #BUG: Dependencies removed! remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
 else
   my_log "main:Check_Prism_API_Up: Error, couldn't reach PC, exit."
   exit 18

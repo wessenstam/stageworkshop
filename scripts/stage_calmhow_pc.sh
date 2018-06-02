@@ -110,6 +110,13 @@ EOF
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/services/nucalm)
   my_log "CALM=|${CALM}|"
+
+  if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
+    echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
+    echo modify_firewall -o open -i eth0 -p 8090 -a
+    remote_exec 'PE' 'SSH' 'allssh "cat /srv/pillar/iptables.sls |grep 8090"'
+    remote_exec 'PE' 'SSH' 'allssh sudo cat /home/docker/epsilon/conf/karan_hosts.txt'
+  fi
 }
 
 function PC_UI
@@ -427,10 +434,13 @@ function Images
 my_log `basename "$0"`": __main__: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
-  my_log "Error: MY_PE_PASSWORD environment variable NOT provided, exit."
+  my_log "${FUNCNAME[0]}.ERROR: MY_PE_PASSWORD environment variable not provided, exit."
   exit 10;
 fi
-
+if [[ -z ${MY_PC_VERSION} ]]; then
+  my_log "${FUNCNAME[0]}.ERROR: MY_PC_VERSION not provided, exit."
+  exit -1
+fi
 if [[ -z ${MY_HPOC_NUMBER} ]]; then
   # Derive HPOC number from IP 3rd byte
   #MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
@@ -444,7 +454,7 @@ fi
 LDAP_SERVER='AutoDC'
       SLEEP=10
 
-Dependencies 'install' \
+Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 && PC_Init \
 && PC_UI \
 && PC_LDAP \
