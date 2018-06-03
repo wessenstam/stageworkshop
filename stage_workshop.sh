@@ -1,10 +1,9 @@
 #!/bin/bash
 # -x
 # use !/bin/bash -x to debug command substitution and evaluation instead of echo.
-# Dependencies: sshpass
 
 . scripts/common.lib.sh # source common routines
-Dependencies 'install';
+Dependencies 'install' 'sshpass';
 
 WORKSHOPS=("Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)" \
 "Calm Introduction Workshop (AOS/AHV PC 5.6.x)" \
@@ -113,6 +112,11 @@ function set_workshop {
 
 # Send configuration scripts to remote clusters and execute Prism Element script
 function stage_clusters {
+  local _DEPENDENCIES=''
+
+  if [[ -d cache ]]; then
+    _DEPENDENCIES='cache/jq-linux64 cache/sshpass-1.06-2.el7.x86_64.rpm'
+  fi
 
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
   do
@@ -134,9 +138,9 @@ function stage_clusters {
 
     Check_Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
-      my_log "stage_clusters: Sending configuration script(s) to PE: ${MY_PE_HOST}"
+      my_log "Sending configuration script(s) to PE: ${MY_PE_HOST}"
     else
-      my_log "stage_clusters: ERROR: Can't reach PE on cluster, are you on VPN?"
+      my_log "Error: Can't reach PE on cluster, are you on VPN?"
       exit 15
     fi
 
@@ -145,7 +149,7 @@ function stage_clusters {
     fi
 
     if [ ! -z ${PC_CONFIG} ]; then
-      remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
+      remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG} ${_DEPENDENCIES}"
     else
       remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG}"
     fi
@@ -176,9 +180,9 @@ function validate_clusters {
 
     Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then
-      my_log "validate_clusters: Success: execute PC API on cluster ${MY_HPOC_NUMBER}"
+      my_log "Success: execute PC API on cluster ${MY_HPOC_NUMBER}"
     else
-      my_log "validate_clusters: Failure: cannot validate PC API on cluster ${MY_HPOC_NUMBER}"
+      my_log "Failure: cannot validate PC API on cluster ${MY_HPOC_NUMBER}"
     fi
   done
 }

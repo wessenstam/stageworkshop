@@ -1,29 +1,29 @@
 #!/bin/bash
 # -x
-# Dependencies: acli, ncli, jq, sshpass, curl, md5sum
+# Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum
 # Please configure according to your needs
 
 function PE_Init
 {
   if [[ `ncli cluster get-params | grep 'External Data' | \
          awk -F: '{print $2}' | tr -d '[:space:]'` == "10.21.${MY_HPOC_NUMBER}.38" ]]; then
-    my_log "[${FUNCNAME[0]}.IDEMPOTENCY]: Data Services IP set, skip"
+    my_log "IDEMPOTENCY: Data Services IP set, skip"
   else
-    my_log "${FUNCNAME[0]}.Configure SMTP"
+    my_log "Configure SMTP"
     ncli cluster set-smtp-server address=${SMTP_SERVER_ADDRESS} from-email-address=cluster@nutanix.com port=25
 
-    my_log "${FUNCNAME[0]}.Configure NTP"
+    my_log "Configure NTP"
     ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
-    my_log "${FUNCNAME[0]}.Rename default container to ${MY_CONTAINER_NAME}"
+    my_log "Rename default container to ${MY_CONTAINER_NAME}"
     default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
     ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
 
-    my_log "${FUNCNAME[0]}.Rename default storage pool to ${MY_SP_NAME}"
+    my_log "Rename default storage pool to ${MY_SP_NAME}"
     default_sp=$(ncli storagepool ls | grep 'Name' | cut -d ':' -f 2 | sed s/' '//g)
     ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
 
-    my_log "${FUNCNAME[0]}.Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
+    my_log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
     (ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
         && my_log "${FUNCNAME[0]}.Container ${MY_IMG_CONTAINER_NAME} exists" \
         || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
@@ -39,7 +39,7 @@ function PE_Init
 function Network_Configure
 {
   if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
-    my_log "[Network_Configure.IDEMPOTENCY]: ${MY_SECONDARY_NET_NAME} network set, skip"
+    my_log "IDEMPOTENCY: ${MY_SECONDARY_NET_NAME} network set, skip"
   else
     my_log "Remove Rx-Automation-Network if it exists"
     acli "-y net.delete Rx-Automation-Network"
@@ -71,7 +71,7 @@ function Network_Configure
 function AuthenticationServer()
 {
   if [[ -z ${1} ]]; then
-    my_log "AuthenticationServer Error: please provide a choice. Exitskip."
+    my_log "Error: please provide a choice."
     exit 13;
   else
     MY_IMAGE=${1}
@@ -82,9 +82,11 @@ function AuthenticationServer()
       my_log "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
       ;;
     'AutoDC')
-      if [[ `dig +short @10.21.${MY_HPOC_NUMBER}.40 dc1.ntnxlab.local` == "10.21.${MY_HPOC_NUMBER}.40" ]]; then
-        my_log "[AuthenticationServer.${MY_IMAGE}.IDEMPOTENCY]: Samba dc1.ntnxlab.local set, skip"
+      local _DNS=$(dig +short @10.21.${MY_HPOC_NUMBER}.40 dc1.${MY_DOMAIN_FQDN})
+      if [[ ${_DNS} == "10.21.${MY_HPOC_NUMBER}.40" ]]; then
+        my_log "${MY_IMAGE}.IDEMPOTENCY: Samba dc1.${MY_DOMAIN_FQDN} set, skip"
       else
+        my_log "${MY_IMAGE}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
         my_log "Import ${MY_IMAGE} image..."
         local AUTH_SERVER_CREATE=0;
         local               LOOP=0;
@@ -139,9 +141,8 @@ function AuthenticationServer()
         done
 
         my_log "Create Reverse Lookup Zone on ${MY_IMAGE} VM" # TODO: candidate for remote_exec
-        sshpass -p nutanix/4u ssh ${SSH_OPTS} \
-          root@10.21.${MY_HPOC_NUMBER}.40 \
-          "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
+        sshpass -p nutanix/4u ssh ${SSH_OPTS} root@10.21.${MY_HPOC_NUMBER}.40 \
+          "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa && service samba-ad-dc restart"
       fi
       ;;
     'OpenLDAP')
@@ -153,7 +154,7 @@ function AuthenticationServer()
 function PE_Auth
 {
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
-    my_log "[PE_Auth.IDEMPOTENCY]: ${MY_DOMAIN_NAME} directory set, skip"
+    my_log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip"
   else
     my_log "Configure PE external authentication"
     ncli authconfig add-directory \
@@ -182,7 +183,7 @@ function PE_Configure
 
   Check_Prism_API_Up 'PC' 0
   if (( $? == 0 )) ; then
-    my_log "[PE_Configure.IDEMPOTENCY]: PC API responds, skip"
+    my_log "IDEMPOTENCY: PC API responds, skip"
   else
     my_log "Validate EULA on PE"
     curl ${CURL_OPTS} -X POST --data '{
@@ -212,7 +213,7 @@ function PE_Configure
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${MY_HPOC_NUMBER}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
 
-    echo; my_log "PE_Configure complete"
+    echo; my_log "Complete!"
   fi
 }
 
@@ -220,7 +221,7 @@ function PC_Init
 {
   Check_Prism_API_Up 'PC' 0
   if (( $? == 0 )) ; then
-    my_log "[${FUNCNAME[0]}.IDEMPOTENCY]: PC API responds, skip."
+    my_log "IDEMPOTENCY: PC API responds, skip."
   else
     my_log "Download PC-metadata.json"
     curl --remote-name --location --retry 3 --show-error ${MY_PC_META_URL}
@@ -231,11 +232,11 @@ function PC_Init
     curl --remote-name --location --retry 3 --show-error ${MY_PC_SRC_URL}
 
     if (( $? > 0 )) ; then
-      my_log "${FUNCNAME[0]}.error, couldn't download PC. Exit."
+      my_log "Error, couldn't download PC."
       exit 1;
     elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
             != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
-      my_log "${FUNCNAME[0]}.error, md5sum does't match. Exit."
+      my_log "Error, md5sum does't match."
       exit 1;
     fi
 
@@ -282,7 +283,7 @@ EOF
 }
 
 function PC_Configure {
-  local PC_FILES='common.lib.sh stage_calmhow_pc.sh'
+  local PC_FILES='common.lib.sh stage_calmhow_pc.sh jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
   my_log "Send configuration scripts to PC and remove: ${PC_FILES}"
   remote_exec 'scp' 'PC' "${PC_FILES}" && rm -f ${PC_FILES}
 
@@ -302,11 +303,11 @@ function PC_Configure {
 my_log `basename "$0"`": ${FUNCNAME[0]}: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD+x} ]]; then
-  my_log "${FUNCNAME[0]}.ERROR: MY_PE_PASSWORD not provided, exit"
+  my_log "Error: MY_PE_PASSWORD not provided, exit"
   exit -1
 fi
 if [[ -z ${MY_PC_VERSION+x} ]]; then
-  my_log "${FUNCNAME[0]}.ERROR: MY_PC_VERSION not provided, exit"
+  my_log "Error: MY_PC_VERSION not provided, exit"
   exit -1
 fi
 
@@ -322,7 +323,7 @@ MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
 MY_DOMAIN_FQDN='ntnxlab.local'
 MY_DOMAIN_NAME='NTNXLAB'
-MY_DOMAIN_USER='administrator@ntnxlab.local'
+MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
 MY_DOMAIN_URL="ldaps://10.21.${MY_HPOC_NUMBER}.40/"
@@ -332,8 +333,8 @@ MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
 SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
 
-MY_PC_VERSION="5.6"
-MY_PC_VERSION="5.7"
+#MY_PC_VERSION="5.6"
+#MY_PC_VERSION="5.7"
 # https://portal.nutanix.com/#/page/releases/prismDetails
 # > Additional Releases (on lower left side)
 # Choose the URLs from: PC 1-click deploy from PE
@@ -370,12 +371,12 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 # Some parallelization possible for critical path above, but not much.
 
 if (( $? == 0 )) ; then
-  PC_Configure && Dependencies 'remove';
+  PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
   my_log "$0: main: done!_____________________"
   echo
   #my_log "Watching logs on PC..."
   #BUG: Dependencies removed! remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
 else
-  my_log "main:Check_Prism_API_Up: Error, couldn't reach PC, exit."
+  my_log "Check_Prism_API_Up: Error, couldn't reach PC, exit."
   exit 18
 fi

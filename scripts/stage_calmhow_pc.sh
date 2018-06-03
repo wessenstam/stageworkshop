@@ -434,11 +434,11 @@ function Images
 my_log `basename "$0"`": __main__: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
-  my_log "${FUNCNAME[0]}.ERROR: MY_PE_PASSWORD environment variable not provided, exit."
+  my_log "Error: MY_PE_PASSWORD environment variable not provided, exit."
   exit 10;
 fi
 if [[ -z ${MY_PC_VERSION} ]]; then
-  my_log "${FUNCNAME[0]}.ERROR: MY_PC_VERSION not provided, exit."
+  my_log "Error: MY_PC_VERSION not provided, exit."
   exit -1
 fi
 if [[ -z ${MY_HPOC_NUMBER} ]]; then
@@ -464,10 +464,10 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 && Check_Prism_API_Up 'PC'
 
 if (( $? == 0 )) ; then
-  Dependencies 'remove';
+  Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
   my_log "$0: main: done!_____________________"
   echo
 else
-  my_log "main: error: failed to reach cluster PE, exit."
+  my_log "Error: failed to reach cluster PE, exit."
   exit 19
 fi

@@ -5,7 +5,6 @@
   + user01@ntnxlab.local auth test fine
 - PC 5.6:
   - Revalidate PC 5.6 works
-  - Restore choice of PC 5.6 (for current bootcamp/workshop lab content) or 5.7.0.1
 + PC 5.7.0.1:
   - update project
   - role mappings? login as cluster admin, etc.
@@ -35,16 +34,17 @@
           user_reference_list: []
   - (localize?) and upload blueprint via nuclei?
   - Default project environment set, enable marketplace item, launch!
-  - Karan
+  - Karan: by PC version, add to cache and prestage?
   - Enabled multiple cloud account settings, then environment, then marketplace launch
 - Overall TODO:
   - move PC download up and save time, pkill curl on second try
+  - refactor curl options, consolidate rogue curl downloads
+  - create cache, use cache, propagate cache to PC
   - file Calm bugs from guide
-  - complete test_functions.sh caller perhaps? vs insert function prefix on each my_log call.
   - refactor out all passwords, hardcoded values to variables
   - use local file repo, fall back to global
   - PE, PC: clear our warnings
-  - Bash test framework for unit tests
+  - Bash test framework for unit tests: https://invent.life/project/bash-infinity-framework
   - Runit/rundeck? http://bashdb.sourceforge.net/
   - nutanix@PC Linux account password change?
 
