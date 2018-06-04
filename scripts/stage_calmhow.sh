@@ -3,6 +3,19 @@
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum
 # Please configure according to your needs
 
+function PC_Download
+{
+  if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
+    download ${MY_PC_META_URL}
+    MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
+  fi
+
+  if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
+    pkill curl
+  fi
+  download ${MY_PC_SRC_URL} &
+}
+
 function PE_Init
 {
   if [[ `ncli cluster get-params | grep 'External Data' | \
@@ -223,27 +236,28 @@ function PC_Init
   if (( $? == 0 )) ; then
     my_log "IDEMPOTENCY: PC API responds, skip."
   else
-    my_log "Download PC-metadata.json"
-    curl --remote-name --location --retry 3 --show-error ${MY_PC_META_URL}
+    if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
+      download ${MY_PC_META_URL}
+      MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
+    fi
 
-    MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
-    MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
-    my_log "Download PC.tar: ${MY_PC_SRC_URL}"
-    curl --remote-name --location --retry 3 --show-error ${MY_PC_SRC_URL}
+    if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
+      pkill curl
+    fi
+    download ${MY_PC_SRC_URL}
 
-    if (( $? > 0 )) ; then
-      my_log "Error, couldn't download PC."
-      exit 1;
-    elif [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
-            != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
-      my_log "Error, md5sum does't match."
-      exit 1;
+    if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
+          != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
+      my_log "Error: md5sum does't match on: ${MY_PC_SRC_URL##*/}"
+      exit 2;
     fi
 
     my_log "Downloaded and passed MD5sum, stage Prism Central upload..."
     ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} \
       meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} \
       software-type=PRISM_CENTRAL_DEPLOY
+
+    MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
 
     my_log "Delete PC sources to free CVM space"
     rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
@@ -361,6 +375,7 @@ CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}"
     SLEEP=60
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
+&& PC_Download \
 && PE_Init \
 && Network_Configure \
 && AuthenticationServer 'AutoDC' \

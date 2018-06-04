@@ -34,16 +34,15 @@
           user_reference_list: []
   - (localize?) and upload blueprint via nuclei?
   - Default project environment set, enable marketplace item, launch!
-  - Karan: by PC version, add to cache and prestage?
+  - Karan: by PC version, add to cache and pre-stage?
   - Enabled multiple cloud account settings, then environment, then marketplace launch
 - Overall TODO:
-  - move PC download up and save time, pkill curl on second try
-  - refactor curl options, consolidate rogue curl downloads
-  - create cache, use cache, propagate cache to PC
+  - refactor curl options
+  - create cache, use cache, propagate cache to PC, fall back to global
   - file Calm bugs from guide
   - refactor out all passwords, hardcoded values to variables
-  - use local file repo, fall back to global
-  - PE, PC: clear our warnings
+  - PE, PC: clear our warnings: resolve/ack issues for cleanliness?
+  - Insure exit codes unique/consistent, error messages consistent
   - Bash test framework for unit tests: https://invent.life/project/bash-infinity-framework
   - Runit/rundeck? http://bashdb.sourceforge.net/
   - nutanix@PC Linux account password change?

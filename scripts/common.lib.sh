@@ -10,16 +10,24 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
 
 function my_log {
   #TODO: Make logging format configurable
-  #echo $(date "+%Y-%m-%d %H:%M:%S")"|${1}"
   local CALLER=$(echo -n `caller 0 | awk '{print $2}'`)
   echo $(date "+%Y-%m-%d %H:%M:%S")"|${CALLER}|${1}"
+}
+
+function download {
+  my_log "Download ${1}"
+  curl --remote-name --location --retry 3 --continue-at - --silent --show-error ${1}
+  if (( $? > 0 )) ; then
+    my_log "Error: couldn't download from: ${1}"
+    exit 1
+  fi
 }
 
 function acli {
 	remote_exec 'SSH' 'PE' "/usr/local/nutanix/bin/acli $@"
 }
 
-function remote_exec { # was send_file
+function remote_exec {
   local   ATTEMPTS=3
   local       LOOP=0
   local   SSH_TEST=0
@@ -104,8 +112,7 @@ function Dependencies {
             if [[ -z `which ${2}` ]]; then
               if [[ ! -e jq-linux64 ]]; then
                 # https://stedolan.github.io/jq/download/#checksums_and_signatures
-                curl --remote-name --location --retry 3 --show-error \
-                  https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+                download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
               fi
               if (( $? > 0 )) ; then
                 my_log "Error: can't install ${2}."
@@ -163,12 +170,12 @@ function Dependencies {
 function Check_Prism_API_Up
 {
   #my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
-  local       LOOP=0;
-  local   PASSWORD=${MY_PE_PASSWORD};
-  local PRISM_TEST=0;
-  local LAST_OCTET=39; # default to PC
+  local       LOOP=0
+  local   PASSWORD=${MY_PE_PASSWORD}
+  local PRISM_TEST=0
+  local LAST_OCTET=39 # default to PC
   if [[ ${1} == 'PE' ]]; then
-    LAST_OCTET=37;
+    LAST_OCTET=37
   fi
   if [[ ! -z ${2} ]]; then
     local ATTEMPTS=${2}
@@ -201,12 +208,4 @@ function Check_Prism_API_Up
       sleep ${SLEEP}
     fi
   done
-  # if [[ ${PCTEST} != "200" ]]; then
-  #   echo -e "\e[1;31m${MY_PE_HOST} - Prism Central staging FAILED\e[0m"
-  #   echo ${MY_PE_HOST} - Review logs at ${MY_PE_HOST}:/home/nutanix/stage_calmhow.log \
-  #    and 10.21.${MY_HPOC_NUMBER}.39:/home/nutanix/stage_calmhow_pc.log
-  # elif [[ $(acli vm.list) =~ "STAGING-FAILED" ]]; then
-  #   echo -e "\e[1;31m${MY_PE_HOST} - Image staging FAILED\e[0m"
-  #   echo ${MY_PE_HOST} - Review log at ${MY_PE_HOST}:stage_calmhow.log
-  # fi
 }

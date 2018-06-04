@@ -204,7 +204,6 @@ function PC_Init
 {
   # TODO: PC_Init depends on ncli
   # TODO: PC_Init: NCLI, type 'cluster get-smtp-server' config
-  # TODO: resolve/ack issues for cleanliness?
 
   local OLD_PW='nutanix/4u'
   my_log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
@@ -366,61 +365,31 @@ function Images
   # TODO: Images depends on nuclei
 
   my_log "CentOS7-04282018.qcow2 image..."
-#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
-#   "source /etc/profile.d/nutanix_env.sh \
-#   && nuclei image.create name=CentOS7-04282018.qcow2 \
   nuclei image.create name=CentOS7-04282018.qcow2 \
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
   if (( $? != 0 )) ; then
-   my_log "Image submission error: $?.";# Exit."   exit 10;
+    my_log "Error: Image submission: $?."
+    #exit 10
   fi
 
   my_log "Windows2012R2-04282018.qcow2 image..."
-#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
-#   "source /etc/profile.d/nutanix_env.sh \
-#   && nuclei image.create name=Windows2012R2-04282018.qcow2 \
   nuclei image.create name=Windows2012R2-04282018.qcow2 \
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
   if (( $? != 0 )) ; then
-   my_log "Image submission error: $?.";# Exit."   exit 10;
+   my_log "Error: Image submission: $?."
+   #exit 10
   fi
 
-  # MY_IMAGE="CentOS"
-  # retries=1
-  # echo; my_log "Import ${MY_IMAGE} image"
   # until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
   #   # acli image.create CentOS container="Images" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/CentOSv2.qcow2 wait=true
-  #   let retries++
-  #   if [ $retries -gt 5 ]; then
-  #     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
-  #     acli vm.create STAGING-FAILED-${MY_IMAGE}
-  #     break
-  #   fi
-  #   my_log "acli image.create ${MY_IMAGE} FAILED. Retry upload (${retries} of 5)..."
-  #   sleep 5
   # done
-  #
-  # MY_IMAGE="Windows2012"
-  # retries=1
-  # echo; my_log "Import ${MY_IMAGE} image"
   # until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
-  #   let retries++
-  #   if [ $retries -gt 5 ]; then
-  #     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
-  #     acli vm.create STAGING-FAILED-${MY_IMAGE}
-  #     break
-  #   fi
-  #   my_log "acli image.create ${MY_IMAGE} FAILED. Retry upload (${retries} of 5)..."
-  #   sleep 5
   # done
-
   # Remove existing VMs, if any (Mark says: unlikely for a new cluster)
   # my_log "Removing \"Windows 2012\" VM if it exists"
   # acli -y vm.delete Windows\ 2012\ VM delete_snapshots=true
-  # my_log "Removing \"Windows 10\" VM if it exists"
-  # acli -y vm.delete Windows\ 10\ VM delete_snapshots=true
   # my_log "Removing \"CentOS\" VM if it exists"
   # acli -y vm.delete CentOS\ VM delete_snapshots=true
 }
