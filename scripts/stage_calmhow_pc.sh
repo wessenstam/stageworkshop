@@ -201,8 +201,7 @@ EOF
 }
 
 function PC_Init
-{
-  # TODO: PC_Init depends on ncli
+{ # depends on ncli
   # TODO: PC_Init: NCLI, type 'cluster get-smtp-server' config
 
   local OLD_PW='nutanix/4u'
@@ -254,7 +253,7 @@ function PC_Init
 }
 
 function Images
-{
+{ # depends on nuclei
   # TOFIX: https://jira.nutanix.com/browse/FEAT-7112
   # https://jira.nutanix.com/browse/ENG-115366
   # once PC image service takes control, rejects PE image uploads. Move to PC, not critical path.
@@ -362,7 +361,6 @@ function Images
     # volume_group_snapshot
     # webhook
   local OLD_PW='nutanix/4u'
-  # TODO: Images depends on nuclei
 
   my_log "CentOS7-04282018.qcow2 image..."
   nuclei image.create name=CentOS7-04282018.qcow2 \

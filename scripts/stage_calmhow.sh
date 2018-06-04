@@ -250,9 +250,11 @@ function PC_Init
           != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
       my_log "Error: md5sum does't match on: ${MY_PC_SRC_URL##*/}"
       exit 2;
+    else
+      my_log "Prism Central downloaded and passed MD5 checksum!"
     fi
 
-    my_log "Downloaded and passed MD5sum, stage Prism Central upload..."
+    my_log "Prism Central upload..."
     ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} \
       meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} \
       software-type=PRISM_CENTRAL_DEPLOY
@@ -383,7 +385,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_Auth \
 && PC_Init \
 && Check_Prism_API_Up 'PC'
-# Some parallelization possible for critical path above, but not much.
+# Some parallelization possible to critical path; not much: would require pre-requestite checks.
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
