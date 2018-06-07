@@ -99,23 +99,25 @@ function AuthenticationServer()
       else
         my_log "${LDAP_SERVER}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
         my_log "Import ${LDAP_SERVER} image..."
-        local AUTH_SERVER_CREATE=0;
-        local               LOOP=0;
-        local              SLEEP=7;
+
+        local AUTH_SERVER_TEST=0
+        local             LOOP=0
+        local            SLEEP=7
+
         while true ; do
           (( LOOP++ ))
-          AUTH_SERVER_CREATE=$(acli "image.create ${LDAP_SERVER} \
+          AUTH_SERVER_TEST=$(acli "image.create ${LDAP_SERVER} \
             container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage \
             source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true")
 
-          if [[ ${AUTH_SERVER_CREATE} =~ 'complete' ]]; then
+          if [[ ${AUTH_SERVER_TEST} =~ 'complete' ]]; then
             break;
           elif (( ${LOOP} > ${ATTEMPTS} )) ; then
             acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
             my_log "${LDAP_SERVER} failed to upload after ${LOOP} attempts. This cluster may require manual remediation."
             exit 13;
           else
-            my_log "__AUTH_SERVER_CREATE ${LOOP}=${AUTH_SERVER_CREATE}: ${LDAP_SERVER} failed. Sleep ${SLEEP} seconds..."
+            my_log "__AUTH_SERVER_TEST ${LOOP}=${AUTH_SERVER_TEST}: ${LDAP_SERVER} failed. Sleep ${SLEEP} seconds..."
             sleep ${SLEEP};
           fi
         done
@@ -129,11 +131,12 @@ function AuthenticationServer()
         my_log "Power on ${LDAP_SERVER} VM"
         acli "vm.on ${LDAP_SERVER}"
 
-        local AUTH_SERVER_TEST=0; # TODO: candidate for remote_exec
-        local             LOOP=0;
+        AUTH_SERVER_TEST=0
+                    LOOP=0
+
         while true ; do
           (( LOOP++ ))
-          # TODO: hardcoded p/w
+          # TODO: hardcoded p/w, candidate for remote_exec
           AUTH_SERVER_TEST=$(sshpass -p nutanix/4u ssh ${SSH_OPTS} \
             root@10.21.${MY_HPOC_NUMBER}.40 "which samba-tool")
           if (( $? > 0 )); then
@@ -201,7 +204,7 @@ function PE_Configure
       "username": "SE with stage_calmhow.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
-    }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/eulas/accept
+    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
 
     echo; my_log "Disable Pulse in PE"
     curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT --data '{
@@ -213,16 +216,16 @@ function PE_Configure
       "nosVersion": null,
       "remindLater": null,
       "verbosityType": null
-    }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/pulse
+    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse
 
     #echo; my_log "Create PE Banner Login" # TODO: for PC, login banner
     # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
     # curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data \
     #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
-    #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
+    #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
     #curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${MY_HPOC_NUMBER}' password = '${MY_PE_PASSWORD}'"}' \
-    #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
+    #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
 
     echo; my_log "Complete!"
   fi
@@ -292,7 +295,7 @@ EOF
     )
     PCD_TEST=$(curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} \
       -X POST --data "${HTTP_BODY}" \
-      https://127.0.0.1:9440/api/nutanix/v3/prism_central)
+      https://localhost:9440/api/nutanix/v3/prism_central)
     my_log "PCD_TEST=|${PCD_TEST}|"
   fi
 }
@@ -346,11 +349,9 @@ MY_DOMAIN_URL="ldaps://10.21.${MY_HPOC_NUMBER}.40/"
 MY_PRIMARY_NET_NAME='Primary'
 MY_PRIMARY_NET_VLAN='0'
 MY_SECONDARY_NET_NAME='Secondary'
-MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
+MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1" # TODO: check this?
 SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
 
-#MY_PC_VERSION="5.6"
-#MY_PC_VERSION="5.7"
 # https://portal.nutanix.com/#/page/releases/prismDetails
 # > Additional Releases (on lower left side)
 # Choose the URLs from: PC 1-click deploy from PE

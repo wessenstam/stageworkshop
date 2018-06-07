@@ -25,7 +25,7 @@ EOF
 
   DIR_TEST=$(curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/authconfig/directories)
+    https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
   my_log "DIR_TEST=|${DIR_TEST}|"
 
   my_log "Add Roles"
@@ -40,7 +40,7 @@ EOF
   )
   ROLE_TEST=$(curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
+    https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
   my_log "Cluster Admin=SSP Admins, ROLE_TEST=|${ROLE_TEST}|"
 }
 
@@ -54,7 +54,7 @@ EOF
   )
   LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/directory_services/list \
+    https://localhost:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
   my_log "LDAP_UUID=|${LDAP_UUID}|"
 
@@ -95,7 +95,7 @@ EOF
   )
   SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X PUT --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/directory_services/${LDAP_UUID})
+    https://localhost:9440/api/nutanix/v3/directory_services/${LDAP_UUID})
   my_log "SSP_CONNECT=|${SSP_CONNECT}|"
 
   # TODO: SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
@@ -113,7 +113,7 @@ EOF
   )
   CALM=$(curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/services/nucalm)
+    https://localhost:9440/api/nutanix/v3/services/nucalm)
   my_log "CALM=|${CALM}|"
 
   if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
@@ -136,7 +136,7 @@ EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
+    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "welcome_banner UI_TEST=|${UI_TEST}|"
 
   HTTP_BODY=$(cat <<EOF
@@ -149,7 +149,7 @@ EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
+    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "disable_2048 UI_TEST=|${UI_TEST}|"
 
   HTTP_BODY=$(cat <<EOF
@@ -162,7 +162,7 @@ EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/user_data)
+    https://localhost:9440/PrismGateway/services/rest/v1/application/user_data)
   my_log "autoLogoutTime UI_TEST=|${UI_TEST}|"
 
   HTTP_BODY=$(cat <<EOF
@@ -175,7 +175,7 @@ EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
+    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "autoLogoutGlobal UI_TEST=|${UI_TEST}|"
 
   HTTP_BODY=$(cat <<EOF
@@ -188,7 +188,7 @@ EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
+    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "autoLogoutOverride UI_TEST=|${UI_TEST}|"
 
   HTTP_BODY=$(cat <<EOF
@@ -201,7 +201,7 @@ EOF
   )
   UI_TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/application/system_data)
+    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
   my_log "welcome_banner UI_TEST=|${UI_TEST}|"
 }
 
@@ -211,7 +211,7 @@ function PC_Init
 
   local OLD_PW='nutanix/4u'
   my_log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
-#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 \
+#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@localhost \
 #   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )) ; then
@@ -225,7 +225,7 @@ function PC_Init
 # EOF
 #   )
 #   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${HTTP_BODY}" \
-#     https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
+#     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
 #   my_log "cURL reset password PC_TEST=${PC_TEST}"
 
   my_log "Configure NTP on PC"
@@ -236,7 +236,7 @@ function PC_Init
       "username": "SE",
       "companyName": "NTNX",
       "jobTitle": "SE"
-  }' https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/eulas/accept)
+  }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
   my_log "EULA_TEST=|${EULA_TEST}|"
 
   my_log "Disable Pulse on PC"
@@ -249,7 +249,7 @@ function PC_Init
       "nosVersion":null,
       "isPulsePromptNeeded":false,
       "remindLater":null
-  }' https://10.21.${MY_HPOC_NUMBER}.39:9440/PrismGateway/services/rest/v1/pulse)
+  }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
   my_log "PULSE_TEST=|${PULSE_TEST}|"
 
   # Prism Central upgrade
@@ -365,14 +365,13 @@ function Images
     # volume_group_backup
     # volume_group_snapshot
     # webhook
-  local OLD_PW='nutanix/4u'
 
   my_log "CentOS7-04282018.qcow2 image..."
   nuclei image.create name=CentOS7-04282018.qcow2 \
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
   if (( $? != 0 )) ; then
-    my_log "Error: Image submission: $?."
+    my_log "Warning: Image submission: $?."
     #exit 10
   fi
 
@@ -381,7 +380,7 @@ function Images
      description='stage_calmhow_pc' \
      source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
   if (( $? != 0 )) ; then
-   my_log "Error: Image submission: $?."
+   my_log "Warning: Image submission: $?."
    #exit 10
   fi
 
@@ -406,11 +405,11 @@ function Images
 my_log `basename "$0"`": __main__: PID=$$"
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
-  my_log "Error: MY_PE_PASSWORD environment variable not provided, exit."
+  my_log "Error: MY_PE_PASSWORD environment variable missing."
   exit 10;
 fi
 if [[ -z ${MY_PC_VERSION} ]]; then
-  my_log "Error: MY_PC_VERSION not provided, exit."
+  my_log "Error: MY_PC_VERSION environment variable missing."
   exit -1
 fi
 if [[ -z ${MY_HPOC_NUMBER} ]]; then
@@ -422,7 +421,6 @@ if [[ -z ${MY_HPOC_NUMBER} ]]; then
 fi
 
 ATTEMPTS=2
-#CURL_OPTS="${CURL_OPTS} --verbose"
    SLEEP=10
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
@@ -433,6 +431,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 && CALM \
 && Images \
 && Check_Prism_API_Up 'PC'
+# TODO: Karan
 
 if (( $? == 0 )) ; then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';

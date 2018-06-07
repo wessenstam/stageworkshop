@@ -78,29 +78,29 @@ function select_workshop {
 # Set script files to send to remote clusters based on command line argument
 function set_workshop {
 
+      PE_CONFIG=PC_CONFIG='scripts/'
+  MY_PC_VERSION=5.6
+
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
     "Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)")
-          PE_CONFIG=stage_calmhow.sh
-          PC_CONFIG=stage_calmhow_pc.sh
-      MY_PC_VERSION=5.7.0.1
+       MY_PC_VERSION=5.7.0.1
+          PE_CONFIG+=stage_calmhow.sh
+          PC_CONFIG+=stage_calmhow_pc.sh
       stage_clusters
       ;;
     "Calm Introduction Workshop (AOS/AHV PC 5.6.x)")
-          PE_CONFIG=stage_calmhow.sh
-          PC_CONFIG=stage_calmhow_pc.sh
-      MY_PC_VERSION=5.6
+          PE_CONFIG+=stage_calmhow.sh
+          PC_CONFIG+=stage_calmhow_pc.sh
       stage_clusters
       ;;
     "Citrix Desktop on AHV Workshop (AOS/AHV PC 5.6)")
-          PE_CONFIG=stage_citrixhow.sh
-          PC_CONFIG=stage_citrixhow_pc.sh
-      MY_PC_VERSION=5.6
+          PE_CONFIG+=stage_citrixhow.sh
+          PC_CONFIG+=stage_citrixhow_pc.sh
       stage_clusters
       ;;
     "Tech Summit 2018")
-          PE_CONFIG=stage_ts18.sh
-          PC_CONFIG=stage_ts18_pc.sh
-      MY_PC_VERSION=5.6
+          PE_CONFIG+=stage_ts18.sh
+          PC_CONFIG+=stage_ts18_pc.sh
       stage_clusters
       ;;
     "Validate Staged Clusters")
@@ -115,6 +115,7 @@ function stage_clusters {
   local _DEPENDENCIES=''
 
   if [[ -d cache ]]; then
+    #TODO: proper cache detection and downloads
     _DEPENDENCIES='cache/jq-linux64 cache/sshpass-1.06-2.el7.x86_64.rpm'
   fi
 
@@ -140,19 +141,15 @@ function stage_clusters {
     if (( $? == 0 )) ; then
       my_log "Sending configuration script(s) to PE: ${MY_PE_HOST}"
     else
-      my_log "Error: Can't reach PE on cluster, are you on VPN?"
+      my_log "Error: Can't reach PE @${MY_PE_HOST}, are you on VPN?"
       exit 15
     fi
 
-    if [[ `pwd | awk -F/ '{print $NF}'` != 'scripts' ]]; then
-      cd scripts
-    fi
+#    if [[ `pwd | awk -F/ '{print $NF}'` != 'scripts' ]]; then
+#      cd scripts
+#    fi
 
-    if [ ! -z ${PC_CONFIG} ]; then
-      remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG} ${_DEPENDENCIES}"
-    else
-      remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG}"
-    fi
+    remote_exec 'SCP' 'PE' "scripts/common.lib.sh ${PE_CONFIG} ${PC_CONFIG} ${_DEPENDENCIES}"
 
     # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
     my_log "Executing configuration script on PE: ${MY_PE_HOST}"
@@ -180,9 +177,9 @@ function validate_clusters {
 
     Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then
-      my_log "Success: execute PC API on cluster ${MY_HPOC_NUMBER}"
+      my_log "Success: execute PE API on ${MY_PE_HOST}"
     else
-      my_log "Failure: cannot validate PC API on cluster ${MY_HPOC_NUMBER}"
+      my_log "Failure: cannot validate PE API on ${MY_PE_HOST}"
     fi
   done
 }

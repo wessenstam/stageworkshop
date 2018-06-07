@@ -8,7 +8,6 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
       SSH_OPTS="${SSH_OPTS} -q" # "-v"
 
 function my_log {
-  #TODO: Make logging format configurable
   local CALLER=$(echo -n `caller 0 | awk '{print $2}'`)
   echo $(date "+%Y-%m-%d %H:%M:%S")"|${CALLER}|${1}"
 }
@@ -27,18 +26,20 @@ function acli {
 }
 
 function remote_exec {
-  local   ATTEMPTS=3
-  local       LOOP=0
-  local   SSH_TEST=0
-  local   PASSWORD="${MY_PE_PASSWORD}"
-  local LAST_OCTET=37 # default to PE
+  # TODO: similaries to Check_Prism_API_Up
+  local ATTEMPTS=3
+  local     HOST="${MY_PE_HOST}"
+  local     LOOP=0
+  local PASSWORD="${MY_PE_PASSWORD}"
+  local SSH_TEST=0
+
   if [[ ${2} == 'PC' ]]; then
-    LAST_OCTET=39 # Prism Cental
-      PASSWORD='nutanix/4u' # TODO: hardcoded p/w
+        HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
+    PASSWORD='nutanix/4u' # TODO: hardcoded p/w
   fi
-  local      HOST="10.21.${MY_HPOC_NUMBER}.${LAST_OCTET}"
+
   if [[ -z ${3} ]]; then
-    my_log 'remote_exec: ERROR -- missing third argument. Exit.'
+    my_log 'Error: missing third argument.'
     exit 99
   fi
 
@@ -47,27 +48,27 @@ function remote_exec {
     case "${1}" in
       'SSH' | 'ssh')
         SSH_TEST=$(sshpass -p ${PASSWORD} ssh -x ${SSH_OPTS} nutanix@${HOST} "${3}")
-        my_log "remote_exec:SSH_TEST:${SSH_TEST}:$?"
+        my_log "SSH_TEST:${SSH_TEST}:$?"
         ;;
       'SCP' | 'scp')
         # local FILENAME="${1##*/}"
         SSH_TEST=$(sshpass -p ${PASSWORD} scp ${SSH_OPTS} ${3} nutanix@${HOST}:)
-        my_log "remote_exec:SSH_TEST:${SSH_TEST}:$?"
+        my_log "SSH_TEST:${SSH_TEST}:$?"
         ;;
       *)
-        my_log "remote_exec:Error: improper first argument, should be ssh or scp. Exit."
+        my_log "Error: improper first argument, should be ssh or scp."
         exit 99
         ;;
     esac
 
     if (( $? == 0 )); then
-      my_log "remote_exec: |${1}|${2}|${3}| done"
+      my_log "|${1}|${2}|${3}| done"
       break;
     elif (( ${LOOP} == ${ATTEMPTS} )); then
-      my_log "remote_exec: giving up after ${LOOP} tries."
+      my_log "giving up after ${LOOP} tries."
       exit 11;
     else
-      my_log "remote_exec ${LOOP}/${ATTEMPTS}: SSH_TEST=$?|${SSH_TEST}| ${FILENAME} SLEEP ${SLEEP}...";
+      my_log "${LOOP}/${ATTEMPTS}: SSH_TEST=$?|${SSH_TEST}| ${FILENAME} SLEEP ${SLEEP}..."
       sleep ${SLEEP};
     fi
   done
@@ -167,15 +168,19 @@ function Dependencies {
 }
 
 function Check_Prism_API_Up
-{
+{ # TODO: similaries to remote_exec
+
   #my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
+  local       HOST="${MY_PE_HOST}"
   local       LOOP=0
-  local   PASSWORD=${MY_PE_PASSWORD}
+  local   PASSWORD="${MY_PE_PASSWORD}"
   local PRISM_TEST=0
-  local LAST_OCTET=39 # default to PC
-  if [[ ${1} == 'PE' ]]; then
-    LAST_OCTET=37
+
+  if [[ ${1} == 'PC' ]]; then
+        HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
+    PASSWORD='nutanix/4u' # TODO: hardcoded p/w
   fi
+
   if [[ ! -z ${2} ]]; then
     local ATTEMPTS=${2}
   fi
@@ -184,7 +189,7 @@ function Check_Prism_API_Up
     (( LOOP++ ))
     PRISM_TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${PASSWORD} \
       -X POST --data '{ "kind": "cluster" }' \
-      https://10.21.${MY_HPOC_NUMBER}.${LAST_OCTET}:9440/api/nutanix/v3/clusters/list \
+      https://${HOST}:9440/api/nutanix/v3/clusters/list \
       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
     if (( $? > 0 )); then
@@ -192,18 +197,18 @@ function Check_Prism_API_Up
     fi
     if (( ${PRISM_TEST} == 401 )) && [[ ${1} == 'PC' ]] ; then
       PASSWORD='Nutanix/4u'
-      my_log "PRISM_API_Up@${1}: Fallback: try initial password next cycle..."
+      my_log "@${1}: Fallback: try initial password next cycle..."
     fi
 
     if (( ${PRISM_TEST} == 200 )) ; then
-      my_log "PRISM_API_Up@${1}: successful"
+      my_log "@${1}: successful"
       return 0
       break
     elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-      my_log "PRISM_API_Up@${1}: Giving up after ${LOOP} tries."
+      my_log "@${1}: Giving up after ${LOOP} tries."
       return 11
     else
-      my_log "__PRISM_API_Up@${1} ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleep ${SLEEP} seconds..."
+      my_log "@${1} ${LOOP}/${ATTEMPTS}=${PRISM_TEST}: sleep ${SLEEP} seconds..."
       sleep ${SLEEP}
     fi
   done

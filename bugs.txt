@@ -55,6 +55,7 @@
   - create cache, use cache, propagate cache to PC, fall back to global
   - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
   - refactor out all passwords, hardcoded values to variables
+    - SSP Admins
   - Insure exit codes unique/consistent, error messages consistent
   - Bash test framework for unit tests: https://invent.life/project/bash-infinity-framework
     - userX login to PE, PC
