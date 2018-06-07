@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # TODO: lost local override for verbose
-     CURL_OPTS='--insecure --header Content-Type:application/json --silent --show-error --max-time 5'
-#     CURL_OPTS="${CURL_OPTS} --verbose"
-CURL_POST_OPTS="${CURL_OPTS} --header Accept:application/json --output /dev/null"
+     CURL_OPTS='--insecure --silent --show-error' # --verbose"
+CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json --header Accept:application/json --output /dev/null"
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
       SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
       SSH_OPTS="${SSH_OPTS} -q" # "-v"
@@ -16,7 +15,7 @@ function my_log {
 
 function download {
   my_log "Download ${1}"
-  curl --remote-name --location --retry 3 --continue-at - --silent --show-error ${1}
+  curl ${CURL_OPTS} --remote-name --location --retry 3 --continue-at - ${1}
   if (( $? > 0 )) ; then
     my_log "Error: couldn't download from: ${1}"
     exit 1

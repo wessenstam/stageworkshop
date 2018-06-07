@@ -83,53 +83,51 @@ function Network_Configure
 
 function AuthenticationServer()
 {
-  if [[ -z ${1} ]]; then
-    my_log "Error: please provide a choice."
+  if [[ -z ${LDAP_SERVER} ]]; then
+    my_log "Error: please provide a choice for authentication server."
     exit 13;
-  else
-    MY_IMAGE=${1}
   fi
 
-  case "${MY_IMAGE}" in
+  case "${LDAP_SERVER}" in
     'ActiveDirectory')
       my_log "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
       ;;
     'AutoDC')
       local _DNS=$(dig +short @10.21.${MY_HPOC_NUMBER}.40 dc1.${MY_DOMAIN_FQDN})
       if [[ ${_DNS} == "10.21.${MY_HPOC_NUMBER}.40" ]]; then
-        my_log "${MY_IMAGE}.IDEMPOTENCY: Samba dc1.${MY_DOMAIN_FQDN} set, skip"
+        my_log "${LDAP_SERVER}.IDEMPOTENCY: Samba dc1.${MY_DOMAIN_FQDN} set, skip"
       else
-        my_log "${MY_IMAGE}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
-        my_log "Import ${MY_IMAGE} image..."
+        my_log "${LDAP_SERVER}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
+        my_log "Import ${LDAP_SERVER} image..."
         local AUTH_SERVER_CREATE=0;
         local               LOOP=0;
         local              SLEEP=7;
         while true ; do
           (( LOOP++ ))
-          AUTH_SERVER_CREATE=$(acli "image.create ${MY_IMAGE} \
+          AUTH_SERVER_CREATE=$(acli "image.create ${LDAP_SERVER} \
             container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage \
             source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true")
 
           if [[ ${AUTH_SERVER_CREATE} =~ 'complete' ]]; then
             break;
           elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-            acli "vm.create STAGING-FAILED-${MY_IMAGE}"
-            my_log "${MY_IMAGE} failed to upload after ${LOOP} attempts. This cluster may require manual remediation."
+            acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
+            my_log "${LDAP_SERVER} failed to upload after ${LOOP} attempts. This cluster may require manual remediation."
             exit 13;
           else
-            my_log "__AUTH_SERVER_CREATE ${LOOP}=${AUTH_SERVER_CREATE}: ${MY_IMAGE} failed. Sleep ${SLEEP} seconds..."
+            my_log "__AUTH_SERVER_CREATE ${LOOP}=${AUTH_SERVER_CREATE}: ${LDAP_SERVER} failed. Sleep ${SLEEP} seconds..."
             sleep ${SLEEP};
           fi
         done
 
-        my_log "Create ${MY_IMAGE} VM based on ${MY_IMAGE} image"
-        acli "vm.create ${MY_IMAGE} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
+        my_log "Create ${LDAP_SERVER} VM based on ${LDAP_SERVER} image"
+        acli "vm.create ${LDAP_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
         # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
-        acli "vm.disk_create ${MY_IMAGE} cdrom=true empty=true"
-        acli "vm.disk_create ${MY_IMAGE} clone_from_image=${MY_IMAGE}"
-        acli "vm.nic_create ${MY_IMAGE} network=${MY_PRIMARY_NET_NAME} ip=10.21.${MY_HPOC_NUMBER}.40"
-        my_log "Power on ${MY_IMAGE} VM"
-        acli "vm.on ${MY_IMAGE}"
+        acli "vm.disk_create ${LDAP_SERVER} cdrom=true empty=true"
+        acli "vm.disk_create ${LDAP_SERVER} clone_from_image=${LDAP_SERVER}"
+        acli "vm.nic_create ${LDAP_SERVER} network=${MY_PRIMARY_NET_NAME} ip=10.21.${MY_HPOC_NUMBER}.40"
+        my_log "Power on ${LDAP_SERVER} VM"
+        acli "vm.on ${LDAP_SERVER}"
 
         local AUTH_SERVER_TEST=0; # TODO: candidate for remote_exec
         local             LOOP=0;
@@ -145,7 +143,7 @@ function AuthenticationServer()
           if [[ ${AUTH_SERVER_TEST} == "/usr/bin/samba-tool" ]]; then
             break;
           elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-            my_log "${MY_IMAGE} VM running: giving up after ${LOOP} tries."
+            my_log "${LDAP_SERVER} VM running: giving up after ${LOOP} tries."
             exit 12;
           else
             my_log "__AUTH_SERVER_TEST ${LOOP}=${AUTH_SERVER_TEST}: sleep ${SLEEP} seconds..."
@@ -153,7 +151,7 @@ function AuthenticationServer()
           fi
         done
 
-        my_log "Create Reverse Lookup Zone on ${MY_IMAGE} VM" # TODO: candidate for remote_exec
+        my_log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM" # TODO: candidate for remote_exec
         sshpass -p nutanix/4u ssh ${SSH_OPTS} root@10.21.${MY_HPOC_NUMBER}.40 \
           "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa && service samba-ad-dc restart"
       fi
@@ -199,14 +197,14 @@ function PE_Configure
     my_log "IDEMPOTENCY: PC API responds, skip"
   else
     my_log "Validate EULA on PE"
-    curl ${CURL_OPTS} -X POST --data '{
+    curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data '{
       "username": "SE with stage_calmhow.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
     }' https://127.0.0.1:9440/PrismGateway/services/rest/v1/eulas/accept
 
     echo; my_log "Disable Pulse in PE"
-    curl ${CURL_OPTS} -X PUT --data '{
+    curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
       "enable": false,
@@ -219,10 +217,10 @@ function PE_Configure
 
     #echo; my_log "Create PE Banner Login" # TODO: for PC, login banner
     # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
-    # curl ${CURL_OPTS} -X POST --data \
+    # curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data \
     #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
     #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
-    #curl ${CURL_OPTS} -X POST --data
+    #curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${MY_HPOC_NUMBER}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://127.0.0.1:9440/PrismGateway/services/rest/v1/application/system_data
 
@@ -292,7 +290,8 @@ function PC_Init
 }
 EOF
     )
-    PCD_TEST=$(curl ${CURL_OPTS} -X POST --data "${HTTP_BODY}" \
+    PCD_TEST=$(curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} \
+      -X POST --data "${HTTP_BODY}" \
       https://127.0.0.1:9440/api/nutanix/v3/prism_central)
     my_log "PCD_TEST=|${PCD_TEST}|"
   fi
@@ -306,7 +305,7 @@ function PC_Configure {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   my_log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-   "MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
+   "LDAP_SERVER=${LDAP_SERVER} MY_DOMAIN_FQDN=${MY_DOMAIN_FQDN} MY_DOMAIN_USER=${MY_DOMAIN_USER} MY_DOMAIN_PASS=${MY_DOMAIN_PASS} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   my_log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
@@ -337,6 +336,7 @@ MY_HPOC_NUMBER=${array[2]}
 MY_SP_NAME='SP01'
 MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
+LDAP_SERVER='AutoDC'
 MY_DOMAIN_FQDN='ntnxlab.local'
 MY_DOMAIN_NAME='NTNXLAB'
 MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
@@ -372,7 +372,6 @@ esac
 #
 # DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING!!
  ATTEMPTS=40
-CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}"
 #CURL_OPTS="${CURL_OPTS} --verbose"
     SLEEP=60
 
@@ -380,7 +379,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PC_Download \
 && PE_Init \
 && Network_Configure \
-&& AuthenticationServer 'AutoDC' \
+&& AuthenticationServer \
 && PE_Configure \
 && PE_Auth \
 && PC_Init \

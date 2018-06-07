@@ -3,17 +3,22 @@
 # Dependencies: curl, ncli, nuclei, jq #sshpass (removed, needed for remote)
 
 function PC_LDAP
-{
+{ # TODO: configure case for each authentication server type?
+  if [[ -z ${LDAP_SERVER} || -z ${MY_DOMAIN_FQDN} || -z ${MY_DOMAIN_USER} || -z ${MY_DOMAIN_PASS} ]]; then
+    my_log "Error: missing LDAP_SERVER, MY_DOMAIN_[FQDN|USER|PASS] for authentication."
+    exit 21
+  fi
+
   my_log "Add Directory ${LDAP_SERVER}"
   HTTP_BODY=$(cat <<EOF
   {
     "name":"${LDAP_SERVER}",
-    "domain":"ntnxlab.local",
+    "domain":"${MY_DOMAIN_FQDN}",
     "directoryUrl":"ldaps://10.21.${MY_HPOC_NUMBER}.40/",
     "directoryType":"ACTIVE_DIRECTORY",
     "connectionType":"LDAP",
-    "serviceAccountUsername":"administrator@ntnxlab.local",
-    "serviceAccountPassword":"nutanix/4u"
+    "serviceAccountUsername":"${MY_DOMAIN_USER}",
+    "serviceAccountPassword":"${MY_DOMAIN_PASS}"
   }
 EOF
   )
@@ -47,7 +52,7 @@ function SSP_Auth {
   }
 EOF
   )
-  LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_OPTS} \
+  LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://10.21.${MY_HPOC_NUMBER}.39:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
@@ -69,13 +74,13 @@ EOF
           }
         ],
         "service_account": {
-          "username": "administrator@ntnxlab.local",
-          "password": "nutanix/4u"
+          "username": "${MY_DOMAIN_USER}",
+          "password": "${MY_DOMAIN_PASS}"
         },
         "url": "ldaps://10.21.${MY_HPOC_NUMBER}.40/",
         "directory_type": "ACTIVE_DIRECTORY",
         "admin_user_reference_list": [],
-        "domain_name": "ntnxlab.local"
+        "domain_name": "${MY_DOMAIN_FQDN}"
       }
     },
     "metadata": {
@@ -416,10 +421,9 @@ if [[ -z ${MY_HPOC_NUMBER} ]]; then
   MY_HPOC_NUMBER=${array[2]}
 fi
 
-   ATTEMPTS=2
-#  CURL_OPTS="${CURL_OPTS} --verbose"
-LDAP_SERVER='AutoDC'
-      SLEEP=10
+ATTEMPTS=2
+#CURL_OPTS="${CURL_OPTS} --verbose"
+   SLEEP=10
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 && PC_Init \

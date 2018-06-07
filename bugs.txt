@@ -46,15 +46,14 @@
   - (localize?) and upload blueprint via nuclei (see unit tests)?
   - Default project environment set, enable marketplace item, launch!
   - Karan: by PC version, add to cache and pre-stage?
-  - Enabled multiple cloud account settings, then environment, then marketplace launch
+  - Enable multiple cloud account settings, then environments, then marketplace launch
   - PE, PC: clear our warnings: resolve/ack issues for cleanliness?
   - nutanix@PC Linux account password change?
 - Overall TODO:
   - Calm 5.7 bootcamp labs and 5.5-6 bugs
-  - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
-  - refactor curl options
-  - create cache, use cache, propagate cache to PC, fall back to global
   - file Calm bugs from guide
+  - create cache, use cache, propagate cache to PC, fall back to global
+  - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
   - refactor out all passwords, hardcoded values to variables
   - Insure exit codes unique/consistent, error messages consistent
   - Bash test framework for unit tests: https://invent.life/project/bash-infinity-framework
