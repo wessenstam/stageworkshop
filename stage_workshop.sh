@@ -150,9 +150,9 @@ function stage_clusters {
       cd scripts
     fi
     remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
-echo TOFIX: _DEPENDENCIES disabled.
-    # cd ../cache
-    # remote_exec 'SCP' 'PE' "${_DEPENDENCIES}"
+    # echo TOFIX: _DEPENDENCIES disabled.
+    cd ../cache
+    remote_exec 'SCP' 'PE' "${_DEPENDENCIES}"
 
     # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
     my_log "Executing configuration script on PE: ${MY_PE_HOST}"

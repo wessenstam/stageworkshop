@@ -365,7 +365,9 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 && CALM \
 && Images \
 && Check_Prism_API_Up 'PC'
+
 # TODO: Karan
+PC_Project
 
 if (( $? == 0 )) ; then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
