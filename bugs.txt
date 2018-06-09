@@ -5,8 +5,9 @@
   - fix role mappings, logins on PE, PC
     - PE, PC: use RBAC user for APIs, etc.: cluster Admin
     - improve/run poc_samba_users.sh
-  - nuclei authconfig (run local from container?)
+  - nuclei (run local from container?)
     - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
+      - vs: cat /etc/nutanix/release_version
     - project.create name=mark.lavi.test \
       description='test_from NuClei!'
     - project.get mark.lavi.test
@@ -27,21 +28,22 @@
             resources: []
           subnet_reference_list: []
           user_reference_list: []
+    - nuclei authconfig (run local from container?)
 
-    # list | ls
-    # edit | update
-    # remove | rm
-    # list-directory | ls-directory
-    # create-directory | add-directory
-    # edit-directory | update-directory
-    # remove-directory | rm-directory
-    # list-role-mappings | ls-role-mappings
-    # delete-role-mapping
-    # add-role-mapping
-    # add-to-role-mapping-values
-    # remove-from-role-mapping-values
-    # get-directory-values-by-type
-    # test-ldap-connection
+  list | ls
+  edit | update
+  remove | rm
+  list-directory | ls-directory
+  create-directory | add-directory
+  edit-directory | update-directory
+  remove-directory | rm-directory
+  list-role-mappings | ls-role-mappings
+  delete-role-mapping
+  add-role-mapping
+  add-to-role-mapping-values
+  remove-from-role-mapping-values
+  get-directory-values-by-type
+  test-ldap-connection
 
   - (localize?) and upload blueprint via nuclei (see unit tests)?
   - Default project environment set, enable marketplace item, launch!
@@ -49,6 +51,7 @@
   - Enable multiple cloud account settings, then environments, then marketplace launch
   - PE, PC: clear our warnings: resolve/ack issues for cleanliness?
   - nutanix@PC Linux account password change?
+  - OPTIMIZATION: Upload AutoDC image in parallel with PC.tar
 - Overall TODO:
   - Calm 5.7 bootcamp labs and 5.5-6 bugs
   - file Calm bugs from guide
@@ -71,15 +74,69 @@
 + PE:
   + user01@ntnxlab.local auth test fine
 
+Citations:
+- https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
+-
+
 Push button Calm:
 - https://github.com/mlavi/stageworkshop/blob/master/guidebook.md
 - MP4 Video = 292MB: https://drive.google.com/open?id=1AfIWDff-mlvwth_lKv9DG4x-vi0ZsWij
  ~11 minute screencast overview of the 70 minute journey from Foundation
   to Calm running a blueprint: most of it is waiting for foundation and PC download/upload/deploy.
 
-I can optimize the automation a little bit more for doing images in the background while we’re waiting.
-I ran into many issues at the end which made this more robust: VPN going down, dependency source downloads disappearing, odd time outs.
-
 Social coding: https://github.com/nutanixworkshops/stageworkshop/pull/1
 Biggest pain: finding a HPOC, second biggest pain: keeping it for more than a few hours except on the weekend.
 Third biggest pain: coding in Bash :slightly_smiling_face: it makes you miss even script kiddie programming languages!
+
+https://jira.nutanix.com/browse/ENG-78322 <nuclei>
+app_blueprint
+availability_zone
+available_extension
+available_extension_images
+catalog_item
+category
+certificate
+changed_regions
+client_auth
+cloud_credentials
+cluster
+container
+core                          CLI control.
+diag                          Diagnostic tools.
+directory_service
+disk
+docker_image
+docker_registry
+exit                          Exits the CLI.
+extension
+get                           Gets the current value of the given configuration options.
+help                          Provides help text for the named object.
+host
+image
+network_function_chain
+network_security_rule
+oauth_client
+oauth_token
+permission
+project
+protection_rule
+quit                          Exits the CLI.
+recovery_plan
+recovery_plan_job
+remote_connection
+report_config
+report_instance
+role
+set                           Sets the value of the given configuration options.
+ssh_user
+subnet
+user
+version                       NuCLEI Version Information.
+virtual_network
+vm
+vm_backup
+vm_snapshot
+volume_group
+volume_group_backup
+volume_group_snapshot
+webhook

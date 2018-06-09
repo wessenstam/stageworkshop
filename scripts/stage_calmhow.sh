@@ -1,26 +1,35 @@
 #!/bin/bash
 # -x
-# Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum
+# Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
+
+function acli {
+  local CMD=$@
+	/usr/local/nutanix/bin/acli ${CMD}
+  # DEBUG=1 && if [[ ${DEBUG} ]]; then my_log "$@"; fi
+}
 
 function PC_Download
 {
   if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
-    download ${MY_PC_META_URL}
-    MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
+    my_log "retrieving Prism Central metadata ${MY_PC_META_URL} ..."
+    Download "${MY_PC_META_URL}"
   fi
+
+  MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
 
   if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
     pkill curl
   fi
-  download ${MY_PC_SRC_URL} &
+  my_log "retrieving Prism Central bits..."
+  Download "${MY_PC_SRC_URL}"
 }
 
 function PE_Init
 {
   if [[ `ncli cluster get-params | grep 'External Data' | \
          awk -F: '{print $2}' | tr -d '[:space:]'` == "10.21.${MY_HPOC_NUMBER}.38" ]]; then
-    my_log "IDEMPOTENCY: Data Services IP set, skip"
+    my_log "IDEMPOTENCY: Data Services IP set, skip."
   else
     my_log "Configure SMTP"
     ncli cluster set-smtp-server address=${SMTP_SERVER_ADDRESS} from-email-address=cluster@nutanix.com port=25
@@ -54,26 +63,24 @@ function Network_Configure
   if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
     my_log "IDEMPOTENCY: ${MY_SECONDARY_NET_NAME} network set, skip"
   else
-    my_log "Remove Rx-Automation-Network if it exists"
+    my_log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
-    my_log "Create primary network:"
-    my_log "Name: ${MY_PRIMARY_NET_NAME}"
-    my_log "VLAN: ${MY_PRIMARY_NET_VLAN}"
-    my_log "Subnet: 10.21.${MY_HPOC_NUMBER}.1/25"
-    my_log "Domain: ${MY_DOMAIN_NAME}"
-    my_log "Pool: 10.21.${MY_HPOC_NUMBER}.50 to 10.21.${MY_HPOC_NUMBER}.125"
+    my_log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}"
+    # my_log "VLAN: ${MY_PRIMARY_NET_VLAN}"
+    # my_log "Subnet: 10.21.${MY_HPOC_NUMBER}.1/25"
+    # my_log "Domain: ${MY_DOMAIN_NAME}"
+    # my_log "Pool: 10.21.${MY_HPOC_NUMBER}.50 to 10.21.${MY_HPOC_NUMBER}.125"
     acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=10.21.${MY_HPOC_NUMBER}.1/25"
     acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=10.21.${MY_HPOC_NUMBER}.40,10.21.253.10 domains=${MY_DOMAIN_NAME}"
     acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=10.21.${MY_HPOC_NUMBER}.50 end=10.21.${MY_HPOC_NUMBER}.125"
 
     if [[ ${MY_SECONDARY_NET_NAME} ]]; then
-      my_log "Create secondary network:"
-      my_log "Name: ${MY_SECONDARY_NET_NAME}"
-      my_log "VLAN: ${MY_SECONDARY_NET_VLAN}"
-      my_log "Subnet: 10.21.${MY_HPOC_NUMBER}.129/25"
-      my_log "Domain: ${MY_DOMAIN_NAME}"
-      my_log "Pool: 10.21.${MY_HPOC_NUMBER}.132 to 10.21.${MY_HPOC_NUMBER}.253"
+      my_log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}"
+      # my_log "VLAN: ${MY_SECONDARY_NET_VLAN}"
+      # my_log "Subnet: 10.21.${MY_HPOC_NUMBER}.129/25"
+      # my_log "Domain: ${MY_DOMAIN_NAME}"
+      # my_log "Pool: 10.21.${MY_HPOC_NUMBER}.132 to 10.21.${MY_HPOC_NUMBER}.253"
       acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=10.21.${MY_HPOC_NUMBER}.129/25"
       acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=10.21.${MY_HPOC_NUMBER}.40,10.21.253.10 domains=${MY_DOMAIN_NAME}"
       acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=10.21.${MY_HPOC_NUMBER}.132 end=10.21.${MY_HPOC_NUMBER}.253"
@@ -100,27 +107,86 @@ function AuthenticationServer()
         my_log "${LDAP_SERVER}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
         my_log "Import ${LDAP_SERVER} image..."
 
-        local AUTH_SERVER_TEST=0
-        local             LOOP=0
-        local            SLEEP=7
+        local _AUTH_SERVER_TEST=0
+        local             _LOOP=0
+        local            _SLEEP=${SLEEP}
 
-        while true ; do
-          (( LOOP++ ))
-          AUTH_SERVER_TEST=$(acli "image.create ${LDAP_SERVER} \
-            container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage \
-            source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true")
+# task.list operation_type_list=kVmCreate
+# Task UUID                             Parent Task UUID  Component  Sequence-id  Type       Status
+# b21efb77-5447-45f9-9d6e-fc3ef6b22e36                    Acropolis  54           kVmCreate  kSucceeded
+#
+# acli -o json-pretty task.get b21efb77-5447-45f9-9d6e-fc3ef6b22e36
+# {
+#   "data": {
+#     "canceled": false,
+#     "cluster_uuid": "00056e27-2f51-7a31-1a72-0cc47ac3b4a0",
+#     "complete_time_usecs": "2018-06-09T00:52:11.527367",
+#     "component": "Acropolis",
+#     "create_time_usecs": "2018-06-09T00:52:11.380946",
+#     "deleted": false,
+#     "disable_auto_progress_update": true,
+#     "entity_list": [
+#       {
+#         "entity_id": "1dbcb887-c368-4142-97be-ff53417355ad",
+#         "entity_type": "kVM"
+#       }
+#     ],
+#     "internal_opaque": "ChIKEB28uIfDaEFCl77/U0FzVa0=",
+#     "internal_task": false,
+#     "last_updated_time_usecs": "2018-06-09T00:52:11.527367",
+#     "local_root_task_uuid": "b21efb77-5447-45f9-9d6e-fc3ef6b22e36",
+#     "logical_timestamp": 1,
+#     "message": "",
+#     "operation_type": "kVmCreate",
+#     "percentage_complete": 100,
+#     "request": {
+#       "arg": {
+#         "spec": {
+#           "memory_mb": 2048,
+#           "name": "STAGING-FAILED-AutoDC",
+#           "num_vcpus": 1
+#         }
+#       },
+#       "method_name": "VmCreate"
+#     },
+#     "requested_state_transition": 20,
+#     "response": {
+#       "error_code": 0,
+#       "ret": {
+#         "embedded": "ChAdvLiHw2hBQpe+/1NBc1Wt"
+#       }
+#     },
+#     "sequence_id": 54,
+#     "start_time_usecs": "2018-06-09T00:52:11.433001",
+#     "status": "kSucceeded",
+#     "uuid": "b21efb77-5447-45f9-9d6e-fc3ef6b22e36",
+#     "weight": 1000
+#   },
+#   "error": null,
+#   "status": 0
+# }
 
-          if [[ ${AUTH_SERVER_TEST} =~ 'complete' ]]; then
-            break;
-          elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-            acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
-            my_log "${LDAP_SERVER} failed to upload after ${LOOP} attempts. This cluster may require manual remediation."
-            exit 13;
-          else
-            my_log "__AUTH_SERVER_TEST ${LOOP}=${AUTH_SERVER_TEST}: ${LDAP_SERVER} failed. Sleep ${SLEEP} seconds..."
-            sleep ${SLEEP};
-          fi
-        done
+        # while true ; do
+        #   (( _LOOP++ ))
+        if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
+          acli image.create ${LDAP_SERVER} \
+            container=${MY_IMG_CONTAINER_NAME} \
+            image_type=kDiskImage \
+            source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 \
+            wait=true
+        fi
+
+          # if [[ ${_AUTH_SERVER_TEST} =~ 'complete' ]]; then
+          #   break;
+          # elif (( ${_LOOP} > ${ATTEMPTS} )) ; then
+          #   acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
+          #   my_log "${LDAP_SERVER} failed to upload after ${_LOOP} attempts. This cluster may require manual remediation."
+          #   exit 13
+          # else
+          #   my_log "__AUTH_SERVER_TEST ${_LOOP}=${_AUTH_SERVER_TEST}: ${LDAP_SERVER} failed. Sleep ${_SLEEP} seconds..."
+          #   sleep ${_SLEEP}
+          # fi
+        # done
 
         my_log "Create ${LDAP_SERVER} VM based on ${LDAP_SERVER} image"
         acli "vm.create ${LDAP_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
@@ -131,26 +197,28 @@ function AuthenticationServer()
         my_log "Power on ${LDAP_SERVER} VM"
         acli "vm.on ${LDAP_SERVER}"
 
-        AUTH_SERVER_TEST=0
-                    LOOP=0
+        _AUTH_SERVER_TEST=0
+                    _LOOP=0
+                   _SLEEP=7
 
         while true ; do
-          (( LOOP++ ))
+          (( _LOOP++ ))
           # TODO: hardcoded p/w, candidate for remote_exec
-          AUTH_SERVER_TEST=$(sshpass -p nutanix/4u ssh ${SSH_OPTS} \
-            root@10.21.${MY_HPOC_NUMBER}.40 "which samba-tool")
+          _AUTH_SERVER_TEST=$(sshpass -p nutanix/4u ssh ${SSH_OPTS} \
+            root@10.21.${MY_HPOC_NUMBER}.40 "systemctl show samba-ad-dc --property=SubState")
           if (( $? > 0 )); then
             echo
           fi
 
-          if [[ ${AUTH_SERVER_TEST} == "/usr/bin/samba-tool" ]]; then
+          if [[ ${_AUTH_SERVER_TEST} == "SubState=running" ]]; then
+            my_log "${LDAP_SERVER} is ready."
             break;
-          elif (( ${LOOP} > ${ATTEMPTS} )) ; then
-            my_log "${LDAP_SERVER} VM running: giving up after ${LOOP} tries."
+          elif (( ${_LOOP} > ${ATTEMPTS} )) ; then
+            my_log "${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
             exit 12;
           else
-            my_log "__AUTH_SERVER_TEST ${LOOP}=${AUTH_SERVER_TEST}: sleep ${SLEEP} seconds..."
-            sleep ${SLEEP};
+            my_log "__AUTH_SERVER_TEST ${_LOOP}=${_AUTH_SERVER_TEST}: sleep ${_SLEEP} seconds..."
+            sleep ${_SLEEP};
           fi
         done
 
@@ -189,12 +257,6 @@ function PE_Auth
 
 function PE_Configure
 {
-  my_log "Get NET_UUID,MY_CONTAINER_UUID from cluster: PC_Init dependency."
-  MY_NET_UUID=$(acli "net.get ${MY_PRIMARY_NET_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
-  my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
-  MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-  my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
-
   Check_Prism_API_Up 'PC' 0
   if (( $? == 0 )) ; then
     my_log "IDEMPOTENCY: PC API responds, skip"
@@ -227,7 +289,7 @@ function PE_Configure
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${MY_HPOC_NUMBER}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
 
-    echo; my_log "Complete!"
+    echo
   fi
 }
 
@@ -237,15 +299,13 @@ function PC_Init
   if (( $? == 0 )) ; then
     my_log "IDEMPOTENCY: PC API responds, skip."
   else
-    if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
-      download ${MY_PC_META_URL}
-      MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
-    fi
+    my_log "Get NET_UUID,MY_CONTAINER_UUID from cluster: PC_Init dependency."
+    MY_NET_UUID=$(acli "net.get ${MY_PRIMARY_NET_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
+    my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
+    MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+    my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 
-    if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
-      pkill curl
-    fi
-    download ${MY_PC_SRC_URL}
+    PC_Download
 
     if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
           != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
@@ -320,25 +380,16 @@ function PC_Configure {
 
 my_log `basename "$0"`": ${FUNCNAME[0]}: PID=$$"
 
-if [[ -z ${MY_PE_PASSWORD+x} ]]; then
-  my_log "Error: MY_PE_PASSWORD not provided, exit"
-  exit -1
-fi
-if [[ -z ${MY_PC_VERSION+x} ]]; then
-  my_log "Error: MY_PC_VERSION not provided, exit"
-  exit -1
-fi
+CheckArgsExist 'MY_PE_PASSWORD MY_PC_VERSION'
 
 # Derive HPOC number from IP 3rd byte
-#MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
 MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
 array=(${MY_CVM_IP//./ })
 MY_HPOC_NUMBER=${array[2]}
-# HPOC Password (if commented, we assume we get that from environment)
-#MY_PE_PASSWORD='nx2TechXXX!'
 MY_SP_NAME='SP01'
 MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
+
 LDAP_SERVER='AutoDC'
 MY_DOMAIN_FQDN='ntnxlab.local'
 MY_DOMAIN_NAME='NTNXLAB'
@@ -346,21 +397,25 @@ MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
 MY_DOMAIN_URL="ldaps://10.21.${MY_HPOC_NUMBER}.40/"
+
 MY_PRIMARY_NET_NAME='Primary'
 MY_PRIMARY_NET_VLAN='0'
 MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1" # TODO: check this?
 SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
 
-# https://portal.nutanix.com/#/page/releases/prismDetails
-# > Additional Releases (on lower left side)
-# Choose the URLs from: PC 1-click deploy from PE
 case ${MY_PC_VERSION} in
   5.6 )
     MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
     ;;
   5.7 | 5.7.0.1 )
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
+    ;;
+  *)
+    my_log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
+    my_log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
+    my_log 'then find: Additional Releases (on lower left side)'
+    my_log 'Provide the metadata URL from: PC 1-click deploy from PE'
     ;;
 esac
 
@@ -376,12 +431,13 @@ esac
 #CURL_OPTS="${CURL_OPTS} --verbose"
     SLEEP=60
 
+Dependencies 'install' 'jq' && PC_Download &
+
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
-&& PC_Download \
 && PE_Init \
+&& PE_Configure \
 && Network_Configure \
 && AuthenticationServer \
-&& PE_Configure \
 && PE_Auth \
 && PC_Init \
 && Check_Prism_API_Up 'PC'

@@ -78,7 +78,8 @@ function select_workshop {
 # Set script files to send to remote clusters based on command line argument
 function set_workshop {
 
-      PE_CONFIG=PC_CONFIG='scripts/'
+#      PE_CONFIG='scripts/'
+#      PC_CONFIG=${PE_CONFIG}
   MY_PC_VERSION=5.6
 
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
@@ -116,7 +117,7 @@ function stage_clusters {
 
   if [[ -d cache ]]; then
     #TODO: proper cache detection and downloads
-    _DEPENDENCIES='cache/jq-linux64 cache/sshpass-1.06-2.el7.x86_64.rpm'
+    _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
   fi
 
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
@@ -145,11 +146,13 @@ function stage_clusters {
       exit 15
     fi
 
-#    if [[ `pwd | awk -F/ '{print $NF}'` != 'scripts' ]]; then
-#      cd scripts
-#    fi
-
-    remote_exec 'SCP' 'PE' "scripts/common.lib.sh ${PE_CONFIG} ${PC_CONFIG} ${_DEPENDENCIES}"
+    if [[ `pwd | awk -F/ '{ print $NF}'` != 'scripts' ]]; then
+      cd scripts
+    fi
+    remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
+echo TOFIX: _DEPENDENCIES disabled.
+    # cd ../cache
+    # remote_exec 'SCP' 'PE' "${_DEPENDENCIES}"
 
     # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
     my_log "Executing configuration script on PE: ${MY_PE_HOST}"

@@ -12,17 +12,41 @@ function my_log {
   echo $(date "+%Y-%m-%d %H:%M:%S")"|${CALLER}|${1}"
 }
 
-function download {
-  my_log "Download ${1}"
-  curl ${CURL_OPTS} --remote-name --location --retry 3 --continue-at - ${1}
-  if (( $? > 0 )) ; then
-    my_log "Error: couldn't download from: ${1}"
-    exit 1
+function CheckArgsExist {
+  local _ARGUMENT
+  for _ARGUMENT in ${1}; do
+    if [[ -z ${_ARGUMENT} ]]; then
+      my_log "Error: ${_ARGUMENT} not provided!"
+      exit -1
+    fi
+  done
+
+  if [[ -z ${MY_HPOC_NUMBER} ]]; then
+    # Derive HPOC number from IP 3rd byte
+    #MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
+    MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
+    array=(${MY_CVM_IP//./ })
+    MY_HPOC_NUMBER=${array[2]}
   fi
 }
 
-function acli {
-	remote_exec 'SSH' 'PE' "/usr/local/nutanix/bin/acli $@"
+function Download {
+  if [[ -z ${1} ]]; then
+    my_log 'Error: no URL to download!'
+    exit 33
+  fi
+
+  my_log "Download ${1}..."
+  curl ${CURL_OPTS} --remote-name --location --retry 3 --continue-at - ${1}
+
+  if (( $? > 0 )) ; then
+    if [[ $? == "33" && -f ${1##*/} ]]; then
+      my_log "Couldn't resume, but ${1##*/} exists, skip."
+    else
+      my_log "Error: couldn't download from: ${1}"
+      exit 1
+    fi
+  fi
 }
 
 function remote_exec {
@@ -33,10 +57,17 @@ function remote_exec {
   local PASSWORD="${MY_PE_PASSWORD}"
   local SSH_TEST=0
 
-  if [[ ${2} == 'PC' ]]; then
-        HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
-    PASSWORD='nutanix/4u' # TODO: hardcoded p/w
-  fi
+  case ${2} in
+    'PE' )
+      if [[ -z ${MY_PE_HOST} ]]; then
+        HOST=localhost
+      fi
+      ;;
+    'PC' )
+          HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
+      PASSWORD='nutanix/4u' # TODO: hardcoded p/w
+      ;;
+  esac
 
   if [[ -z ${3} ]]; then
     my_log 'Error: missing third argument.'
@@ -47,13 +78,21 @@ function remote_exec {
     (( LOOP++ ))
     case "${1}" in
       'SSH' | 'ssh')
+        if [[ ${DEBUG} ]]; then my_log "SSH_TEST will perform nutanix@${HOST} ${3}..."; fi
         SSH_TEST=$(sshpass -p ${PASSWORD} ssh -x ${SSH_OPTS} nutanix@${HOST} "${3}")
-        my_log "SSH_TEST:${SSH_TEST}:$?"
+        if (( $? > 0 )); then
+          my_log "Error SSH_TEST:${SSH_TEST} on HOST=${HOST}:$?"
+          exit 22
+        fi
         ;;
       'SCP' | 'scp')
         # local FILENAME="${1##*/}"
-        SSH_TEST=$(sshpass -p ${PASSWORD} scp ${SSH_OPTS} ${3} nutanix@${HOST}:)
-        my_log "SSH_TEST:${SSH_TEST}:$?"
+        if [[ ${DEBUG} ]]; then my_log "SCP_TEST will perform nutanix@${HOST}:${3}..."; fi
+        SCP_TEST=$(sshpass -p ${PASSWORD} scp ${SSH_OPTS} ${3} nutanix@${HOST}:)
+        if (( $? > 0 )); then
+          my_log "Error pwd = `pwd` and SCP_TEST:${SCP_TEST} on HOST=${HOST}:$?"
+          exit 22
+        fi
         ;;
       *)
         my_log "Error: improper first argument, should be ssh or scp."
@@ -83,9 +122,9 @@ function Dependencies {
     exit 21
   fi
 
-  case "$1" in
+  case "${1}" in
     'install')
-      my_log "Install..."
+      my_log "Install ${2}..."
       export PATH=${PATH}:${HOME}
 
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
@@ -178,7 +217,7 @@ function Check_Prism_API_Up
 
   if [[ ${1} == 'PC' ]]; then
         HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
-    PASSWORD='nutanix/4u' # TODO: hardcoded p/w
+    #PASSWORD='nutanix/4u' # TODO: hardcoded p/w
   fi
 
   if [[ ! -z ${2} ]]; then

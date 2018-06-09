@@ -119,8 +119,9 @@ EOF
   if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
     echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
     echo modify_firewall -o open -i eth0 -p 8090 -a
-    remote_exec 'PE' 'SSH' 'allssh "cat /srv/pillar/iptables.sls |grep 8090"'
-    remote_exec 'PE' 'SSH' 'allssh sudo cat /home/docker/epsilon/conf/karan_hosts.txt'
+    echo TOFIX: remote_exec 'SSH' 'PE'
+    echo allssh "cat /srv/pillar/iptables.sls |grep 8090"
+    echo allssh sudo cat /home/docker/epsilon/conf/karan_hosts.txt
   fi
 }
 
@@ -313,89 +314,36 @@ function Images
   #Windows2012R2-04282018.qcow2  28753cfc-2203-448e-9020-7c38466e39ab  RUNNING
   # Takes a while to show up in: nuclei image.list, state = COMPLETE
   # image.list Name UUID State
-  # https://jira.nutanix.com/browse/ENG-78322 <nuclei>
-    # app_blueprint
-    # availability_zone
-    # available_extension
-    # available_extension_images
-    # catalog_item
-    # category
-    # certificate
-    # changed_regions
-    # client_auth
-    # cloud_credentials
-    # cluster
-    # container
-    # core                          CLI control.
-    # diag                          Diagnostic tools.
-    # directory_service
-    # disk
-    # docker_image
-    # docker_registry
-    # exit                          Exits the CLI.
-    # extension
-    # get                           Gets the current value of the given configuration options.
-    # help                          Provides help text for the named object.
-    # host
-    # image
-    # network_function_chain
-    # network_security_rule
-    # oauth_client
-    # oauth_token
-    # permission
-    # project
-    # protection_rule
-    # quit                          Exits the CLI.
-    # recovery_plan
-    # recovery_plan_job
-    # remote_connection
-    # report_config
-    # report_instance
-    # role
-    # set                           Sets the value of the given configuration options.
-    # ssh_user
-    # subnet
-    # user
-    # version                       NuCLEI Version Information.
-    # virtual_network
-    # vm
-    # vm_backup
-    # vm_snapshot
-    # volume_group
-    # volume_group_backup
-    # volume_group_snapshot
-    # webhook
 
-  my_log "CentOS7-04282018.qcow2 image..."
-  nuclei image.create name=CentOS7-04282018.qcow2 \
-     description='stage_calmhow_pc' \
-     source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
-  if (( $? != 0 )) ; then
-    my_log "Warning: Image submission: $?."
-    #exit 10
-  fi
 
-  my_log "Windows2012R2-04282018.qcow2 image..."
-  nuclei image.create name=Windows2012R2-04282018.qcow2 \
-     description='stage_calmhow_pc' \
-     source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
-  if (( $? != 0 )) ; then
-   my_log "Warning: Image submission: $?."
-   #exit 10
-  fi
-
-  # until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
-  #   # acli image.create CentOS container="Images" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/CentOSv2.qcow2 wait=true
-  # done
-  # until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
-  # done
-  # Remove existing VMs, if any (Mark says: unlikely for a new cluster)
-  # my_log "Removing \"Windows 2012\" VM if it exists"
-  # acli -y vm.delete Windows\ 2012\ VM delete_snapshots=true
-  # my_log "Removing \"CentOS\" VM if it exists"
-  # acli -y vm.delete CentOS\ VM delete_snapshots=true
+  for IMG in 'CentOS7-04282018.qcow2 Windows2012R2-04282018.qcow2'; do
+    my_log "CentOS7-04282018.qcow2 image..."
+    nuclei image.create name=${IMG} \
+       description="${0} via stage_calmhow_pc for ${IMG}" \
+       source_uri=http://10.21.250.221/images/ahv/techsummit/${IMG}
+    if (( $? != 0 )) ; then
+      my_log "Warning: Image submission: $?."
+      #exit 10
+    fi
+  done
 }
 
+function PC_project {
+  PROJECT_NAME=mark.lavi.test
+
+  nuclei project.create name=${PROJECT_NAME} \
+      description='test from NuClei!'
+      nuclei project.get ${PROJECT_NAME} format=json | jq .metadata.project_reference.uuid | tr -d '"'
+
+    # - project.get mark.lavi.test
+    # - project.update mark.lavi.test
+    #     spec.resources.account_reference_list.kind= or .uuid
+    #     spec.resources.default_subnet_reference.kind=
+    #     spec.resources.environment_reference_list.kind=
+    #     spec.resources.external_user_group_reference_list.kind=
+    #     spec.resources.subnet_reference_list.kind=
+    #     spec.resources.user_reference_list.kind=
+}
 #__main()____________
 
 # Source Nutanix environments (for PATH and other things such as ncli)
@@ -404,21 +352,7 @@ function Images
 
 my_log `basename "$0"`": __main__: PID=$$"
 
-if [[ -z ${MY_PE_PASSWORD} ]]; then
-  my_log "Error: MY_PE_PASSWORD environment variable missing."
-  exit 10;
-fi
-if [[ -z ${MY_PC_VERSION} ]]; then
-  my_log "Error: MY_PC_VERSION environment variable missing."
-  exit -1
-fi
-if [[ -z ${MY_HPOC_NUMBER} ]]; then
-  # Derive HPOC number from IP 3rd byte
-  #MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
-  MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
-  array=(${MY_CVM_IP//./ })
-  MY_HPOC_NUMBER=${array[2]}
-fi
+CheckArgsExist 'MY_PE_PASSWORD MY_PC_VERSION LDAP_SERVER MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
 
 ATTEMPTS=2
    SLEEP=10
@@ -435,9 +369,9 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 
 if (( $? == 0 )) ; then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
-  my_log "$0: main: done!_____________________"
+  my_log "$0: done!_____________________"
   echo
 else
-  my_log "Error: failed to reach cluster PE, exit."
+  my_log "Error: failed to reach PC, exit."
   exit 19
 fi
