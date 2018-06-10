@@ -3,6 +3,13 @@
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
 
+function _testDNS {
+  local _DNS=$(dig +short @10.21.${MY_HPOC_NUMBER}.40 dc1.${MY_DOMAIN_FQDN})
+  if [[ ${_DNS} != "10.21.${MY_HPOC_NUMBER}.40" ]]; then
+    return 44
+  fi
+}
+
 function acli {
   local CMD=$@
 	/usr/local/nutanix/bin/acli ${CMD}
@@ -12,7 +19,7 @@ function acli {
 function PC_Download
 {
   if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
-    my_log "retrieving Prism Central metadata ${MY_PC_META_URL} ..."
+    my_log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
     Download "${MY_PC_META_URL}"
   fi
 
@@ -21,7 +28,7 @@ function PC_Download
   if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
     pkill curl
   fi
-  my_log "retrieving Prism Central bits..."
+  my_log "Retrieving Prism Central bits..."
   Download "${MY_PC_SRC_URL}"
 }
 
@@ -47,7 +54,7 @@ function PE_Init
 
     my_log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
     (ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
-        && my_log "${FUNCNAME[0]}.Container ${MY_IMG_CONTAINER_NAME} exists" \
+        && my_log "Container ${MY_IMG_CONTAINER_NAME} exists" \
         || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
 
     # Set external IP address:
@@ -92,7 +99,7 @@ function AuthenticationServer()
 {
   if [[ -z ${LDAP_SERVER} ]]; then
     my_log "Error: please provide a choice for authentication server."
-    exit 13;
+    exit 13
   fi
 
   case "${LDAP_SERVER}" in
@@ -100,16 +107,15 @@ function AuthenticationServer()
       my_log "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
       ;;
     'AutoDC')
-      local _DNS=$(dig +short @10.21.${MY_HPOC_NUMBER}.40 dc1.${MY_DOMAIN_FQDN})
-      if [[ ${_DNS} == "10.21.${MY_HPOC_NUMBER}.40" ]]; then
+      if (( _testDNS == 0 )); then
         my_log "${LDAP_SERVER}.IDEMPOTENCY: Samba dc1.${MY_DOMAIN_FQDN} set, skip"
       else
         my_log "${LDAP_SERVER}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
         my_log "Import ${LDAP_SERVER} image..."
 
-        local _AUTH_SERVER_TEST=0
-        local             _LOOP=0
-        local            _SLEEP=${SLEEP}
+        local  _LOOP=0
+        local _SLEEP=${SLEEP}
+        local  _TEST=0
 
 # task.list operation_type_list=kVmCreate
 # Task UUID                             Parent Task UUID  Component  Sequence-id  Type       Status
@@ -176,14 +182,14 @@ function AuthenticationServer()
             wait=true
         fi
 
-          # if [[ ${_AUTH_SERVER_TEST} =~ 'complete' ]]; then
-          #   break;
-          # elif (( ${_LOOP} > ${ATTEMPTS} )) ; then
+          # if [[ ${_TEST} =~ 'complete' ]]; then
+          #   break
+          # elif (( ${_LOOP} > ${ATTEMPTS} )); then
           #   acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
           #   my_log "${LDAP_SERVER} failed to upload after ${_LOOP} attempts. This cluster may require manual remediation."
           #   exit 13
           # else
-          #   my_log "__AUTH_SERVER_TEST ${_LOOP}=${_AUTH_SERVER_TEST}: ${LDAP_SERVER} failed. Sleep ${_SLEEP} seconds..."
+          #   my_log "_TEST ${_LOOP}=${_TEST}: ${LDAP_SERVER} failed. Sleep ${_SLEEP} seconds..."
           #   sleep ${_SLEEP}
           # fi
         # done
@@ -197,34 +203,51 @@ function AuthenticationServer()
         my_log "Power on ${LDAP_SERVER} VM"
         acli "vm.on ${LDAP_SERVER}"
 
-        _AUTH_SERVER_TEST=0
-                    _LOOP=0
-                   _SLEEP=7
+        local _ATTEMPTS=10
+         _LOOP=0
+        _SLEEP=7
 
         while true ; do
           (( _LOOP++ ))
-          # TODO: hardcoded p/w, candidate for remote_exec
-          _AUTH_SERVER_TEST=$(sshpass -p nutanix/4u ssh ${SSH_OPTS} \
-            root@10.21.${MY_HPOC_NUMBER}.40 "systemctl show samba-ad-dc --property=SubState")
-          if (( $? > 0 )); then
-            echo
-          fi
+          _TEST=$(remote_exec 'SSH' 'LDAP_SERVER' 'systemctl show samba-ad-dc --property=SubState' \
+          | tr -d '[:space:]')
 
-          if [[ ${_AUTH_SERVER_TEST} == "SubState=running" ]]; then
+          if [[ "${_TEST}" == "SubState=running" ]]; then
             my_log "${LDAP_SERVER} is ready."
-            break;
-          elif (( ${_LOOP} > ${ATTEMPTS} )) ; then
+            sleep ${_SLEEP}
+            break
+          elif (( ${_LOOP} > ${_ATTEMPTS} )); then
             my_log "${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
-            exit 12;
+            acli "-y vm.delete ${LDAP_SERVER}"
+            exit 12
           else
-            my_log "__AUTH_SERVER_TEST ${_LOOP}=${_AUTH_SERVER_TEST}: sleep ${_SLEEP} seconds..."
-            sleep ${_SLEEP};
+            my_log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
+            sleep ${_SLEEP}
           fi
         done
 
-        my_log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM" # TODO: candidate for remote_exec
-        sshpass -p nutanix/4u ssh ${SSH_OPTS} root@10.21.${MY_HPOC_NUMBER}.40 \
-          "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa && service samba-ad-dc restart"
+        my_log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM"
+        _ATTEMPTS=3
+            _LOOP=0
+        while true ; do
+          (( _LOOP++ ))
+          remote_exec 'SSH' 'LDAP_SERVER' \
+            "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa && sleep 2 && service samba-ad-dc restart" \
+            'OPTIONAL'
+
+          if (( _testDNS == 0 )); then
+            my_log "Success."
+            break
+          elif (( ${_LOOP} > ${_ATTEMPTS} )); then
+            my_log "${LDAP_SERVER}: giving up after ${_LOOP} tries."
+            acli "-y vm.delete ${LDAP_SERVER}"
+            exit 12
+          else
+            my_log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
+            sleep ${_SLEEP}
+          fi
+        done
+
       fi
       ;;
     'OpenLDAP')
@@ -257,7 +280,7 @@ function PE_Auth
 
 function PE_Configure
 {
-  Check_Prism_API_Up 'PC' 0
+  Check_Prism_API_Up 'PC' 2 10
   if (( $? == 0 )) ; then
     my_log "IDEMPOTENCY: PC API responds, skip"
   else
@@ -268,7 +291,7 @@ function PE_Configure
       "jobTitle": "SE"
     }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
 
-    echo; my_log "Disable Pulse in PE"
+    my_log "Disable Pulse in PE"
     curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
@@ -288,14 +311,12 @@ function PE_Configure
     #curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${MY_HPOC_NUMBER}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
-
-    echo
   fi
 }
 
 function PC_Init
 {
-  Check_Prism_API_Up 'PC' 0
+  Check_Prism_API_Up 'PC' 2 10
   if (( $? == 0 )) ; then
     my_log "IDEMPOTENCY: PC API responds, skip."
   else
@@ -307,10 +328,11 @@ function PC_Init
 
     PC_Download
 
-    if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` \
-          != `md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}'` ]]; then
-      my_log "Error: md5sum does't match on: ${MY_PC_SRC_URL##*/}"
-      exit 2;
+    local _CHECKSUM=$(md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}')
+    if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
+      my_log "Error: md5sum ${_CHECKSUM} does't match on: ${MY_PC_SRC_URL##*/} removing and exit!"
+      rm -f ${MY_PC_SRC_URL##*/}
+      exit 2
     else
       my_log "Prism Central downloaded and passed MD5 checksum!"
     fi
@@ -361,9 +383,13 @@ EOF
 }
 
 function PC_Configure {
-  local PC_FILES='common.lib.sh stage_calmhow_pc.sh jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
+  local PC_FILES='common.lib.sh stage_calmhow_pc.sh'
   my_log "Send configuration scripts to PC and remove: ${PC_FILES}"
   remote_exec 'scp' 'PC' "${PC_FILES}" && rm -f ${PC_FILES}
+
+  PC_FILES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
+  my_log "OPTIONAL: Send binary dependencies to PC: ${PC_FILES}"
+  remote_exec 'scp' 'PC' "${PC_FILES}" 'OPTIONAL'
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   my_log "Launch PC configuration script"
@@ -378,7 +404,7 @@ function PC_Configure {
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh # source common routines, global variables
 
-my_log `basename "$0"`": ${FUNCNAME[0]}: PID=$$"
+my_log `basename "$0"`": PID=$$"
 
 CheckArgsExist 'MY_PE_PASSWORD MY_PC_VERSION'
 
@@ -428,10 +454,9 @@ esac
 #
 # DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING!!
  ATTEMPTS=40
-#CURL_OPTS="${CURL_OPTS} --verbose"
     SLEEP=60
 
-Dependencies 'install' 'jq' && PC_Download &
+#Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_Init \
@@ -450,6 +475,6 @@ if (( $? == 0 )) ; then
   #my_log "Watching logs on PC..."
   #BUG: Dependencies removed! remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
 else
-  my_log "Check_Prism_API_Up: Error, couldn't reach PC, exit."
+  my_log "Error in main functional chain, exit!"
   exit 18
 fi
