@@ -80,7 +80,7 @@ function set_workshop {
 
 #      PE_CONFIG='scripts/'
 #      PC_CONFIG=${PE_CONFIG}
-  MY_PC_VERSION=5.6
+  MY_PC_VERSION=5.6 # default
 
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
     "Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)")
@@ -140,22 +140,17 @@ function stage_clusters {
 
     Check_Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
-      my_log "Sending configuration script(s) to PE: ${MY_PE_HOST}"
+      my_log "Sending configuration script(s) to PE@${MY_PE_HOST}"
     else
-      my_log "Error: Can't reach PE @${MY_PE_HOST}, are you on VPN?"
+      my_log "Error: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
       exit 15
     fi
 
-    if [[ `pwd | awk -F/ '{ print $NF}'` != 'scripts' ]]; then
-      cd scripts
-    fi
-    remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}"
-    # echo TOFIX: _DEPENDENCIES disabled.
-    cd ../cache
-    remote_exec 'SCP' 'PE' "${_DEPENDENCIES}"
+    cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}" && cd ..
+    #echo 'TOFIX: _DEPENDENCIES disabled.'
+    cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' && cd ..
 
-    # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-    my_log "Executing configuration script on PE: ${MY_PE_HOST}"
+    my_log "Remote execution configuration script on PE@${MY_PE_HOST}"
     remote_exec 'SSH' 'PE' "MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
@@ -163,6 +158,10 @@ Progress of individual clusters can be monitored by:
  $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
    https://${MY_PE_HOST}:9440/
  $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 'tail -f stage_calmhow_pc.log'
+   https://10.21.${MY_HPOC_NUMBER}.39:9440/
+
+ sshpass -p ${MY_PE_PASSWORD} scp ${SSH_OPTS} nutanix@${MY_PE_HOST}:stage_calmhow.log logs/ && \
+ sshpass -p 'nutanix/4u' scp ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39:stage_calmhow_pc.log logs/
 EOM
   done
   exit
