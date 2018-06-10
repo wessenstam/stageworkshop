@@ -4,10 +4,8 @@
 
 function PC_LDAP
 { # TODO: configure case for each authentication server type?
-  if [[ -z ${LDAP_SERVER} || -z ${MY_DOMAIN_FQDN} || -z ${MY_DOMAIN_USER} || -z ${MY_DOMAIN_PASS} ]]; then
-    my_log "Error: missing LDAP_SERVER, MY_DOMAIN_[FQDN|USER|PASS] for authentication."
-    exit 21
-  fi
+  local _GROUP
+  local _TEST
 
   my_log "Add Directory ${LDAP_SERVER}"
   HTTP_BODY=$(cat <<EOF
@@ -23,25 +21,27 @@ function PC_LDAP
 EOF
   )
 
-  DIR_TEST=$(curl ${CURL_POST_OPTS} \
+  _TEST=$(curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
     https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
-  my_log "DIR_TEST=|${DIR_TEST}|"
+  my_log "_TEST=|${_TEST}|"
 
-  my_log "Add Roles"
-  HTTP_BODY=$(cat <<EOF
-  {
-    "directoryName":"${LDAP_SERVER}",
-    "role":"ROLE_CLUSTER_ADMIN",
-    "entityType":"GROUP",
-    "entityValues":["SSP Admins"]
-  }
+  my_log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO: hardcoded
+  for _GROUP in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
+    HTTP_BODY=$(cat <<EOF
+    {
+      "directoryName":"${LDAP_SERVER}",
+      "role":"ROLE_CLUSTER_ADMIN",
+      "entityType":"GROUP",
+      "entityValues":["${_GROUP}"]
+    }
 EOF
-  )
-  ROLE_TEST=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
-  my_log "Cluster Admin=SSP Admins, ROLE_TEST=|${ROLE_TEST}|"
+    )
+    _TEST=$(curl ${CURL_POST_OPTS} \
+      --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
+      https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
+    my_log "Cluster Admin=${_GROUP}, _TEST=|${_TEST}|"
+  done
 }
 
 function SSP_Auth {
@@ -215,8 +215,8 @@ function PC_Init
 #  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@localhost \
 #   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
-  if (( $? != 0 )) ; then
-   my_log "Password not reset, error: $?.";# Exit."   exit 10;
+  if (( $? != 0 )); then
+   my_log "Error: Password not reset: $?."# exit 10
   fi
 #   HTTP_BODY=$(cat <<EOF
 # {
@@ -255,7 +255,7 @@ function PC_Init
 
   # Prism Central upgrade
   #my_log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
-  #cd /home/nutanix/install ; ./bin/cluster -i . -p upgrade
+  #cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
 }
 
 function Images
@@ -308,32 +308,34 @@ function Images
     # }
   # 2.  PUT images/uuid/file: upload uuid, body, checksum and checksum type: sha1, sha256
   # or nuclei, only on PCVM or in container
-  # nuclei image.create name=CentOS7-04282018.qcow2 source_uri=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
-  #CentOS7-04282018.qcow2  b6d95c0d-2d8d-4a26-b16a-8c1c1c84b62b  RUNNING
-  # nuclei image.create name=Windows2012R2-04282018.qcow2 source_uri=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
-  #Windows2012R2-04282018.qcow2  28753cfc-2203-448e-9020-7c38466e39ab  RUNNING
-  # Takes a while to show up in: nuclei image.list, state = COMPLETE
-  # image.list Name UUID State
 
-
-  for IMG in 'CentOS7-04282018.qcow2 Windows2012R2-04282018.qcow2'; do
-    my_log "CentOS7-04282018.qcow2 image..."
+  for IMG in CentOS7-04282018.qcow2 Windows2012R2-04282018.qcow2 ; do
+    my_log "${IMG} image.create..."
     nuclei image.create name=${IMG} \
        description="${0} via stage_calmhow_pc for ${IMG}" \
        source_uri=http://10.21.250.221/images/ahv/techsummit/${IMG}
-    if (( $? != 0 )) ; then
+     my_log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
+     my_log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
+    if (( $? != 0 )); then
       my_log "Warning: Image submission: $?."
       #exit 10
     fi
   done
 }
 
-function PC_project {
-  PROJECT_NAME=mark.lavi.test
+function PC_Project {
+  local _NAME=mark.lavi.test
 
+  local _COUNT=$(nuclei project.list | grep ${_NAME} | wc --lines)
+  if (( ${_COUNT} > 0 )); then
+    nuclei project.delete ${_NAME} confirm=false
+  fi
+
+  my_log "Creating ${_NAME}..."
   nuclei project.create name=${PROJECT_NAME} \
-      description='test from NuClei!'
-      nuclei project.get ${PROJECT_NAME} format=json | jq .metadata.project_reference.uuid | tr -d '"'
+      description='test from NuCLeI!'
+  local _UUID=$(nuclei project.get ${_NAME} format=json | jq .metadata.project_reference.uuid | tr -d '"')
+  my_log "${_NAME}.uuid = ${_UUID}"
 
     # - project.get mark.lavi.test
     # - project.update mark.lavi.test
@@ -357,7 +359,7 @@ CheckArgsExist 'MY_PE_PASSWORD MY_PC_VERSION LDAP_SERVER MY_DOMAIN_FQDN MY_DOMAI
 ATTEMPTS=2
    SLEEP=10
 
-Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
+Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PC_Init \
 && PC_UI \
 && PC_LDAP \
@@ -369,11 +371,10 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq'\
 # TODO: Karan
 PC_Project
 
-if (( $? == 0 )) ; then
-  Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
-  my_log "$0: done!_____________________"
-  echo
+if (( $? == 0 )); then
+  Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
+   && my_log "$0: done!_____________________" && echo
 else
-  my_log "Error: failed to reach PC, exit."
+  my_log "Error: failed to reach PC!"
   exit 19
 fi
