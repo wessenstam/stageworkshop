@@ -3,10 +3,14 @@
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
 
-function _testDNS {
-  local _DNS=$(dig +short @10.21.${MY_HPOC_NUMBER}.40 dc1.${MY_DOMAIN_FQDN})
+function _TestDNS {
+  local   _DNS=$(dig +retry=0 +time=2 +short @10.21.${MY_HPOC_NUMBER}.40 dc1.${MY_DOMAIN_FQDN})
+  local _ERROR=44
+  local  _TEST=$?
+
   if [[ ${_DNS} != "10.21.${MY_HPOC_NUMBER}.40" ]]; then
-    return 44
+    my_log "Error ${_ERROR}: result was ${_TEST}: ${_DNS}"
+    return ${_ERROR}
   fi
 }
 
@@ -107,15 +111,19 @@ function AuthenticationServer()
       my_log "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
       ;;
     'AutoDC')
-      if (( _testDNS == 0 )); then
-        my_log "${LDAP_SERVER}.IDEMPOTENCY: Samba dc1.${MY_DOMAIN_FQDN} set, skip"
+      local _RESULT
+      _TestDNS; _RESULT=$?
+
+      if (( ${_RESULT} == 0 )); then
+        my_log "${LDAP_SERVER}.IDEMPOTENCY: dc1.${MY_DOMAIN_FQDN} set, skip. ${_RESULT}"
       else
-        my_log "${LDAP_SERVER}.IDEMPOTENCY failed, no _DNS match for Samba dc1.${MY_DOMAIN_FQDN} in: ${_DNS}"
+        my_log "${LDAP_SERVER}.IDEMPOTENCY failed, no DNS record dc1.${MY_DOMAIN_FQDN}"
         my_log "Import ${LDAP_SERVER} image..."
 
+        local _ERROR=12
         local  _LOOP=0
         local _SLEEP=${SLEEP}
-        local  _TEST=0
+        local  _TEST
 
 # task.list operation_type_list=kVmCreate
 # Task UUID                             Parent Task UUID  Component  Sequence-id  Type       Status
@@ -200,7 +208,8 @@ function AuthenticationServer()
         acli "vm.disk_create ${LDAP_SERVER} cdrom=true empty=true"
         acli "vm.disk_create ${LDAP_SERVER} clone_from_image=${LDAP_SERVER}"
         acli "vm.nic_create ${LDAP_SERVER} network=${MY_PRIMARY_NET_NAME} ip=10.21.${MY_HPOC_NUMBER}.40"
-        my_log "Power on ${LDAP_SERVER} VM"
+
+        my_log "Power on ${LDAP_SERVER} VM..."
         acli "vm.on ${LDAP_SERVER}"
 
         local _ATTEMPTS=10
@@ -209,42 +218,45 @@ function AuthenticationServer()
 
         while true ; do
           (( _LOOP++ ))
-          _TEST=$(remote_exec 'SSH' 'LDAP_SERVER' 'systemctl show samba-ad-dc --property=SubState' \
-          | tr -d '[:space:]')
+          _TEST=$(remote_exec 'SSH' 'LDAP_SERVER' 'systemctl show samba-ad-dc --property=SubState')
 
           if [[ "${_TEST}" == "SubState=running" ]]; then
             my_log "${LDAP_SERVER} is ready."
             sleep ${_SLEEP}
             break
           elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-            my_log "${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
+            my_log "Error ${_ERROR}: ${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
             acli "-y vm.delete ${LDAP_SERVER}"
-            exit 12
+            exit ${_ERROR}
           else
             my_log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
             sleep ${_SLEEP}
           fi
         done
 
-        my_log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM"
+        my_log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM..."
         _ATTEMPTS=3
             _LOOP=0
         while true ; do
           (( _LOOP++ ))
+          # TODO: service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
-            "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa && sleep 2 && service samba-ad-dc restart" \
+            "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa && service samba-ad-dc restart" \
             'OPTIONAL'
+          sleep ${_SLEEP}
 
-          if (( _testDNS == 0 )); then
-            my_log "Success."
+          _TestDNS; _RESULT=$?
+
+          if (( ${_RESULT} == 0 )); then
+            my_log "Success: DNS record dc1.${MY_DOMAIN_FQDN} set."
             break
           elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-            my_log "${LDAP_SERVER}: giving up after ${_LOOP} tries."
+            my_log "Error ${_ERROR}: ${LDAP_SERVER}: giving up after ${_LOOP} tries; deleting VM."
             acli "-y vm.delete ${LDAP_SERVER}"
-            exit 12
+            exit ${_ERROR}
           else
-            my_log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
-            sleep ${_SLEEP}
+            my_log "_TestDNS ${_LOOP}/${_ATTEMPTS}=|${_RESULT}|: sleep ${_SLEEP} seconds..."
+            #sleep ${_SLEEP}
           fi
         done
 
@@ -259,7 +271,7 @@ function AuthenticationServer()
 function PE_Auth
 {
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
-    my_log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip"
+    my_log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
   else
     my_log "Configure PE external authentication"
     ncli authconfig add-directory \
@@ -344,10 +356,10 @@ function PC_Init
 
     MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
 
-    my_log "Delete PC sources to free CVM space"
+    my_log "Delete PC sources to free CVM space..."
     rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
 
-    my_log "Deploy Prism Central"
+    my_log "Deploy Prism Central..."
     # TODO: Parameterize DNS Servers & add secondary
     # TODO: make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     HTTP_BODY=$(cat <<EOF
@@ -375,10 +387,11 @@ function PC_Init
 }
 EOF
     )
-    PCD_TEST=$(curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} \
+    local _TEST
+    _TEST=$(curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} \
       -X POST --data "${HTTP_BODY}" \
       https://localhost:9440/api/nutanix/v3/prism_central)
-    my_log "PCD_TEST=|${PCD_TEST}|"
+    my_log "_TEST=|${_TEST}|"
   fi
 }
 
@@ -445,14 +458,12 @@ case ${MY_PC_VERSION} in
     ;;
 esac
 
-# From this point, we assume:
+# From this point, we assume according to SEWiki:
 # IP Range: 10.21.${MY_HPOC_NUMBER}.0/25
 # Gateway: 10.21.${MY_HPOC_NUMBER}.1
 # DNS: 10.21.253.10,10.21.253.11
-# Domain: nutanixdc.local
 # DHCP Pool: 10.21.${MY_HPOC_NUMBER}.50 - 10.21.${MY_HPOC_NUMBER}.120
-#
-# DO NOT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU KNOW WHAT YOU'RE DOING!!
+
  ATTEMPTS=40
     SLEEP=60
 
@@ -470,6 +481,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
+  my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
   my_log "$0: main: done!_____________________"
   echo
   #my_log "Watching logs on PC..."

@@ -60,11 +60,22 @@
   - refactor out all passwords, hardcoded values to variables
     - SSP Admins
   - Insure exit codes unique/consistent, error messages consistent
-  - Bash test framework for unit tests: https://invent.life/project/bash-infinity-framework
-    - userX login to PE, PC
-    - userX new project, upload, run blueprint
-    - serverspec on blueprint?
-  - Runit/rundeck? http://bashdb.sourceforge.net/
+  - Bash test framework for unit tests:
+    - BATS
+    - https://invent.life/project/bash-infinity-framework
+    - Runit/rundeck? http://bashdb.sourceforge.net/
+    - Tests:
+      - userX login to PE, PC
+      - userX new project, upload, run blueprint
+      - rspec, serverspec on blueprint?
+  - Atom.io packages added:
+    - npm i -g bash-language-server ; https://atom.io/packages/ide-bash
+    - https://atom.io/packages/atom-ide-ui
+      - Disabled linter & linter-ui-default
+    - Interesting:
+      - https://atom.io/packages/script
+      - https://atom.io/packages/platformio-ide-terminal
+
   + clear; MY_PE_PASSWORD='nx2Tech!'; sshpass -p "${MY_PE_PASSWORD}" \
   ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
   nutanix@10.21.${MY_HPOC_NUMBER}.37 'pkill tail; ps -efww|grep calm'

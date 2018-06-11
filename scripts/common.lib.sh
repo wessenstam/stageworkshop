@@ -76,6 +76,7 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
 
   local  _ACCOUNT='nutanix'
   local _ATTEMPTS=3
+  local    _ERROR=99
   local     _HOST="${MY_PE_HOST}"
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
@@ -101,8 +102,8 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
   esac
 
   if [[ -z ${3} ]]; then
-    my_log 'Error: missing third argument.'
-    exit 99
+    my_log 'Error ${_ERROR}: missing third argument.'
+    exit ${_ERROR}
   fi
 
   while true ; do
@@ -119,22 +120,24 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
         _TEST=$?
         ;;
       *)
-        my_log "Error: improper first argument, should be ssh or scp."
-        exit 99
+        my_log "Error ${_ERROR}: improper first argument, should be ssh or scp."
+        exit ${_ERROR}
         ;;
     esac
 
     if (( ${_TEST} > 0 )) && [[ -z ${4} ]]; then
-      my_log "Error pwd = `pwd` and _TEST:${_TEST} _HOST=${_HOST}:$?"
-      exit 22
+      _ERROR=22
+      my_log "Error ${_ERROR}: pwd=`pwd`, _TEST=${_TEST}, _HOST=${_HOST}"
+      exit ${_ERROR}
     fi
 
     if (( ${_TEST} == 0 )); then
       if [[ ${DEBUG} ]]; then my_log "${3} executed properly."; fi
       return 0
     elif (( ${_LOOP} == ${_ATTEMPTS} )); then
-      my_log "giving up after ${_LOOP} tries."
-      exit 11
+      _ERROR=11
+      my_log "Error ${_ERROR}: giving up after ${_LOOP} tries."
+      exit ${_ERROR}
     else
       my_log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_ACCOUNT}..."
       sleep ${_SLEEP}
@@ -143,12 +146,15 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
 }
 
 function Dependencies {
+  local _ERROR=20
+
   if [[ -z ${1} ]]; then
-    my_log "Error: missing install or remove verb."
-    exit 20
+    my_log "Error ${_ERROR}: missing install or remove verb."
+    exit ${_ERROR}
   elif [[ -z ${2} ]]; then
-    my_log "Error: missing package name."
-    exit 21
+    _ERROR=21
+    my_log "Error ${_ERROR}: missing package name."
+    exit ${_ERROR}
   fi
 
   case "${1}" in
@@ -244,8 +250,6 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 # Argument ${1} = REQIRED: PE or PC
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
-
-  my_log "PC Configuration complete: Waiting for deployment to complete, API up..."
   local _ATTEMPTS=${ATTEMPTS}
   local     _HOST="${MY_PE_HOST}"
   local     _LOOP=0
