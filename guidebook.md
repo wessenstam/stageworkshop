@@ -22,18 +22,18 @@ We'll round up to the nearest half minute.
 
 1. 30 min = RX Foundation times to PE up (approximate)
 
-| Cluster | 5/24 (minutes) | 6/2 (min) |
-| :------------- | ------------- | --- |
-| NX-1060 | 30 | N/A |
-| NX-3060-G5 | 25 | 35 |
+| Cluster | 5/24 (minutes) | 6/2 (min) | 6/10 (min) |
+| :------------- | ------------- | --- | ---------- |
+| NX-1060 | 30 | N/A | N/A |
+| NX-3060-G5 | 25 | 35 | 33 |
 
 2. 0.5 min = ./stage_workshop.sh
 
-3. 28/26 min = PE:stage_calmhow.sh
+3. 28/26/20 min = PE:stage_calmhow.sh
 
-| Function | Run1@5/24 (minutes) | 6/2 (min) |
-| :------------- | :------------- | --- |
-| __start__ | 11:26:53 | 09:07:55 |
+| Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
+| :------------- | :------------- | --- | ---------- |
+| __start__ | 11:26:53 | 09:07:55 | 03:15:35 |
 | Dependencies 'install' | 1 |
 | PE_Init | 1 |
 | Network_Configure | 0.5 |
@@ -44,13 +44,13 @@ We'll round up to the nearest half minute.
 | Check_Prism_API_Up 'PC' | 16 |
 | PC_Configure | 0.5 |
 | Dependencies 'remove' | 0.5 |
-| __end__ | 11:54:28 | 09:34:09 |
+| __end__ | 11:54:28 | 09:34:09 | 03:35:25 |
 
 4. 1.5 min = PC:stage_calmhow_pc.sh
 
-| Function | Run1@5/24 (minutes) | 6/2 (min) |
-| :------------- | :------------- | --- |
-| __start (localtime)__ | 04:54:27 | 02:34:08 |
+| Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
+| :------------- | :------------- | --- | ---------- |
+| __start (localtime)__ | 04:54:27 | 02:34:08 | 20:35:24 |
 | Dependencies 'install' | 0.5 |
 | PC_Init | 0.5 |
 | PC_UI | 0.5 |
@@ -60,7 +60,7 @@ We'll round up to the nearest half minute.
 | Images | background |
 | Check_Prism_API_Up 'PC' | 0.5 |
 | Dependencies 'remove' | 0.5 |
-| __end (localtime)__ | 04:55:57 | 02:35:37 |
+| __end (localtime)__ | 04:55:57 | 02:35:37 | 20:36:45 |
 
 5. 2 min: manual configuration of Calm default project.
 

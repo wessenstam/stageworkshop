@@ -1,6 +1,8 @@
 - PC 5.6:
   - Revalidate it works
 + PC 5.7.0.1:
+  - document public cloud account/credentials
+    - Add to: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
   - update default or create new project
   - fix role mappings, logins on PE, PC
     - PE, PC: use RBAC user for APIs, etc.: cluster Admin
