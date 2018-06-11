@@ -1,5 +1,9 @@
 # HPoC Automation: Push Button Calm
 
+## Caveat ##
+
+This is a work in progress and your milage may vary!
+
 ## Prerequisites ##
 1. Tested on Mac, probably works on Linux.
 2. A terminal, command line: git, jq, and sshpass.
