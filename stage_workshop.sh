@@ -78,8 +78,6 @@ function select_workshop {
 # Set script files to send to remote clusters based on command line argument
 function set_workshop {
 
-#      PE_CONFIG='scripts/'
-#      PC_CONFIG=${PE_CONFIG}
   MY_PC_VERSION=5.6 # default
 
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
@@ -126,8 +124,8 @@ function stage_clusters {
     array=(${MY_LINE//|/ })
     MY_PE_HOST=${array[0]}
     MY_PE_PASSWORD=${array[1]}
-    # array=(${MY_PE_HOST//./ })
-    # MY_HPOC_NUMBER=${array[2]}
+    array=(${MY_PE_HOST//./ })
+    MY_PC_HOST=${array[0]}.${array[1]}.${array[2]}.39
 
     Check_Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
@@ -165,9 +163,6 @@ function validate_clusters {
     array=(${MY_LINE//|/ })
     MY_PE_HOST=${array[0]}
     MY_PE_PASSWORD=${array[1]}
-    # array=(${MY_PE_HOST//./ })
-    # MY_HPOC_NUMBER=${array[2]}
-    MY_PC_HOST=$(echo ${MY_PE_HOST} | sed s/7$/9/)
 
     Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then

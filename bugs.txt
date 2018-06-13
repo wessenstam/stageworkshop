@@ -56,9 +56,9 @@
   - nutanix@PC Linux account password change?
   - OPTIMIZATION: Upload AutoDC image in parallel with PC.tar
 - Overall TODO:
-  - Refactor 10.21 out to use the entire PE IP for Support HPoCs
   - Calm 5.7 bootcamp labs and 5.5-6 bugs
   - file Calm bugs from guide
+  - Refactor 10.21 out further!
   - create cache, use cache, propagate cache to PC, fall back to global
   - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
   - refactor out all passwords, hardcoded values to variables
