@@ -126,23 +126,14 @@ function stage_clusters {
     array=(${MY_LINE//|/ })
     MY_PE_HOST=${array[0]}
     MY_PE_PASSWORD=${array[1]}
-    array=(${MY_PE_HOST//./ })
-    MY_HPOC_NUMBER=${array[2]}
-
-    #TODO: Check rx cluster foundation status, then PE API login success to proceed!
-    # 12 failed SSH login attempts registered, but it took more time than successful email.
-    # rx: 20180518 21:38:52 INFO All 140 cluster services are up
-    # we move from: ssh: connect to host 10.21.20.37 port 22: Operation timed out
-    # lost connection
-    # to: Warning: Permanently added '10.21.20.37' (ECDSA) to the list of known hosts.
-    # Nutanix Controller VM
-    # Permission denied, please try again.
+    # array=(${MY_PE_HOST//./ })
+    # MY_HPOC_NUMBER=${array[2]}
 
     Check_Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
-      my_log "Sending configuration script(s) to PE@${MY_PE_HOST}"
+      log "Sending configuration script(s) to PE@${MY_PE_HOST}"
     else
-      my_log "Error: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
+      log "Error: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
       exit 15
     fi
 
@@ -150,18 +141,18 @@ function stage_clusters {
     #echo 'TOFIX: _DEPENDENCIES disabled.'
     cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' && cd ..
 
-    my_log "Remote execution configuration script on PE@${MY_PE_HOST}"
-    remote_exec 'SSH' 'PE' "MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
+    log "Remote execution configuration script on PE@${MY_PE_HOST}"
+    remote_exec 'SSH' 'PE' "MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
 Progress of individual clusters can be monitored by:
  $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
    https://${MY_PE_HOST}:9440/
- $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39 'tail -f stage_calmhow_pc.log'
-   https://10.21.${MY_HPOC_NUMBER}.39:9440/
+ $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@${MY_PC_HOST} 'tail -f stage_calmhow_pc.log'
+   https://${MY_PC_HOST}:9440/
 
  sshpass -p ${MY_PE_PASSWORD} scp ${SSH_OPTS} nutanix@${MY_PE_HOST}:stage_calmhow.log logs/ && \
- sshpass -p 'nutanix/4u' scp ${SSH_OPTS} nutanix@10.21.${MY_HPOC_NUMBER}.39:stage_calmhow_pc.log logs/
+ sshpass -p 'nutanix/4u' scp ${SSH_OPTS} nutanix@${MY_PC_HOST}:stage_calmhow_pc.log logs/
 EOM
   done
   exit
@@ -174,14 +165,15 @@ function validate_clusters {
     array=(${MY_LINE//|/ })
     MY_PE_HOST=${array[0]}
     MY_PE_PASSWORD=${array[1]}
-    array=(${MY_PE_HOST//./ })
-    MY_HPOC_NUMBER=${array[2]}
+    # array=(${MY_PE_HOST//./ })
+    # MY_HPOC_NUMBER=${array[2]}
+    MY_PC_HOST=$(echo ${MY_PE_HOST} | sed s/7$/9/)
 
     Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then
-      my_log "Success: execute PE API on ${MY_PE_HOST}"
+      log "Success: execute PE API on ${MY_PE_HOST}"
     else
-      my_log "Failure: cannot validate PE API on ${MY_PE_HOST}"
+      log "Failure: cannot validate PE API on ${MY_PE_HOST}"
     fi
   done
 }

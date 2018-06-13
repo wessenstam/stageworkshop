@@ -7,7 +7,7 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
       SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
      SSH_OPTS+=' -q' # -v'
 
-function my_log {
+function log {
   local CALLER=$(echo -n `caller 0 | awk '{print $2}'`)
   echo $(date "+%Y-%m-%d %H:%M:%S")"|${CALLER}|${1}"
 }
@@ -16,18 +16,18 @@ function CheckArgsExist {
   local _ARGUMENT
   for _ARGUMENT in ${1}; do
     if [[ -z ${_ARGUMENT} ]]; then
-      my_log "Error: ${_ARGUMENT} not provided!"
+      log "Error: ${_ARGUMENT} not provided!"
       exit -1
     fi
   done
 
-  if [[ -z ${MY_HPOC_NUMBER} ]]; then
-    # Derive HPOC number from IP 3rd byte
-    #MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
-    MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
-    array=(${MY_CVM_IP//./ })
-    MY_HPOC_NUMBER=${array[2]}
-  fi
+  # if [[ -z ${MY_HPOC_NUMBER} ]]; then
+  #   # Derive HPOC number from IP 3rd byte
+  #   #MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
+  #   MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
+  #   array=(${MY_CVM_IP//./ })
+  #   MY_HPOC_NUMBER=${array[2]}
+  # fi
 }
 
 function Download {
@@ -37,32 +37,32 @@ function Download {
   local              _SLEEP=2
 
   if [[ -z ${1} ]]; then
-    my_log 'Error: no URL to download!'
+    log 'Error: no URL to download!'
     exit 33
   fi
 
   while true ; do
     (( _LOOP++ ))
-    my_log "${1}..."
+    log "${1}..."
     local _OUTPUT=''
     curl ${CURL_OPTS} ${_HTTP_RANGE_ENABLED} --remote-name --location ${1}
     _OUTPUT=$?
-    DEBUG=1; if [[ ${DEBUG} ]]; then my_log "DEBUG: curl exited ${_OUTPUT}."; fi
+    DEBUG=1; if [[ ${DEBUG} ]]; then log "DEBUG: curl exited ${_OUTPUT}."; fi
 
     if (( ${_OUTPUT} == 0 )); then
-      my_log "Success: ${1##*/}"
+      log "Success: ${1##*/}"
       break
     fi
 
     if (( ${_LOOP} == ${_ATTEMPTS} )); then
-      my_log "Error: couldn't download from: ${1}, giving up after ${_LOOP} tries."
+      log "Error: couldn't download from: ${1}, giving up after ${_LOOP} tries."
       exit 11
     elif (( ${_OUTPUT} == 33 )); then
-      my_log "Web server doesn't support HTTP range command, purging and falling back."
+      log "Web server doesn't support HTTP range command, purging and falling back."
       _HTTP_RANGE_ENABLED=''
       rm -f ${1##*/}
     else
-      my_log "${_LOOP}/${_ATTEMPTS}: curl=${_OUTPUT} ${1##*/} SLEEP ${_SLEEP}..."
+      log "${_LOOP}/${_ATTEMPTS}: curl=${_OUTPUT} ${1##*/} SLEEP ${_SLEEP}..."
       sleep ${_SLEEP}
     fi
   done
@@ -90,19 +90,22 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
       fi
       ;;
     'PC' )
-          _HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
+      if [[ -z ${MY_PC_HOST} ]]; then
+        #_HOST=localhost
+        MY_PC_HOST=$(echo ${MY_PE_HOST} | sed s/7$/9/)
+      fi
       _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
       ;;
     'LDAP_SERVER' )
        _ACCOUNT='root'
-          _HOST="10.21.${MY_HPOC_NUMBER}.40"
+          _HOST=$(echo ${MY_PE_HOST} | sed s/37$/40/)
       _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
          _SLEEP=7
       ;;
   esac
 
   if [[ -z ${3} ]]; then
-    my_log 'Error ${_ERROR}: missing third argument.'
+    log 'Error ${_ERROR}: missing third argument.'
     exit ${_ERROR}
   fi
 
@@ -110,36 +113,36 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
     (( _LOOP++ ))
     case "${1}" in
       'SSH' | 'ssh')
-       #DEBUG=1; if [[ ${DEBUG} ]]; then my_log "_TEST will perform ${_ACCOUNT}@${_HOST} ${3}..."; fi
+       #DEBUG=1; if [[ ${DEBUG} ]]; then log "_TEST will perform ${_ACCOUNT}@${_HOST} ${3}..."; fi
         sshpass -p ${_PASSWORD} ssh -x ${SSH_OPTS} ${_ACCOUNT}@${_HOST} "${3}"
         _TEST=$?
         ;;
       'SCP' | 'scp')
-        #DEBUG=1; if [[ ${DEBUG} ]]; then my_log "_TEST will perform scp ${3} ${_ACCOUNT}@${_HOST}:"; fi
+        #DEBUG=1; if [[ ${DEBUG} ]]; then log "_TEST will perform scp ${3} ${_ACCOUNT}@${_HOST}:"; fi
         sshpass -p ${_PASSWORD} scp ${SSH_OPTS} ${3} ${_ACCOUNT}@${_HOST}:
         _TEST=$?
         ;;
       *)
-        my_log "Error ${_ERROR}: improper first argument, should be ssh or scp."
+        log "Error ${_ERROR}: improper first argument, should be ssh or scp."
         exit ${_ERROR}
         ;;
     esac
 
     if (( ${_TEST} > 0 )) && [[ -z ${4} ]]; then
       _ERROR=22
-      my_log "Error ${_ERROR}: pwd=`pwd`, _TEST=${_TEST}, _HOST=${_HOST}"
+      log "Error ${_ERROR}: pwd=`pwd`, _TEST=${_TEST}, _HOST=${_HOST}"
       exit ${_ERROR}
     fi
 
     if (( ${_TEST} == 0 )); then
-      if [[ ${DEBUG} ]]; then my_log "${3} executed properly."; fi
+      if [[ ${DEBUG} ]]; then log "${3} executed properly."; fi
       return 0
     elif (( ${_LOOP} == ${_ATTEMPTS} )); then
       _ERROR=11
-      my_log "Error ${_ERROR}: giving up after ${_LOOP} tries."
+      log "Error ${_ERROR}: giving up after ${_LOOP} tries."
       exit ${_ERROR}
     else
-      my_log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_ACCOUNT}..."
+      log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_ACCOUNT}..."
       sleep ${_SLEEP}
     fi
   done
@@ -149,17 +152,17 @@ function Dependencies {
   local _ERROR=20
 
   if [[ -z ${1} ]]; then
-    my_log "Error ${_ERROR}: missing install or remove verb."
+    log "Error ${_ERROR}: missing install or remove verb."
     exit ${_ERROR}
   elif [[ -z ${2} ]]; then
     _ERROR=21
-    my_log "Error ${_ERROR}: missing package name."
+    log "Error ${_ERROR}: missing package name."
     exit ${_ERROR}
   fi
 
   case "${1}" in
     'install')
-      my_log "Install ${2}..."
+      log "Install ${2}..."
       export PATH=${PATH}:${HOME}
 
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
@@ -175,11 +178,11 @@ function Dependencies {
                 # https://sourceforge.net/projects/sshpass/files/sshpass/
               fi
               if (( $? > 0 )) ; then
-                my_log "Error: can't install ${2}."
+                log "Error: can't install ${2}."
                 exit 98
               fi
             else
-              my_log "Success: found ${2}."
+              log "Success: found ${2}."
             fi
             ;;
           jq )
@@ -189,13 +192,13 @@ function Dependencies {
                 Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
               fi
               if (( $? > 0 )); then
-                my_log "Error: can't install ${2}."
+                log "Error: can't install ${2}."
                 exit 98
               else
                 chmod u+x jq-linux64 && ln -s jq-linux64 jq
               fi
             else
-              my_log "Success: found ${2}."
+              log "Success: found ${2}."
             fi
             ;;
         esac
@@ -206,29 +209,29 @@ function Dependencies {
             if [[ -z `which ${2}` ]]; then
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
               if (( $? > 0 )); then
-                my_log "Error: can't install ${2}."
+                log "Error: can't install ${2}."
                 exit 98
               fi
             else
-              my_log "Success: found ${2}."
+              log "Success: found ${2}."
             fi
             ;;
           jq )
             if [[ -z `which ${2}` ]]; then
               brew install jq
               if (( $? > 0 )); then
-                my_log "Error: can't install ${2}."
+                log "Error: can't install ${2}."
                 exit 98
               fi
             else
-              my_log "Success: found ${2}."
+              log "Success: found ${2}."
             fi
             ;;
         esac
       fi #MacOS
       ;;
     'remove')
-      my_log "Removing ${2}..."
+      log "Removing ${2}..."
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
         # probably on NTNX CVM or PCVM = CentOS7
         case "${2}" in
@@ -240,7 +243,7 @@ function Dependencies {
             ;;
         esac
       else
-        my_log "FEATURE: don't remove Dependencies on Mac."
+        log "FEATURE: don't remove Dependencies on Mac."
       fi
       ;;
   esac
@@ -258,7 +261,7 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
   local     _TEST=0
 
   if [[ ${1} == 'PC' ]]; then
-        _HOST="10.21.${MY_HPOC_NUMBER}.39" # Prism Cental
+        _HOST=${MY_PC_HOST}
     #_PASSWORD='nutanix/4u' # TODO: hardcoded p/w
   fi
 
@@ -278,17 +281,17 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 
     if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]]; then
       _PASSWORD='Nutanix/4u'
-      my_log "@${1}: Fallback: try initial password next cycle..."
+      log "@${1}: Fallback: try initial password next cycle..."
     fi
 
     if (( ${_TEST} == 200 )); then
-      my_log "@${1}: successful"
+      log "@${1}: successful"
       return 0
     elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-      my_log "@${1}: Giving up after ${_LOOP} tries."
+      log "@${1}: Giving up after ${_LOOP} tries."
       return 11
     else
-      my_log "@${1} ${_LOOP}/${_ATTEMPTS}=${_TEST}: sleep ${_SLEEP} seconds..."
+      log "@${1} ${_LOOP}/${_ATTEMPTS}=${_TEST}: sleep ${_SLEEP} seconds..."
       sleep ${_SLEEP}
     fi
   done

@@ -8,6 +8,7 @@
     - PE, PC: use RBAC user for APIs, etc.: cluster Admin
     - improve/run poc_samba_users.sh
   - nuclei (run local from container?)
+    - http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
     - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
       - vs: cat /etc/nutanix/release_version
     - project.create name=mark.lavi.test \
@@ -55,6 +56,7 @@
   - nutanix@PC Linux account password change?
   - OPTIMIZATION: Upload AutoDC image in parallel with PC.tar
 - Overall TODO:
+  - Refactor 10.21 out to use the entire PE IP for Support HPoCs
   - Calm 5.7 bootcamp labs and 5.5-6 bugs
   - file Calm bugs from guide
   - create cache, use cache, propagate cache to PC, fall back to global
