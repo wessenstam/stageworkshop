@@ -34,8 +34,8 @@ MY_PRIMARY_NET_NAME='Primary'
 MY_PRIMARY_NET_VLAN='0'
 MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${MY_HPOC_NUMBER}1"
-MY_PC_SRC_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central.tar'
-MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+MY_PC_SRC_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central.tar'
+MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
 MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
 MY_AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
 
