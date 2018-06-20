@@ -230,7 +230,7 @@ MY_DEPLOY_BODY=$(cat <<EOF
 {
   "resources": {
       "should_auto_register":true,
-      "version":"5.6",
+      "version":"5.7.1",
       "pc_vm_list":[{
           "data_disk_size_bytes":536870912000,
           "nic_list":[{
