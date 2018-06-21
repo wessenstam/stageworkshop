@@ -5,10 +5,11 @@
 function PC_LDAP
 { # TODO: configure case for each authentication server type?
   local _GROUP
+  local _HTTP_BODY
   local _TEST
 
   log "Add Directory ${LDAP_SERVER}"
-  HTTP_BODY=$(cat <<EOF
+  _HTTP_BODY=$(cat <<EOF
   {
     "name":"${LDAP_SERVER}",
     "domain":"${MY_DOMAIN_FQDN}",
@@ -22,13 +23,13 @@ EOF
   )
 
   _TEST=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
   log "_TEST=|${_TEST}|"
 
   log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO: hardcoded
   for _GROUP in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
-    HTTP_BODY=$(cat <<EOF
+    _HTTP_BODY=$(cat <<EOF
     {
       "directoryName":"${LDAP_SERVER}",
       "role":"ROLE_CLUSTER_ADMIN",
@@ -38,30 +39,33 @@ EOF
 EOF
     )
     _TEST=$(curl ${CURL_POST_OPTS} \
-      --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
+      --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
       https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
     log "Cluster Admin=${_GROUP}, _TEST=|${_TEST}|"
   done
 }
 
 function SSP_Auth {
+  local _HTTP_BODY
+  local _LDAP_UUID
+
   log "Find ${LDAP_SERVER} uuid"
-  HTTP_BODY=$(cat <<EOF
+  _HTTP_BODY=$(cat <<EOF
   {
     "kind": "directory_service"
   }
 EOF
   )
-  LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
+  _LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
-  log "LDAP_UUID=|${LDAP_UUID}|"
+  log "_LDAP_UUID=|${_LDAP_UUID}|"
 
   # TODO: test ldap connection
 
   log "Connect SSP Authentication (spec-ssp-authrole.json)..."
-  HTTP_BODY=$(cat <<EOF
+  _HTTP_BODY=$(cat <<EOF
   {
     "spec": {
       "name": "${LDAP_SERVER}",
@@ -86,7 +90,7 @@ EOF
     "metadata": {
       "kind": "directory_service",
       "spec_version": 0,
-      "uuid": "${LDAP_UUID}",
+      "uuid": "${_LDAP_UUID}",
       "categories": {}
     },
     "api_version": "3.1.0"
@@ -94,8 +98,8 @@ EOF
 EOF
   )
   SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X PUT --data "${HTTP_BODY}" \
-    https://localhost:9440/api/nutanix/v3/directory_services/${LDAP_UUID})
+    --user admin:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
+    https://localhost:9440/api/nutanix/v3/directory_services/${_LDAP_UUID})
   log "SSP_CONNECT=|${SSP_CONNECT}|"
 
   # TODO: SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
@@ -103,18 +107,21 @@ EOF
 
 function CALM
 {
+  local _HTTP_BODY
+  local _TEST
+
   log "Enable Nutanix Calm..."
-  HTTP_BODY=$(cat <<EOF
+  _HTTP_BODY=$(cat <<EOF
   {
     "state": "ENABLE",
     "enable_nutanix_apps": true
   }
 EOF
   )
-  CALM=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
+  _TEST=$(curl ${CURL_POST_OPTS} \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
-  log "CALM=|${CALM}|"
+  log "CALM=|${_TEST}|"
 
   if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
     echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
@@ -126,34 +133,30 @@ EOF
 }
 
 function PC_UI
-{
-  HTTP_BODY=$(cat <<EOF
-  {
-    "type":"welcome_banner",
-    "key":"disable_video",
-    "value": true}
-  }
+{ # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
+
+  local _JSON=$(cat <<EOF
+{"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
+{"type":"custom_login_screen","key":"color_out","value":"#7B920A"} \
+{"type":"custom_login_screen","key":"product_title","value":"Prism Central ${MY_PC_VERSION}"} \
+{"type":"custom_login_screen","key":"title","value":"Welcome to NutanixWorkshops.com"} \
+{"type":"welcome_banner","key":"disable_video","value": true} \
+{"type":"disable_2048","key":"disable_video","value": true} \
+{"type":"UI_CONFIG","key":"autoLogoutGlobal","value": 7200000} \
+{"type":"UI_CONFIG","key":"autoLogoutOverride","value": 0} \
+{"type":"UI_CONFIG","key":"welcome_banner","value": "NutanixWorkshops.com"}
 EOF
   )
-  UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
-  log "welcome_banner UI_TEST=|${UI_TEST}|"
+  local _TEST
 
-  HTTP_BODY=$(cat <<EOF
-  {
-    "type":"disable_2048",
-    "key":"disable_video",
-    "value": true}
-  }
-EOF
-  )
-  UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
-  log "disable_2048 UI_TEST=|${UI_TEST}|"
+  for _HTTP_BODY in ${_JSON}; do
+    _TEST=$(curl ${CURL_HTTP_OPTS} \
+      --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+      https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
+    log "_TEST=|${_TEST}|${_HTTP_BODY}"
+  done
 
-  HTTP_BODY=$(cat <<EOF
+  _HTTP_BODY=$(cat <<EOF
   {
     "type":"UI_CONFIG",
     "key":"autoLogoutTime",
@@ -161,56 +164,19 @@ EOF
   }
 EOF
   )
-  UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
+  _TEST=$(curl ${CURL_HTTP_OPTS} \
+    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/PrismGateway/services/rest/v1/application/user_data)
-  log "autoLogoutTime UI_TEST=|${UI_TEST}|"
-
-  HTTP_BODY=$(cat <<EOF
-  {
-    "type":"UI_CONFIG",
-    "key":"autoLogoutGlobal",
-    "value": 7200000}
-  }
-EOF
-  )
-  UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
-  log "autoLogoutGlobal UI_TEST=|${UI_TEST}|"
-
-  HTTP_BODY=$(cat <<EOF
-  {
-    "type":"UI_CONFIG",
-    "key":"autoLogoutOverride",
-    "value": 0}
-  }
-EOF
-  )
-  UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
-  log "autoLogoutOverride UI_TEST=|${UI_TEST}|"
-
-  HTTP_BODY=$(cat <<EOF
-  {
-    "type":"UI_CONFIG",
-    "key":"welcome_banner",
-    "value": "NutanixWorkshops.com"}
-  }
-EOF
-  )
-  UI_TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${HTTP_BODY}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
-  log "welcome_banner UI_TEST=|${UI_TEST}|"
+  log "autoLogoutTime _TEST=|${_TEST}|"
 }
 
 function PC_Init
 { # depends on ncli
   # TODO: PC_Init: NCLI, type 'cluster get-smtp-server' config
 
+  local _TEST
   local OLD_PW='nutanix/4u'
+
   log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
 #  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@localhost \
 #   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
@@ -218,14 +184,14 @@ function PC_Init
   if (( $? != 0 )); then
    log "Error: Password not reset: $?."# exit 10
   fi
-#   HTTP_BODY=$(cat <<EOF
+#   _HTTP_BODY=$(cat <<EOF
 # {
 #   "oldPassword": "${OLD_PW}",
 #   "newPassword": "${MY_PE_PASSWORD}"
 # }
 # EOF
 #   )
-#   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${HTTP_BODY}" \
+#   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${_HTTP_BODY}" \
 #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
 #   log "cURL reset password PC_TEST=${PC_TEST}"
 
@@ -233,15 +199,15 @@ function PC_Init
   ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
   log "Validate EULA on PC"
-  EULA_TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
+  _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
       "username": "SE",
       "companyName": "NTNX",
       "jobTitle": "SE"
   }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
-  log "EULA_TEST=|${EULA_TEST}|"
+  log "EULA _TEST=|${_TEST}|"
 
   log "Disable Pulse on PC"
-  PULSE_TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT -d '{
+  _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT -d '{
       "emailContactList":null,
       "enable":false,
       "verbosityType":null,
@@ -251,7 +217,7 @@ function PC_Init
       "isPulsePromptNeeded":false,
       "remindLater":null
   }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
-  log "PULSE_TEST=|${PULSE_TEST}|"
+  log "PULSE _TEST=|${_TEST}|"
 
   # Prism Central upgrade
   #log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
@@ -325,7 +291,6 @@ function Images
 
 function PC_Project {
   local _NAME=mark.lavi.test
-
   local _COUNT=$(nuclei project.list | grep ${_NAME} | wc --lines)
   if (( ${_COUNT} > 0 )); then
     nuclei project.delete ${_NAME} confirm=false
@@ -354,7 +319,7 @@ function PC_Project {
 
 log `basename "$0"`": __main__: PID=$$"
 
-CheckArgsExist 'MY_PE_PASSWORD MY_PC_VERSION LDAP_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+CheckArgsExist 'MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION LDAP_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
 
 ATTEMPTS=2
    SLEEP=10

@@ -144,9 +144,9 @@ function stage_clusters {
 
     cat <<EOM
 Progress of individual clusters can be monitored by:
- $ sshpass -p ${MY_PE_PASSWORD} ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
+ $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
    https://${MY_PE_HOST}:9440/
- $ sshpass -p 'nutanix/4u' ssh ${SSH_OPTS} nutanix@${MY_PC_HOST} 'tail -f stage_calmhow_pc.log'
+ $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PC_HOST} 'tail -f stage_calmhow_pc.log'
    https://${MY_PC_HOST}:9440/
 
  sshpass -p ${MY_PE_PASSWORD} scp ${SSH_OPTS} nutanix@${MY_PE_HOST}:stage_calmhow.log logs/ && \

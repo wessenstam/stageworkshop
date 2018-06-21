@@ -38,7 +38,7 @@ function PC_Download
 
 function PE_Init
 {
-  local _DATA_SERVICE_IP=${HPOC_PREFIX}.38
+  local _DATA_SERVICE_IP=${HPOC_PREFIX}.$(($OCTET4 + 1))
 
   if [[ `ncli cluster get-params | grep 'External Data' | \
          awk -F: '{print $2}' | tr -d '[:space:]'` == "${_DATA_SERVICE_IP}" ]]; then
@@ -66,7 +66,7 @@ function PE_Init
     # Set external IP address:
     #ncli cluster edit-params external-ip-address=${MY_PE_HOST}
 
-    log "Set Data Services IP address to ${_DATA_SERVICE_I}P"
+    log "Set Data Services IP address to ${_DATA_SERVICE_IP}"
     ncli cluster edit-params external-data-services-ip-address=${_DATA_SERVICE_IP}
   fi
 }
@@ -335,7 +335,6 @@ function PC_Init
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else
-    MY_PC_HOST=${HPOC_PREFIX}.39
     log "Get NET_UUID,MY_CONTAINER_UUID from cluster: PC_Init dependency."
     MY_NET_UUID=$(acli "net.get ${MY_PRIMARY_NET_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
     log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
@@ -412,7 +411,10 @@ function PC_Configure {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-   "LDAP_SERVER=${LDAP_SERVER} LDAP_HOST=${LDAP_HOST} MY_DOMAIN_FQDN=${MY_DOMAIN_FQDN} MY_DOMAIN_USER=${MY_DOMAIN_USER} MY_DOMAIN_PASS=${MY_DOMAIN_PASS} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
+    "LDAP_SERVER=${LDAP_SERVER} LDAP_HOST=${LDAP_HOST} MY_DOMAIN_FQDN=${MY_DOMAIN_FQDN} \
+    MY_DOMAIN_USER=${MY_DOMAIN_USER} MY_DOMAIN_PASS=${MY_DOMAIN_PASS} \
+    MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} \
+    nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
@@ -420,7 +422,7 @@ function PC_Configure {
 
 # Source Nutanix environments (for PATH and other things)
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh # source common routines, global variables
+. common.lib.sh # source common routines, additional global variables
 
 log `basename "$0"`": PID=$$"
 
@@ -430,14 +432,16 @@ array=(${MY_PE_HOST//./ })
      OCTET1=${array[0]}
      OCTET2=${array[1]}
      OCTET3=${array[2]}
+     OCTET4=${array[3]}
 HPOC_PREFIX=${OCTET1}.${OCTET2}.${OCTET3}
+ MY_PC_HOST=${HPOC_PREFIX}.$(($OCTET4 + 2))
 
 MY_SP_NAME='SP01'
 MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
 
    LDAP_SERVER='AutoDC'
-     LDAP_HOST=${HPOC_PREFIX}.40
+     LDAP_HOST=${HPOC_PREFIX}.$(($OCTET4 + 3))
  MY_DOMAIN_URL="ldaps://${LDAP_HOST}/"
 MY_DOMAIN_FQDN='ntnxlab.local'
 MY_DOMAIN_NAME='NTNXLAB'
@@ -455,8 +459,11 @@ case ${MY_PC_VERSION} in
   5.6 )
     MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
     ;;
-  5.7 | 5.7.0.1 )
+  5.7.0.1 )
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
+    ;;
+  5.7 | 5.7.1 )
+    MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
     ;;
   *)
     log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
@@ -492,8 +499,6 @@ if (( $? == 0 )) ; then
   log "PC Configuration complete: Waiting for deployment to complete, API up..."
   log "$0: main: done!_____________________"
   echo
-  #log "Watching logs on PC..."
-  #BUG: Dependencies removed! remote_exec 'ssh' 'PC' "tail -f stage_calmhow_pc.log"
 else
   log "Error in main functional chain, exit!"
   exit 18

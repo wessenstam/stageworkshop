@@ -2,3 +2,5 @@ example_pocs.txt
 cache/
 logs/
 .DS_Store
+.kitchen/
+.kitchen.local.yml

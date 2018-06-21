@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# TODO: lost local override for verbose
      CURL_OPTS='--insecure --silent --show-error' # --verbose'
 CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json --header Accept:application/json --output /dev/null"
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
@@ -20,14 +19,6 @@ function CheckArgsExist {
       exit -1
     fi
   done
-
-  # if [[ -z ${MY_HPOC_NUMBER} ]]; then
-  #   # Derive HPOC number from IP 3rd byte
-  #   #MY_CVM_IP=$(ip addr | grep inet | cut -d ' ' -f 6 | grep ^10.21 | head -n 1)
-  #   MY_CVM_IP=$(/sbin/ifconfig eth0 | grep 'inet ' | awk '{ print $2}')
-  #   array=(${MY_CVM_IP//./ })
-  #   MY_HPOC_NUMBER=${array[2]}
-  # fi
 }
 
 function Download {
@@ -47,7 +38,7 @@ function Download {
     local _OUTPUT=''
     curl ${CURL_OPTS} ${_HTTP_RANGE_ENABLED} --remote-name --location ${1}
     _OUTPUT=$?
-    DEBUG=1; if [[ ${DEBUG} ]]; then log "DEBUG: curl exited ${_OUTPUT}."; fi
+    #DEBUG=1; if [[ ${DEBUG} ]]; then log "DEBUG: curl exited ${_OUTPUT}."; fi
 
     if (( ${_OUTPUT} == 0 )); then
       log "Success: ${1##*/}"
@@ -77,28 +68,20 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
   local  _ACCOUNT='nutanix'
   local _ATTEMPTS=3
   local    _ERROR=99
-  local     _HOST="${MY_PE_HOST}"
+  local     _HOST=${MY_PE_HOST}
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
   case ${2} in
-    'PE' )
-      if [[ -z ${MY_PE_HOST} ]]; then
-        _HOST=localhost
-      fi
-      ;;
     'PC' )
-      if [[ -z ${MY_PC_HOST} ]]; then
-        #_HOST=localhost
-        MY_PC_HOST=$(echo ${MY_PE_HOST} | sed s/7$/9/)
-      fi
+          _HOST=${MY_PC_HOST}
       _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
       ;;
     'LDAP_SERVER' )
        _ACCOUNT='root'
-          _HOST=$(echo ${MY_PE_HOST} | sed s/37$/40/)
+          _HOST=${LDAP_HOST}
       _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
          _SLEEP=7
       ;;
@@ -114,12 +97,12 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
     case "${1}" in
       'SSH' | 'ssh')
        #DEBUG=1; if [[ ${DEBUG} ]]; then log "_TEST will perform ${_ACCOUNT}@${_HOST} ${3}..."; fi
-        sshpass -p ${_PASSWORD} ssh -x ${SSH_OPTS} ${_ACCOUNT}@${_HOST} "${3}"
+        SSHPASS="${_PASSWORD}" sshpass -e ssh -x ${SSH_OPTS} ${_ACCOUNT}@${_HOST} "${3}"
         _TEST=$?
         ;;
       'SCP' | 'scp')
         #DEBUG=1; if [[ ${DEBUG} ]]; then log "_TEST will perform scp ${3} ${_ACCOUNT}@${_HOST}:"; fi
-        sshpass -p ${_PASSWORD} scp ${SSH_OPTS} ${3} ${_ACCOUNT}@${_HOST}:
+        SSHPASS="${_PASSWORD}" sshpass -e scp ${SSH_OPTS} ${3} ${_ACCOUNT}@${_HOST}:
         _TEST=$?
         ;;
       *)
@@ -166,7 +149,7 @@ function Dependencies {
       export PATH=${PATH}:${HOME}
 
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
-        # probably on NTNX CVM or PCVM = CentOS7
+        # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
         case "${2}" in
           sshpass )
             if [[ -z `which ${2}` ]]; then
@@ -254,7 +237,7 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
   local _ATTEMPTS=${ATTEMPTS}
-  local     _HOST="${MY_PE_HOST}"
+  local     _HOST=${MY_PE_HOST}
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
   local    _SLEEP=${SLEEP}
@@ -262,7 +245,6 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 
   if [[ ${1} == 'PC' ]]; then
         _HOST=${MY_PC_HOST}
-    #_PASSWORD='nutanix/4u' # TODO: hardcoded p/w
   fi
 
   if [[ ! -z ${2} ]]; then
@@ -280,8 +262,9 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
     if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]]; then
-      _PASSWORD='Nutanix/4u'
+      _PASSWORD='Nutanix/4u' # TODO: hardcoded p/w
       log "@${1}: Fallback: try initial password next cycle..."
+      break
     fi
 
     if (( ${_TEST} == 200 )); then

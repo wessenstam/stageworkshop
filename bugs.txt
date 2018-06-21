@@ -1,5 +1,43 @@
+- Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 - PC 5.6:
-  - Revalidate it works
+  - Revalidate it works, add AOS 5.5 dependency note
+  - 5.6.1 http://download.nutanix.com/pc/one-click-pc-deployment/5.6.1/v1/euphrates-5.6.1-stable-prism_central_metadata.json
+- bugs from mike.bujara@nutanix.com:
+  - test cases: external URLs working (PC x, sshpass, jq, autodc, etc.)
+  - i created the cluster file and run it with stage_Workshop and it gives me the menu
+but none of the inputs are accepted:
+    - ./stage_Workshop.sh
+    - example_poc.txt
+    - 2 (no response, back to menu)
+    " you can login and see PE tasks while in flight, but that’s not as informative"
+    - verify doesn't do much
+    - Test 10/10|Substate=running, exec properly, sleep 7 seconds..
+    Error 12: AutoDC VM running, giving up after 11 tries.
+    AutoDC pending
+    AutoDC complete
+      - You can remediate by running it again or by deleting the AutoDC VM from PE and rerunning the script. I should make it try more times, perhaps.
+    - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
+- SRE Clusters of HPOC (10.63.x.x)
+  - Cluster IP: https://10.63.30.150:9440/console/#login
+    Prism UI Credentials: admin/nx2Tech975!
+    CVM Credentials: nutanix/nx2Tech975!
+    AHV Host Credentials: root / nx2Tech975!
+
+    AOS Version: 5.6
+    Hypervisor Version: AHV 20170830.115 (AOS5.6+)
+
+    NETWORK INFORMATION
+    Subnet Mask: 255.255.252.0
+    Gateway: 10.63.28.1
+    Nameserver IP: 10.63.25.10
+
+    SECONDARY NETWORK INFORMATION
+    Secondary VLAN: 0
+    Secondary Subnet: 255.255.252.0
+    Secondary Gateway: 10.63.28.1
+    Secondary IP Range: 10.63.31.146-149
+
+
 + PC 5.7.0.1:
   - document public cloud account/credentials
     - Add to: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
@@ -8,7 +46,6 @@
     - PE, PC: use RBAC user for APIs, etc.: cluster Admin
     - improve/run poc_samba_users.sh
   - nuclei (run local from container?)
-    - http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
     - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
       - vs: cat /etc/nutanix/release_version
     - project.create name=mark.lavi.test \
@@ -57,6 +94,8 @@
   - OPTIMIZATION: Upload AutoDC image in parallel with PC.tar
 - Overall TODO:
   - Calm 5.7 bootcamp labs and 5.5-6 bugs
+    - https://github.com/nutanixworkshops/introcalm
+    vs. https://github.com/mlavi/calm_workshop
   - file Calm bugs from guide
   - Refactor 10.21 out further!
   - create cache, use cache, propagate cache to PC, fall back to global
@@ -64,21 +103,30 @@
   - refactor out all passwords, hardcoded values to variables
     - SSP Admins
   - Insure exit codes unique/consistent, error messages consistent
-  - Bash test framework for unit tests:
-    - BATS
+  - Bash test framework for unit tests and on blueprints?
+    - https://kitchen.ci/ which can do spec, BATS, etc. = https://github.com/test-kitchen/test-kitchen
+      - https://kitchen.ci/docs/getting-started/writing-test
+      - https://serverspec.org/ DSL Spec TDD
+      - http://rspec.info/ Ruby TDD
+      - inspec
+        - more compliance from supermarket
+        - https://dev-sec.io/features.html#os-hardening
+        - https://www.cisecurity.org/cis-benchmarks/
+      - https://en.wikipedia.org/wiki/ERuby
+      - https://www.engineyard.com/blog/bats-test-command-line-tools
+      - https://medium.com/@pimterry/testing-your-shell-scripts-with-bats-abfca9bdc5b9
+        - http://ohmyz.sh/
+        - https://github.com/jakubroztocil/httpie#scripting
+        - https://github.com/pimterry/git-confirm
+    - BATS https://github.com/bats-core/bats-core
     - https://invent.life/project/bash-infinity-framework
     - Runit/rundeck? http://bashdb.sourceforge.net/
     - Tests:
       - userX login to PE, PC
       - userX new project, upload, run blueprint
-      - rspec, serverspec on blueprint?
-  - Atom.io packages added:
-    - npm i -g bash-language-server ; https://atom.io/packages/ide-bash
-    - https://atom.io/packages/atom-ide-ui
-      - Disabled linter & linter-ui-default
-    - Interesting:
-      - https://atom.io/packages/script
-      - https://atom.io/packages/platformio-ide-terminal
+  - Base images/boxes: https://github.com/chef/bento
+    - https://qemu.weilnetz.de/doc/qemu-doc.html#disk_005fimages_005fssh
+      qemu-system-x86_64 -drive file=ssh://[user@]server[:port]/path[?host_key_check=host_key_check]
 
   + clear; MY_PE_PASSWORD='nx2Tech!'; sshpass -p "${MY_PE_PASSWORD}" \
   ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
@@ -86,12 +134,12 @@
 + AutoDC:
   + NTNXLAB, ntnxlab.local, root:nutanix/4u
   + samba --version Version 4.2.14-Debian
+  - https://gitlab.com/mlavi/alpine-dc
 + PE:
   + user01@ntnxlab.local auth test fine
 
 Citations:
 - https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
--
 
 Push button Calm:
 - https://github.com/mlavi/stageworkshop/blob/master/guidebook.md
