@@ -1,7 +1,6 @@
 - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 - PC 5.6:
   - Revalidate it works, add AOS 5.5 dependency note
-  - 5.6.1 http://download.nutanix.com/pc/one-click-pc-deployment/5.6.1/v1/euphrates-5.6.1-stable-prism_central_metadata.json
 - bugs from mike.bujara@nutanix.com:
   - test cases: external URLs working (PC x, sshpass, jq, autodc, etc.)
   - i created the cluster file and run it with stage_Workshop and it gives me the menu
@@ -97,7 +96,7 @@ but none of the inputs are accepted:
     - https://github.com/nutanixworkshops/introcalm
     vs. https://github.com/mlavi/calm_workshop
   - file Calm bugs from guide
-  - Refactor 10.21 out further!
+  - Refactor 10.21 out further: mostly done! move to bats?
   - create cache, use cache, propagate cache to PC, fall back to global
   - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
   - refactor out all passwords, hardcoded values to variables

@@ -4,6 +4,7 @@
 # Please configure according to your needs
 
 function _TestDNS {
+  CheckArgsExist 'LDAP_HOST MY_DOMAIN_FQDN'
   local   _DNS=$(dig +retry=0 +time=2 +short @${LDAP_HOST} dc1.${MY_DOMAIN_FQDN})
   local _ERROR=44
   local  _TEST=$?
@@ -22,6 +23,7 @@ function acli {
 
 function PC_Download
 {
+  CheckArgsExist 'MY_PC_META_URL'
   if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
     log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
     Download "${MY_PC_META_URL}"
@@ -38,6 +40,8 @@ function PC_Download
 
 function PE_Init
 {
+  CheckArgsExist 'HPOC_PREFIX OCTET4 SMTP_SERVER_ADDRESS MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME SLEEP ATTEMPTS OCTET4 OCTET3 OCTET2 OCTET1'
+
   local _DATA_SERVICE_IP=${HPOC_PREFIX}.$(($OCTET4 + 1))
 
   if [[ `ncli cluster get-params | grep 'External Data' | \
@@ -73,6 +77,8 @@ function PE_Init
 
 function Network_Configure
 {
+  CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME HPOC_PREFIX LDAP_HOST'
+
   if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
     log "IDEMPOTENCY: ${MY_SECONDARY_NET_NAME} network set, skip"
   else
@@ -103,6 +109,8 @@ function Network_Configure
 
 function AuthenticationServer()
 {
+  CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME'
+
   if [[ -z ${LDAP_SERVER} ]]; then
     log "Error: please provide a choice for authentication server."
     exit 13
@@ -214,7 +222,7 @@ function AuthenticationServer()
         log "Power on ${LDAP_SERVER} VM..."
         acli "vm.on ${LDAP_SERVER}"
 
-        local _ATTEMPTS=10
+        local _ATTEMPTS=20
          _LOOP=0
         _SLEEP=7
 
@@ -259,7 +267,7 @@ function AuthenticationServer()
             exit ${_ERROR}
           else
             log "_TestDNS ${_LOOP}/${_ATTEMPTS}=|${_RESULT}|: sleep ${_SLEEP} seconds..."
-            #sleep ${_SLEEP}
+            sleep ${_SLEEP}
           fi
         done
 
@@ -273,6 +281,8 @@ function AuthenticationServer()
 
 function PE_Auth
 {
+  CheckArgsExist 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
+
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
     log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
   else
@@ -295,6 +305,8 @@ function PE_Auth
 
 function PE_Configure
 {
+  CheckArgsExist 'CURL_POST_OPTS MY_PE_PASSWORD'
+
   Check_Prism_API_Up 'PC' 2 10
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip"
@@ -456,8 +468,9 @@ MY_SECONDARY_NET_VLAN="${OCTET3}1" # TODO: check this?
 SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
 
 case ${MY_PC_VERSION} in
-  5.6 )
-    MY_PC_META_URL='http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+  5.6 | 5.6.1 )
+    MY_PC_META_URL=\ #'http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+    'http://download.nutanix.com/pc/one-click-pc-deployment/5.6.1/v1/euphrates-5.6.1-stable-prism_central_metadata.json'
     ;;
   5.7.0.1 )
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
@@ -496,7 +509,9 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
-  log "PC Configuration complete: Waiting for deployment to complete, API up..."
+  log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
+  log "PE = https://${MY_PE_HOST}:9440"
+  log "PC = https://${MY_PC_HOST}:9440"
   log "$0: main: done!_____________________"
   echo
 else

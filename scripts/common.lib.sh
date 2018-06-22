@@ -13,23 +13,33 @@ function log {
 
 function CheckArgsExist {
   local _ARGUMENT
+  local    _ERROR=88
   for _ARGUMENT in ${1}; do
-    if [[ -z ${_ARGUMENT} ]]; then
-      log "Error: ${_ARGUMENT} not provided!"
-      exit -1
+    if [[ ${DEBUG} ]]; then
+      log "DEBUG: Checking ${_ARGUMENT}..."
+    fi
+    _RESULT=$(eval "echo \$${_ARGUMENT}")
+    if [[ -z ${_RESULT} ]]; then
+      log "Error ${_ERROR}: ${_ARGUMENT} not provided!"
+      exit ${_ERROR}
+    elif [[ ${DEBUG} ]]; then
+      log "Non-error: ${_ARGUMENT} for ${_RESULT}"
     fi
   done
+  log "Success: required arguments provided."
 }
 
 function Download {
   local           _ATTEMPTS=2
+  local              _ERROR=0
   local _HTTP_RANGE_ENABLED='--continue-at -'
   local               _LOOP=0
   local              _SLEEP=2
 
   if [[ -z ${1} ]]; then
-    log 'Error: no URL to download!'
-    exit 33
+    _ERROR=33
+    log "Error ${_ERROR}: no URL to download!"
+    exit ${_ERROR}
   fi
 
   while true ; do
@@ -237,16 +247,18 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
   local _ATTEMPTS=${ATTEMPTS}
+  local    _ERROR=11
   local     _HOST=${MY_PE_HOST}
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
-  if [[ ${1} == 'PC' ]]; then
-        _HOST=${MY_PC_HOST}
-  fi
+  CheckArgsExist 'ATTEMPTS MY_PE_HOST MY_PE_PASSWORD SLEEP'
 
+  if [[ ${1} == 'PC' ]]; then
+    _HOST=${MY_PC_HOST}
+  fi
   if [[ ! -z ${2} ]]; then
     _ATTEMPTS=${2}
   fi
@@ -263,7 +275,7 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 
     if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]]; then
       _PASSWORD='Nutanix/4u' # TODO: hardcoded p/w
-      log "@${1}: Fallback: try initial password next cycle..."
+      log "WARNING @${1}: Fallback: try initial password next cycle..."
       break
     fi
 
@@ -271,8 +283,8 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
       log "@${1}: successful"
       return 0
     elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-      log "@${1}: Giving up after ${_LOOP} tries."
-      return 11
+      log "ERROR ${_ERROR} @${1}: Giving up after ${_LOOP} tries."
+      return ${_ERROR}
     else
       log "@${1} ${_LOOP}/${_ATTEMPTS}=${_TEST}: sleep ${_SLEEP} seconds..."
       sleep ${_SLEEP}

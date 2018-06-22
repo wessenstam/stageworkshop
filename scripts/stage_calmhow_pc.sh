@@ -137,14 +137,14 @@ function PC_UI
 
   local _JSON=$(cat <<EOF
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
-{"type":"custom_login_screen","key":"color_out","value":"#7B920A"} \
-{"type":"custom_login_screen","key":"product_title","value":"Prism Central ${MY_PC_VERSION}"} \
-{"type":"custom_login_screen","key":"title","value":"Welcome to NutanixWorkshops.com"} \
-{"type":"welcome_banner","key":"disable_video","value": true} \
-{"type":"disable_2048","key":"disable_video","value": true} \
-{"type":"UI_CONFIG","key":"autoLogoutGlobal","value": 7200000} \
-{"type":"UI_CONFIG","key":"autoLogoutOverride","value": 0} \
-{"type":"UI_CONFIG","key":"welcome_banner","value": "NutanixWorkshops.com"}
+{"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
+{"type":"custom_login_screen","key":"product_title","value":"PC-${MY_PC_VERSION}"} \
+{"type":"custom_login_screen","key":"title","value":"Welcome%20to%20NutanixWorkshops.com"} \
+{"type":"welcome_banner","key":"disable_video","value":true} \
+{"type":"disable_2048","key":"disable_video","value":true} \
+{"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \
+{"type":"UI_CONFIG","key":"autoLogoutOverride","value":0} \
+{"type":"UI_CONFIG","key":"welcome_banner","value":"http://NutanixWorkshops.com"}
 EOF
   )
   local _TEST
@@ -156,15 +156,8 @@ EOF
     log "_TEST=|${_TEST}|${_HTTP_BODY}"
   done
 
-  _HTTP_BODY=$(cat <<EOF
-  {
-    "type":"UI_CONFIG",
-    "key":"autoLogoutTime",
-    "value": 3600000}
-  }
-EOF
-  )
-  _TEST=$(curl ${CURL_HTTP_OPTS} \
+  _HTTP_BODY='{"type":"UI_CONFIG","key":"autoLogoutTime","value": 3600000}'
+       _TEST=$(curl ${CURL_HTTP_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/PrismGateway/services/rest/v1/application/user_data)
   log "autoLogoutTime _TEST=|${_TEST}|"
@@ -178,17 +171,12 @@ function PC_Init
   local OLD_PW='nutanix/4u'
 
   log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
-#  sshpass -p ${OLD_PW} ssh ${SSH_OPTS} nutanix@localhost \
-#   'source /etc/profile.d/nutanix_env.sh && ncli user reset-password user-name=admin password='${MY_PE_PASSWORD}
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )); then
    log "Error: Password not reset: $?."# exit 10
   fi
 #   _HTTP_BODY=$(cat <<EOF
-# {
-#   "oldPassword": "${OLD_PW}",
-#   "newPassword": "${MY_PE_PASSWORD}"
-# }
+# {"oldPassword": "${OLD_PW}","newPassword": "${MY_PE_PASSWORD}"}
 # EOF
 #   )
 #   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${_HTTP_BODY}" \
@@ -196,7 +184,8 @@ function PC_Init
 #   log "cURL reset password PC_TEST=${PC_TEST}"
 
   log "Configure NTP on PC"
-  ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
+  ncli cluster add-to-ntp-servers \
+    servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
   log "Validate EULA on PC"
   _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
@@ -290,16 +279,20 @@ function Images
 }
 
 function PC_Project {
-  local _NAME=mark.lavi.test
-  local _COUNT=$(nuclei project.list | grep ${_NAME} | wc --lines)
+  local  _NAME=mark.lavi.test
+  local _COUNT=$(. /etc/profile.d/nutanix_env.sh \
+    && nuclei project.list | grep ${_NAME} | wc --lines)
   if (( ${_COUNT} > 0 )); then
     nuclei project.delete ${_NAME} confirm=false
+  else
+    log "Warning: _COUNT=${_COUNT}"
   fi
 
   log "Creating ${_NAME}..."
-  nuclei project.create name=${PROJECT_NAME} \
-      description='test from NuCLeI!'
-  local _UUID=$(nuclei project.get ${_NAME} format=json | jq .metadata.project_reference.uuid | tr -d '"')
+  nuclei project.create name=${_NAME} description='test from NuCLeI!'
+  local _UUID=$(. /etc/profile.d/nutanix_env.sh \
+    && nuclei project.get ${_NAME} format=json \
+    | ${HOME}/jq .metadata.project_reference.uuid | tr -d '"')
   log "${_NAME}.uuid = ${_UUID}"
 
     # - project.get mark.lavi.test
@@ -310,6 +303,8 @@ function PC_Project {
     #     spec.resources.external_user_group_reference_list.kind=
     #     spec.resources.subnet_reference_list.kind=
     #     spec.resources.user_reference_list.kind=
+
+    # {"spec":{"access_control_policy_list":[],"project_detail":{"name":"mark.lavi.test1","resources":{"external_user_group_reference_list":[],"user_reference_list":[],"environment_reference_list":[],"account_reference_list":[],"subnet_reference_list":[{"kind":"subnet","name":"Primary","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"},{"kind":"subnet","name":"Secondary","uuid":"4689bc7f-61dd-4527-bc7a-9d737ae61322"}],"default_subnet_reference":{"kind":"subnet","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"}},"description":"test from NuCLeI!"},"user_list":[],"user_group_list":[]},"api_version":"3.1","metadata":{"creation_time":"2018-06-22T03:54:59Z","spec_version":0,"kind":"project","last_update_time":"2018-06-22T03:55:00Z","uuid":"1be7f66a-5006-4061-b9d2-76caefedd298","categories":{},"owner_reference":{"kind":"user","name":"admin","uuid":"00000000-0000-0000-0000-000000000000"}}}
 }
 #__main()____________
 
@@ -332,13 +327,13 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && CALM \
 && Images \
 && Check_Prism_API_Up 'PC'
-
 # TODO: Karan
 PC_Project
 
 if (( $? == 0 )); then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
-   && log "$0: done!_____________________" && echo
+  && log "PC = https://${MY_PC_HOST}:9440" \
+  && log "$0: done!_____________________" && echo
 else
   log "Error: failed to reach PC!"
   exit 19

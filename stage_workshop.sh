@@ -5,7 +5,7 @@
 . scripts/common.lib.sh # source common routines
 Dependencies 'install' 'sshpass';
 
-WORKSHOPS=("Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)" \
+WORKSHOPS=("Calm Introduction Workshop (AOS/AHV PC 5.7.1)" \
 "Calm Introduction Workshop (AOS/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
@@ -81,8 +81,8 @@ function set_workshop {
   MY_PC_VERSION=5.6 # default
 
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
-    "Calm Introduction Workshop (AOS/AHV PC 5.7.0.x)")
-       MY_PC_VERSION=5.7.0.1
+    "Calm Introduction Workshop (AOS/AHV PC 5.7.1)")
+       MY_PC_VERSION=5.7.1
           PE_CONFIG+=stage_calmhow.sh
           PC_CONFIG+=stage_calmhow_pc.sh
       stage_clusters
@@ -203,9 +203,7 @@ while getopts ":f:w:" opt; do
     fi
     ;;
     w )
-#    if [ $(($OPTARG)) -gt 0 ] && [ $(($OPTARG)) -le $((${#WORKSHOPS[@]}-3)) ]; then
     if [ $(($OPTARG)) -gt 0 ] && [ $(($OPTARG)) -le $((${#WORKSHOPS[@]})) ]; then
-      # do something
       WORKSHOP_NUM=${OPTARG}
     else
       echo "INVALID WORKSHOP SELECTION!"
