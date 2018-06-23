@@ -27,6 +27,8 @@ function PC_Download
   if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
     log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
     Download "${MY_PC_META_URL}"
+  else
+    log "Warning: using cached ${MY_PC_META_URL##*/}"
   fi
 
   MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
@@ -307,7 +309,7 @@ function PE_Configure
 {
   CheckArgsExist 'CURL_POST_OPTS MY_PE_PASSWORD'
 
-  Check_Prism_API_Up 'PC' 2 10
+  Check_Prism_API_Up 'PC' 2 0
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip"
   else
@@ -343,7 +345,7 @@ function PE_Configure
 
 function PC_Init
 {
-  Check_Prism_API_Up 'PC' 2 10
+  Check_Prism_API_Up 'PC' 2 0
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else
@@ -477,6 +479,7 @@ case ${MY_PC_VERSION} in
     ;;
   5.7 | 5.7.1 )
     MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.1/v1/pc-5.7.1-stable-prism_central_metadata.json'
     ;;
   *)
     log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
@@ -515,6 +518,6 @@ if (( $? == 0 )) ; then
   log "$0: main: done!_____________________"
   echo
 else
-  log "Error in main functional chain, exit!"
+  log "Error 18: in main functional chain, exit!"
   exit 18
 fi

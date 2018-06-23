@@ -26,7 +26,9 @@ function CheckArgsExist {
       log "Non-error: ${_ARGUMENT} for ${_RESULT}"
     fi
   done
-  log "Success: required arguments provided."
+  if [[ ${DEBUG} ]]; then
+    log 'Success: required arguments provided.'
+  fi
 }
 
 function Download {
@@ -142,9 +144,10 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
 }
 
 function Dependencies {
-  local _ERROR=20
+  local _ERROR
 
   if [[ -z ${1} ]]; then
+    _ERROR=20
     log "Error ${_ERROR}: missing install or remove verb."
     exit ${_ERROR}
   elif [[ -z ${2} ]]; then
@@ -202,8 +205,9 @@ function Dependencies {
             if [[ -z `which ${2}` ]]; then
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
               if (( $? > 0 )); then
-                log "Error: can't install ${2}."
-                exit 98
+                _ERROR=98
+                log "Error ${_ERROR}: can't install ${2}."
+                exit ${_ERROR}
               fi
             else
               log "Success: found ${2}."
@@ -213,8 +217,9 @@ function Dependencies {
             if [[ -z `which ${2}` ]]; then
               brew install jq
               if (( $? > 0 )); then
-                log "Error: can't install ${2}."
-                exit 98
+                _ERROR=98
+                log "Error ${_ERROR}: can't install ${2}."
+                exit ${_ERROR}
               fi
             else
               log "Success: found ${2}."
@@ -243,27 +248,24 @@ function Dependencies {
 }
 
 function Check_Prism_API_Up { # TODO: similaries to remote_exec
-# Argument ${1} = REQIRED: PE or PC
+# Argument ${1} = REQUIRED: PE or PC
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
   local _ATTEMPTS=${ATTEMPTS}
-  local    _ERROR=11
+  local    _ERROR=-11
   local     _HOST=${MY_PE_HOST}
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
-  CheckArgsExist 'ATTEMPTS MY_PE_HOST MY_PE_PASSWORD SLEEP'
+  CheckArgsExist 'ATTEMPTS MY_PE_HOST MY_PC_HOST MY_PE_PASSWORD SLEEP'
 
   if [[ ${1} == 'PC' ]]; then
     _HOST=${MY_PC_HOST}
   fi
   if [[ ! -z ${2} ]]; then
     _ATTEMPTS=${2}
-  fi
-  if [[ ! -z ${3} ]]; then
-    _SLEEP=${3}
   fi
 
   while true ; do
@@ -273,17 +275,21 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
       https://${_HOST}:9440/api/nutanix/v3/clusters/list \
       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
-    if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]]; then
+    if [[ ! -z ${3} ]]; then
+      _SLEEP=${3}
+    fi
+
+    if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_PASSWORD} != 'Nutanix/4u' ]]; then
       _PASSWORD='Nutanix/4u' # TODO: hardcoded p/w
-      log "WARNING @${1}: Fallback: try initial password next cycle..."
-      break
+      log "Warning @${1}: Fallback on ${_HOST}: try initial password next cycle..."
+      _SLEEP=0 #break
     fi
 
     if (( ${_TEST} == 200 )); then
-      log "@${1}: successful"
+      log "@${1}: successful."
       return 0
     elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-      log "ERROR ${_ERROR} @${1}: Giving up after ${_LOOP} tries."
+      log "Warning ${_ERROR} @${1}: Giving up after ${_LOOP} tries."
       return ${_ERROR}
     else
       log "@${1} ${_LOOP}/${_ATTEMPTS}=${_TEST}: sleep ${_SLEEP} seconds..."
