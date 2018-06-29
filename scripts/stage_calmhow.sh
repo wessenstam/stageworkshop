@@ -50,8 +50,10 @@ function PE_Init
          awk -F: '{print $2}' | tr -d '[:space:]'` == "${_DATA_SERVICE_IP}" ]]; then
     log "IDEMPOTENCY: Data Services IP set, skip."
   else
-    log "Configure SMTP"
-    ncli cluster set-smtp-server address=${SMTP_SERVER_ADDRESS} from-email-address=cluster@nutanix.com port=25
+    log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
+    ncli cluster set-smtp-server port=25 from-email-address=NutanixHostedPOC@nutanix.com address=${SMTP_SERVER_ADDRESS}
+    ${HOME}/serviceability/bin/email-alerts --to_addresses="mark.lavi@nutanix.com" --subject="[alert test] `ncli cluster get-params`" \
+    && ${HOME}/serviceability/bin/send-email
 
     log "Configure NTP"
     ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
@@ -467,7 +469,7 @@ MY_PRIMARY_NET_NAME='Primary'
 MY_PRIMARY_NET_VLAN='0'
 MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${OCTET3}1" # TODO: check this?
-SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+SMTP_SERVER_ADDRESS=nutanix-com.mail.protection.outlook.com
 
 case ${MY_PC_VERSION} in
   5.6 | 5.6.1 )

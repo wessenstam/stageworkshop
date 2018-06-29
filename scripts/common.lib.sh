@@ -252,7 +252,7 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
   local _ATTEMPTS=${ATTEMPTS}
-  local    _ERROR=-11
+  local    _ERROR=77
   local     _HOST=${MY_PE_HOST}
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
