@@ -15,7 +15,7 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 ## For the Impatient ##
 
     export MY_HPOC=10.21.X.37 && export MY_PE_PASSWORD='nx2Tech###!' \
-    && git clone https://github.com/mlavi/stageworkshop.git && cd _ \
+    && git clone https://github.com/mlavi/stageworkshop.git && cd stageworkshop \
     && echo "${MY_HPOC}|${MY_PE_PASSWORD}" >> poc.txt && echo “Start foundation now” \
     && ./stage_workshop.sh -f poc.txt -w 1 #calm
     sleep 60*70 && lynx https://admin@${MY_HPOC}:9440/
