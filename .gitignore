@@ -4,4 +4,4 @@ logs/
 .DS_Store
 .kitchen/
 .kitchen.local.yml
-Gemfile.locl
+Gemfile.lock
