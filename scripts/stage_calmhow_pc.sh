@@ -278,6 +278,19 @@ function Images
   done
 }
 
+function Enable_Flow {
+  # Enable Flow
+  ## (API; Didn't work. Used nuclei instead)
+  ## https://10.21.8.39:9440/api/nutanix/v3/services/microseg
+  ## {"state":"ENABLE"}
+  # To disable flow run the following on PC: nuclei microseg.disable
+
+  log "Enable Nutanix Flow... "
+  nuclei microseg.enable
+  local MICROSEGSTATUS=$(nuclei microseg.get_status)
+  log "Done with result: $MICROSEGSTATUS"
+}
+
 function PC_Project {
   local  _NAME=mark.lavi.test
   local _COUNT=$(. /etc/profile.d/nutanix_env.sh \
@@ -326,6 +339,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && SSP_Auth \
 && CALM \
 && Images \
+&& Enable_Flow \
 && Check_Prism_API_Up 'PC'
 # TODO: Karan
 PC_Project
