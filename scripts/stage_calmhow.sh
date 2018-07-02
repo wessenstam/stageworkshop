@@ -427,10 +427,10 @@ function PC_Configure {
   remote_exec 'scp' 'PC' "${_PC_FILES}" 'OPTIONAL'
 
   for _CONTAINER in epsilon nucalm ; do
-    if [[ -e ${_CONTAINER}.tar ]]; do
+    if [[ -e ${_CONTAINER}.tar ]]; then
       log "Uploading Calm container updates in background..."
       remote_exec 'SCP' 'PC' ${_CONTAINER}.tar 'OPTIONAL' &
-    done
+    fi
   done
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
