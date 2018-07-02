@@ -21,25 +21,6 @@ function acli {
   # DEBUG=1 && if [[ ${DEBUG} ]]; then log "$@"; fi
 }
 
-function PC_Download
-{
-  CheckArgsExist 'MY_PC_META_URL'
-  if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
-    log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
-    Download "${MY_PC_META_URL}"
-  else
-    log "Warning: using cached ${MY_PC_META_URL##*/}"
-  fi
-
-  MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
-
-  if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
-    pkill curl
-  fi
-  log "Retrieving Prism Central bits..."
-  Download "${MY_PC_SRC_URL}"
-}
-
 function PE_Init
 {
   CheckArgsExist 'HPOC_PREFIX OCTET4 SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME SLEEP ATTEMPTS OCTET4 OCTET3 OCTET2 OCTET1'
@@ -346,6 +327,25 @@ function PE_Configure
   fi
 }
 
+function PC_Download
+{
+  CheckArgsExist 'MY_PC_META_URL'
+  if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
+    log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
+    Download "${MY_PC_META_URL}"
+  else
+    log "Warning: using cached ${MY_PC_META_URL##*/}"
+  fi
+
+  MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
+
+  if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
+    pkill curl
+  fi
+  log "Retrieving Prism Central bits..."
+  Download "${MY_PC_SRC_URL}"
+}
+
 function PC_Init
 {
   Check_Prism_API_Up 'PC' 2 0
@@ -417,13 +417,21 @@ EOF
 }
 
 function PC_Configure {
-  local PC_FILES='common.lib.sh stage_calmhow_pc.sh'
-  log "Send configuration scripts to PC and remove: ${PC_FILES}"
-  remote_exec 'scp' 'PC' "${PC_FILES}" && rm -f ${PC_FILES}
+  local _CONTAINER
+  local _PC_FILES='common.lib.sh stage_calmhow_pc.sh'
+  log "Send configuration scripts to PC and remove: ${_PC_FILES}"
+  remote_exec 'scp' 'PC' "${_PC_FILES}" && rm -f ${_PC_FILES}
 
-  PC_FILES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
-  log "OPTIONAL: Send binary dependencies to PC: ${PC_FILES}"
-  remote_exec 'scp' 'PC' "${PC_FILES}" 'OPTIONAL'
+  _PC_FILES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
+  log "OPTIONAL: Send binary dependencies to PC: ${_PC_FILES}"
+  remote_exec 'scp' 'PC' "${_PC_FILES}" 'OPTIONAL'
+
+  for _CONTAINER in epsilon nucalm ; do
+    if [[ -e ${_CONTAINER}.tar ]]; do
+      log "Uploading Calm container updates in background..."
+      remote_exec 'SCP' 'PC' ${_CONTAINER}.tar 'OPTIONAL' &
+    done
+  done
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   log "Launch PC configuration script"

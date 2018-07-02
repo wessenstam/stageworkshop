@@ -341,6 +341,7 @@ function PC_Project {
 
 function Calm_Update {
   local _CALM_BIN=/usr/local/nutanix/epsilon
+  local _CONTAINER
 
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
     mkdir ${HOME}/calm.backup || true

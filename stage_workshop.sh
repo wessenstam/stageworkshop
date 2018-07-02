@@ -147,9 +147,8 @@ function stage_clusters {
       log "Uploading Calm container updates in background..."
       cd cache/pc-${MY_PC_VERSION} \
       && for _CONTAINER in epsilon nucalm ; do
-        local _TEST=0
-        if [[ -e ${_TEST}.tar ]]; do
-          remote_exec 'SCP' 'PE' ${_TEST}.tar 'OPTIONAL' &
+        if [[ -e ${_CONTAINER}.tar ]]; do
+          remote_exec 'SCP' 'PE' ${_CONTAINER}.tar 'OPTIONAL' &
         done
       done \
       && cd ../..
