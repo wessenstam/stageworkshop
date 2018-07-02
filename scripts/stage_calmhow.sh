@@ -42,7 +42,7 @@ function PC_Download
 
 function PE_Init
 {
-  CheckArgsExist 'HPOC_PREFIX OCTET4 SMTP_SERVER_ADDRESS MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME SLEEP ATTEMPTS OCTET4 OCTET3 OCTET2 OCTET1'
+  CheckArgsExist 'HPOC_PREFIX OCTET4 SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME SLEEP ATTEMPTS OCTET4 OCTET3 OCTET2 OCTET1'
 
   local _DATA_SERVICE_IP=${HPOC_PREFIX}.$(($OCTET4 + 1))
 
@@ -51,8 +51,8 @@ function PE_Init
     log "IDEMPOTENCY: Data Services IP set, skip."
   else
     log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
-    ncli cluster set-smtp-server port=25 from-email-address=NutanixHostedPOC@nutanix.com address=${SMTP_SERVER_ADDRESS}
-    ${HOME}/serviceability/bin/email-alerts --to_addresses="mark.lavi@nutanix.com" --subject="[alert test] `ncli cluster get-params`" \
+    ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
+    ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" --subject="[PE_Init:Config SMTP:alert test] `ncli cluster get-params`" \
     && ${HOME}/serviceability/bin/send-email
 
     log "Configure NTP"
@@ -241,6 +241,7 @@ function AuthenticationServer()
           elif (( ${_LOOP} > ${_ATTEMPTS} )); then
             log "Error ${_ERROR}: ${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
             acli "-y vm.delete ${LDAP_SERVER}"
+            log "Remediate by deleting the ${LDAP_SERVER} VM from PE (which was just attempted by this script) and then running $_"
             exit ${_ERROR}
           else
             log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
@@ -427,8 +428,9 @@ function PC_Configure {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-    "LDAP_SERVER=${LDAP_SERVER} LDAP_HOST=${LDAP_HOST} MY_DOMAIN_FQDN=${MY_DOMAIN_FQDN} \
-    MY_DOMAIN_USER=${MY_DOMAIN_USER} MY_DOMAIN_PASS=${MY_DOMAIN_PASS} \
+    LDAP_SERVER=${LDAP_SERVER} LDAP_HOST=${LDAP_HOST} MY_DOMAIN_FQDN=${MY_DOMAIN_FQDN} \
+    MY_EMAIL=${MY_EMAIL} MY_DOMAIN_USER=${MY_DOMAIN_USER} MY_DOMAIN_PASS=${MY_DOMAIN_PASS} \
+    SMTP_SERVER_ADDRESS=${SMTP_SERVER_ADDRESS} SMTP_SERVER_FROM=${SMTP_SERVER_FROM} SMTP_SERVER_PORT=${SMTP_SERVER_PORT} \
     MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} \
     nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
@@ -442,7 +444,7 @@ function PC_Configure {
 
 log `basename "$0"`": PID=$$"
 
-CheckArgsExist 'MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
+CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
 
 array=(${MY_PE_HOST//./ })
      OCTET1=${array[0]}
@@ -470,6 +472,8 @@ MY_PRIMARY_NET_VLAN='0'
 MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${OCTET3}1" # TODO: check this?
 SMTP_SERVER_ADDRESS=nutanix-com.mail.protection.outlook.com
+   SMTP_SERVER_FROM=NutanixHostedPOC@nutanix.com
+   SMTP_SERVER_PORT=25
 
 case ${MY_PC_VERSION} in
   5.6 | 5.6.1 )

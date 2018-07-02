@@ -21,7 +21,7 @@ Now you can have push-button Calm in about an hour.
 
 ## HPoC Cluster Reservation ##
 
-Make your new reservation on https://rx.corp.nutanix.com:8443/ with:
+Make your new reservation on https://rx.corp.nutanix.com/ with:
 
 - __Region:__ NX-US-West region only
 - __AOS + Hypevisor:__ proper versions for your workshop, specified above
@@ -45,17 +45,17 @@ Next, you'll need to create or reuse and update a text file (*e.g.:* example_poc
  It's easiest to create this file in the same directory as the stage_workshop.sh script.
  Input files must use the following format:
 
-    <Nutanix Cluster #1 IP>|<Cluster #1 Password>
-    <Nutanix Cluster #2 IP>|<Cluster #2 Password>
+    <Nutanix Cluster #1 IP>|<Cluster #1 Password>|first.lasty@nutanix.com
+    <Nutanix Cluster #2 IP>|<Cluster #2 Password>|example@nutanix.com
     ...
-    <Nutanix Cluster #N IP>|<Cluster #N Password>
+    <Nutanix Cluster #N IP>|<Cluster #N Password>|example@nutanix.com
 
 For example:
 
-    10.21.1.37|nx2Tech123!
-    10.21.7.37|nx2Tech517!
-    #10.21.5.37|nx2Tech789! <-- The script will ignore commented out clusters
-    10.21.55.37|nx2Tech456!
+    10.21.1.37|nx2Tech123!|you@nutanix.com
+    10.21.7.37|nx2Tech517!|me@nutanix.com
+    #10.21.5.37|nx2Tech789!|first.last@nutanix.com <-- The script will ignore commented out clusters
+    10.21.55.37|nx2Tech456!|se@nutanix.com
 
 Finally, execute the script to stage the HPOC clusters defined in your text file.
 

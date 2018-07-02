@@ -46,6 +46,8 @@ EOF
 }
 
 function SSP_Auth {
+  CheckArgsExist 'LDAP_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+
   local _HTTP_BODY
   local _LDAP_UUID
 
@@ -105,7 +107,7 @@ EOF
   # TODO: SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
 }
 
-function CALM
+function Enable_Calm
 {
   local _HTTP_BODY
   local _TEST
@@ -121,7 +123,7 @@ EOF
   _TEST=$(curl ${CURL_POST_OPTS} \
     --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
-  log "CALM=|${_TEST}|"
+  log "_TEST=|${_TEST}|"
 
   if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
     echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
@@ -139,7 +141,7 @@ function PC_UI
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
 {"type":"custom_login_screen","key":"product_title","value":"PC-${MY_PC_VERSION}"} \
-{"type":"custom_login_screen","key":"title","value":"Welcome%20to%20NutanixWorkshops.com"} \
+{"type":"custom_login_screen","key":"title","value":"Welcome to NutanixWorkshops.com"} \
 {"type":"welcome_banner","key":"disable_video","value":true} \
 {"type":"disable_2048","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \
@@ -173,7 +175,7 @@ function PC_Init
   log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )); then
-   log "Error: Password not reset: $?."# exit 10
+   log "Warning: password not reset: $?."# exit 10
   fi
 #   _HTTP_BODY=$(cat <<EOF
 # {"oldPassword": "${OLD_PW}","newPassword": "${MY_PE_PASSWORD}"}
@@ -183,11 +185,11 @@ function PC_Init
 #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
 #   log "cURL reset password PC_TEST=${PC_TEST}"
 
-  log "Configure NTP on PC"
+  log "Configure NTP@PC"
   ncli cluster add-to-ntp-servers \
     servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
-  log "Validate EULA on PC"
+  log "Validate EULA@PC"
   _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
       "username": "SE",
       "companyName": "NTNX",
@@ -195,7 +197,7 @@ function PC_Init
   }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
   log "EULA _TEST=|${_TEST}|"
 
-  log "Disable Pulse on PC"
+  log "Disable Pulse@PC"
   _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT -d '{
       "emailContactList":null,
       "enable":false,
@@ -278,6 +280,23 @@ function Images
   done
 }
 
+function PC_SMTP {
+  log "Configure SMTP@PC"
+  local _SLEEP=5
+
+  CheckArgsExist 'SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT'
+  ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
+    address=${SMTP_SERVER_ADDRESS} from-email-address=${SMTP_SERVER_FROM}
+  #log "sleep ${_SLEEP}..."; sleep ${_SLEEP}
+  #log $(ncli cluster get-smtp-server | grep Status | grep success)
+  log $(ncli cluster send-test-email recipient=${MY_EMAIL} \
+    subject="PC_SMTP https://admin:${MY_PE_PASSWORD}@${MY_PC_HOST}:9440 Testing.")
+  # local _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
+  #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
+  #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
+  # log "_TEST=|${_TEST}|"
+}
+
 function Enable_Flow {
   # Enable Flow
   ## (API; Didn't work. Used nuclei instead)
@@ -285,14 +304,14 @@ function Enable_Flow {
   ## {"state":"ENABLE"}
   # To disable flow run the following on PC: nuclei microseg.disable
 
-  log "Enable Nutanix Flow... "
+  log "Enable Nutanix Flow..."
   nuclei microseg.enable
-  local MICROSEGSTATUS=$(nuclei microseg.get_status)
-  log "Done with result: $MICROSEGSTATUS"
+  local _MICROSEGSTATUS=$(nuclei microseg.get_status)
+  log "Done with result: $_MICROSEGSTATUS"
 }
 
 function PC_Project {
-  local  _NAME=mark.lavi.test
+  local  _NAME=${MY_EMAIL%%nutanix.com}.test
   local _COUNT=$(. /etc/profile.d/nutanix_env.sh \
     && nuclei project.list | grep ${_NAME} | wc --lines)
   if (( ${_COUNT} > 0 )); then
@@ -319,6 +338,28 @@ function PC_Project {
 
     # {"spec":{"access_control_policy_list":[],"project_detail":{"name":"mark.lavi.test1","resources":{"external_user_group_reference_list":[],"user_reference_list":[],"environment_reference_list":[],"account_reference_list":[],"subnet_reference_list":[{"kind":"subnet","name":"Primary","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"},{"kind":"subnet","name":"Secondary","uuid":"4689bc7f-61dd-4527-bc7a-9d737ae61322"}],"default_subnet_reference":{"kind":"subnet","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"}},"description":"test from NuCLeI!"},"user_list":[],"user_group_list":[]},"api_version":"3.1","metadata":{"creation_time":"2018-06-22T03:54:59Z","spec_version":0,"kind":"project","last_update_time":"2018-06-22T03:55:00Z","uuid":"1be7f66a-5006-4061-b9d2-76caefedd298","categories":{},"owner_reference":{"kind":"user","name":"admin","uuid":"00000000-0000-0000-0000-000000000000"}}}
 }
+
+function Calm_Update {
+  local _CALM_BIN=/usr/local/nutanix/epsilon
+
+  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
+    mkdir ${HOME}/calm.backup || true
+    cp ${_CALM_BIN}/*tar ${HOME}/calm.backup/ \
+    && genesis stop nucalm epsilon \
+    && docker rm -f $(docker ps -aq) \
+    && docker rmi -f $(docker images -q) \
+    && cp ${HOME}/*tar ${_CALM_BIN}/ \
+    && cluster start # ~75 seconds to start both containers
+
+    for _CONTAINER in epsilon nucalm ; do
+      local _TEST=0
+      while [[ ${_TEST} < 1 ]]; do
+        _TEST=$(docker ps -a | grep ${_CONTAINER} | grep -i healthy | wc --lines)
+      done
+    done
+  fi
+}
+
 #__main()____________
 
 # Source Nutanix environments (for PATH and other things such as ncli)
@@ -327,7 +368,7 @@ function PC_Project {
 
 log `basename "$0"`": __main__: PID=$$"
 
-CheckArgsExist 'MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION LDAP_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION'
 
 ATTEMPTS=2
    SLEEP=10
@@ -336,8 +377,9 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PC_Init \
 && PC_UI \
 && PC_LDAP \
+&& PC_SMTP \
 && SSP_Auth \
-&& CALM \
+&& Enable_Calm \
 && Images \
 && Enable_Flow \
 && Check_Prism_API_Up 'PC'

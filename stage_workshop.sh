@@ -105,8 +105,10 @@ function set_workshop {
     "Validate Staged Clusters")
       validate_clusters
       ;;
-    *) echo "No one should ever see this. Time to panic.";;
+    *) echo "No one should ever see this. Time to panic."
+      ;;
   esac
+
 }
 
 # Send configuration scripts to remote clusters and execute Prism Element script
@@ -126,6 +128,7 @@ function stage_clusters {
     MY_PE_PASSWORD=${array[1]}
     array=(${MY_PE_HOST//./ })
     MY_PC_HOST=${array[0]}.${array[1]}.${array[2]}.39
+    MY_EMAIL=${array[2]}
 
     Check_Prism_API_Up 'PE' 60
     if (( $? == 0 )) ; then
@@ -137,10 +140,23 @@ function stage_clusters {
 
     cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}" && cd ..
     #echo 'TOFIX: _DEPENDENCIES disabled.'
+
     cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' && cd ..
 
+    if [[ -d cache/pc-${MY_PC_VERSION} ]]; then
+      log "Uploading Calm container updates in background..."
+      cd cache/pc-${MY_PC_VERSION} \
+      && for _CONTAINER in epsilon nucalm ; do
+        local _TEST=0
+        if [[ -e ${_TEST}.tar ]]; do
+          remote_exec 'SCP' 'PE' ${_TEST}.tar 'OPTIONAL' &
+        done
+      done \
+      && cd ../..
+    fi
+
     log "Remote execution configuration script on PE@${MY_PE_HOST}"
-    remote_exec 'SSH' 'PE' "MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
+    remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
 Progress of individual clusters can be monitored by:
