@@ -62,6 +62,12 @@ function PE_Init
 
 function Network_Configure
 {
+  # From this point, we assume according to SEWiki:
+  # IP Range: ${HPOC_PREFIX}.0/25
+  # Gateway: ${HPOC_PREFIX}.1
+  # DNS: 10.21.253.10,10.21.253.11
+  # DHCP Pool: ${HPOC_PREFIX}.50 - ${HPOC_PREFIX}.120
+
   CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME HPOC_PREFIX LDAP_HOST'
 
   if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
@@ -436,10 +442,7 @@ function PC_Configure {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-    "LDAP_SERVER=${LDAP_SERVER} LDAP_HOST=${LDAP_HOST} MY_DOMAIN_FQDN=${MY_DOMAIN_FQDN} \
-    MY_EMAIL=${MY_EMAIL} MY_DOMAIN_USER=${MY_DOMAIN_USER} MY_DOMAIN_PASS=${MY_DOMAIN_PASS} \
-    SMTP_SERVER_ADDRESS=${SMTP_SERVER_ADDRESS} SMTP_SERVER_FROM=${SMTP_SERVER_FROM} SMTP_SERVER_PORT=${SMTP_SERVER_PORT} \
-    MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} \
+    "MY_EMAIL=${MY_EMAIL} MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} \
     nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
@@ -453,35 +456,6 @@ function PC_Configure {
 log `basename "$0"`": PID=$$"
 
 CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
-
-array=(${MY_PE_HOST//./ })
-     OCTET1=${array[0]}
-     OCTET2=${array[1]}
-     OCTET3=${array[2]}
-     OCTET4=${array[3]}
-HPOC_PREFIX=${OCTET1}.${OCTET2}.${OCTET3}
- MY_PC_HOST=${HPOC_PREFIX}.$(($OCTET4 + 2))
-
-MY_SP_NAME='SP01'
-MY_CONTAINER_NAME='Default'
-MY_IMG_CONTAINER_NAME='Images'
-
-   LDAP_SERVER='AutoDC'
-     LDAP_HOST=${HPOC_PREFIX}.$(($OCTET4 + 3))
- MY_DOMAIN_URL="ldaps://${LDAP_HOST}/"
-MY_DOMAIN_FQDN='ntnxlab.local'
-MY_DOMAIN_NAME='NTNXLAB'
-MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
-MY_DOMAIN_PASS='nutanix/4u'
-MY_DOMAIN_ADMIN_GROUP='SSP Admins'
-
-MY_PRIMARY_NET_NAME='Primary'
-MY_PRIMARY_NET_VLAN='0'
-MY_SECONDARY_NET_NAME='Secondary'
-MY_SECONDARY_NET_VLAN="${OCTET3}1" # TODO: check this?
-SMTP_SERVER_ADDRESS=nutanix-com.mail.protection.outlook.com
-   SMTP_SERVER_FROM=NutanixHostedPOC@nutanix.com
-   SMTP_SERVER_PORT=25
 
 case ${MY_PC_VERSION} in
   5.6 | 5.6.1 )
@@ -502,15 +476,6 @@ case ${MY_PC_VERSION} in
     log 'Provide the metadata URL from: PC 1-click deploy from PE'
     ;;
 esac
-
-# From this point, we assume according to SEWiki:
-# IP Range: ${HPOC_PREFIX}.0/25
-# Gateway: ${HPOC_PREFIX}.1
-# DNS: 10.21.253.10,10.21.253.11
-# DHCP Pool: ${HPOC_PREFIX}.50 - ${HPOC_PREFIX}.120
-
- ATTEMPTS=40
-    SLEEP=60
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
 

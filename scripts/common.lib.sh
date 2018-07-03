@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
 
+array=(${MY_PE_HOST//./ })
+     OCTET1=${array[0]}
+     OCTET2=${array[1]}
+     OCTET3=${array[2]}
+     OCTET4=${array[3]}
+HPOC_PREFIX=${OCTET1}.${OCTET2}.${OCTET3}
+ MY_PC_HOST=${HPOC_PREFIX}.$(($OCTET4 + 2))
+
+MY_SP_NAME='SP01'
+MY_CONTAINER_NAME='Default'
+MY_IMG_CONTAINER_NAME='Images'
+
+   LDAP_SERVER='AutoDC'  # TODO: refactor to input file, set default here.
+     LDAP_HOST=${HPOC_PREFIX}.$(($OCTET4 + 3))
+ MY_DOMAIN_URL="ldaps://${LDAP_HOST}/"
+MY_DOMAIN_FQDN='ntnxlab.local'
+MY_DOMAIN_NAME='NTNXLAB'
+MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
+MY_DOMAIN_PASS='nutanix/4u'
+MY_DOMAIN_ADMIN_GROUP='SSP Admins'
+
+MY_PRIMARY_NET_NAME='Primary'
+MY_PRIMARY_NET_VLAN='0'
+MY_SECONDARY_NET_NAME='Secondary'
+MY_SECONDARY_NET_VLAN="${OCTET3}1" # TODO: check this?
+SMTP_SERVER_ADDRESS=nutanix-com.mail.protection.outlook.com
+   SMTP_SERVER_FROM=NutanixHostedPOC@nutanix.com
+   SMTP_SERVER_PORT=25
+
+   ATTEMPTS=40
+      SLEEP=60
+
      CURL_OPTS='--insecure --silent --show-error' # --verbose'
 CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json --header Accept:application/json --output /dev/null"
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
@@ -80,13 +112,16 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
   local  _ACCOUNT='nutanix'
   local _ATTEMPTS=3
   local    _ERROR=99
-  local     _HOST=${MY_PE_HOST}
+  local     _HOST
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
   case ${2} in
+    'PE' )
+          _HOST=${MY_PE_HOST}
+      ;;
     'PC' )
           _HOST=${MY_PC_HOST}
       _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
@@ -253,16 +288,18 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
 # Argument ${3} = OPTIONAL: number of seconds per cycle
   local _ATTEMPTS=${ATTEMPTS}
   local    _ERROR=77
-  local     _HOST=${MY_PE_HOST}
+  local     _HOST
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
-  CheckArgsExist 'ATTEMPTS MY_PE_HOST MY_PC_HOST MY_PE_PASSWORD SLEEP'
+  CheckArgsExist 'ATTEMPTS MY_PE_PASSWORD SLEEP'
 
   if [[ ${1} == 'PC' ]]; then
     _HOST=${MY_PC_HOST}
+  else
+    _HOST=${MY_PE_HOST}
   fi
   if [[ ! -z ${2} ]]; then
     _ATTEMPTS=${2}

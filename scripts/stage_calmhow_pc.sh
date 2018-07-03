@@ -141,7 +141,7 @@ function PC_UI
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
 {"type":"custom_login_screen","key":"product_title","value":"PC-${MY_PC_VERSION}"} \
-{"type":"custom_login_screen","key":"title","value":"Welcome to NutanixWorkshops.com"} \
+{"type":"custom_login_screen","key":"title","value":"Welcome_to_NutanixWorkshops.com"} \
 {"type":"welcome_banner","key":"disable_video","value":true} \
 {"type":"disable_2048","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \
@@ -311,7 +311,7 @@ function Enable_Flow {
 }
 
 function PC_Project {
-  local  _NAME=${MY_EMAIL%%nutanix.com}.test
+  local  _NAME=${MY_EMAIL%%@nutanix.com}.test
   local _COUNT=$(. /etc/profile.d/nutanix_env.sh \
     && nuclei project.list | grep ${_NAME} | wc --lines)
   if (( ${_COUNT} > 0 )); then

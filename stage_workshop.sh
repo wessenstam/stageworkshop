@@ -139,20 +139,20 @@ function stage_clusters {
     fi
     cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}" && cd ..
 
-    #echo 'TOFIX: _DEPENDENCIES disabled.'
-    log "Sending ./cache/ binaries: ${_DEPENDENCIES} if they exist..."
     cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' && cd ..
 
-    if [[ -d cache/pc-${MY_PC_VERSION} ]]; then
+    if [[ -d cache/pc-${MY_PC_VERSION}/ ]]; then
       log "Uploading Calm container updates in background..."
       cd cache/pc-${MY_PC_VERSION} \
-      && pkill scp || true \
-      && for _CONTAINER in epsilon nucalm ; do \
+      && pkill scp || true
+      for _CONTAINER in epsilon nucalm ; do \
         if [[ -e ${_CONTAINER}.tar ]]; then \
           remote_exec 'SCP' 'PE' ${_CONTAINER}.tar 'OPTIONAL' & \
-        fi \
-      done \
-      && cd ../..
+        fi
+      done
+      cd ../..
+    else
+      log "No Calm container updates found in cache/pc-${MY_PC_VERSION}/"
     fi
 
     log "Remote execution configuration script on PE@${MY_PE_HOST}"
