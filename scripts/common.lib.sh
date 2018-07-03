@@ -8,7 +8,7 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
 
 function log {
   local CALLER=$(echo -n `caller 0 | awk '{print $2}'`)
-  echo $(date "+%Y-%m-%d %H:%M:%S")"|${CALLER}|${1}"
+  echo $(date "+%Y-%m-%d %H:%M:%S")"|$$|${CALLER}|${1}"
 }
 
 function CheckArgsExist {
@@ -137,7 +137,7 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
       log "Error ${_ERROR}: giving up after ${_LOOP} tries."
       exit ${_ERROR}
     else
-      log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_ACCOUNT}..."
+      log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_SLEEP}..."
       sleep ${_SLEEP}
     fi
   done
