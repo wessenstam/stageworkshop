@@ -7,6 +7,7 @@ Dependencies 'install' 'sshpass';
 
 WORKSHOPS=("Calm Introduction Workshop (AOS/AHV PC 5.7.1)" \
 "Calm Introduction Workshop (AOS/AHV PC 5.6.x)" \
+"Calm Introduction Workshop (AOS/AHV PC 5.8)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Change Cluster Input File" \
@@ -78,28 +79,33 @@ function select_workshop {
 # Set script files to send to remote clusters based on command line argument
 function set_workshop {
 
-  MY_PC_VERSION=5.6 # default
-
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
     "Calm Introduction Workshop (AOS/AHV PC 5.7.1)")
-       MY_PC_VERSION=5.7.1
-          PE_CONFIG+=stage_calmhow.sh
-          PC_CONFIG+=stage_calmhow_pc.sh
+      MY_PC_VERSION=5.7.1
+         PE_CONFIG+=stage_calmhow.sh
+         PC_CONFIG+=stage_calmhow_pc.sh
       stage_clusters
       ;;
     "Calm Introduction Workshop (AOS/AHV PC 5.6.x)")
-          PE_CONFIG+=stage_calmhow.sh
-          PC_CONFIG+=stage_calmhow_pc.sh
+      MY_PC_VERSION=5.6
+         PE_CONFIG+=stage_calmhow.sh
+         PC_CONFIG+=stage_calmhow_pc.sh
+      stage_clusters
+      ;;
+    "Calm Introduction Workshop (AOS/AHV PC 5.8)")
+      MY_PC_VERSION=5.8
+         PE_CONFIG+=stage_calmhow.sh
+         PC_CONFIG+=stage_calmhow_pc.sh
       stage_clusters
       ;;
     "Citrix Desktop on AHV Workshop (AOS/AHV PC 5.6)")
-          PE_CONFIG+=stage_citrixhow.sh
-          PC_CONFIG+=stage_citrixhow_pc.sh
+      PE_CONFIG+=stage_citrixhow.sh
+      PC_CONFIG+=stage_citrixhow_pc.sh
       stage_clusters
       ;;
     "Tech Summit 2018")
-          PE_CONFIG+=stage_ts18.sh
-          PC_CONFIG+=stage_ts18_pc.sh
+      PE_CONFIG+=stage_ts18.sh
+      PC_CONFIG+=stage_ts18_pc.sh
       stage_clusters
       ;;
     "Validate Staged Clusters")

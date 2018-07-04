@@ -12,6 +12,29 @@ but none of the inputs are accepted:
     - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
 
 + PC 5.7.1:
+  - file servers for container updates:
+    - https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#What_you_get_with_each_reservation
+    - https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#Lab_Resources
+    - https://sewiki.nutanix.com/index.php/HPOC_Access_Instructions#FTP
+      - \\lab-ftp\ftp
+      - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
+      - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
+      - smb://pocfs/    = \\pocfs\iso\ and \images\
+      - smb://hpoc-afs/ = \\hpoc-afs\se\ = smbclient \\\\hpoc-afs\\se\\ --user mark.lavi@nutanixdc.local
+      - smb://NTNX-HPOC-AFS-3.NUTANIXDC.LOCAL
+      default password = welcome123
+    - smb-client vs cifs?
+      - https://www.tldp.org/HOWTO/SMB-HOWTO-8.html
+      - https://www.samba.org/samba/docs/current/man-html/smbclient.1.html
+      - https://linux-cifs.samba.org/
+        - https://pserver.samba.org/samba/ftp/cifs-cvs/linux-cifs-client-guide.pdf
+        - https://serverfault.com/questions/609365/cifs-mount-in-fstab-succeeds-on-ip-fails-on-hostname-written-in-etc-hosts
+          - sudo apt-get install cifs-utils
+          - yum install cifs-utils
+            man mount.cifs
+            USER=mark.lavi@nutanix.com PASSWD=secret mount -t cifs //hpoc-afs/se /mnt/se/
+    - mount AFS and then put a web/S/FTP server on top
+
   - document public cloud account/credentials
     - Add to: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
   - update default or create new project
@@ -90,7 +113,7 @@ but none of the inputs are accepted:
       Secondary Gateway: 10.63.28.1
       Secondary IP Range: 10.63.31.146-149
 
-  - Calm 5.7 bootcamp labs and 5.5-6 bugs
+  - Calm 5.8 bootcamp labs and 5.5-6 bugs
     - https://github.com/nutanixworkshops/introcalm
     vs. https://github.com/mlavi/calm_workshop
   - file Calm bugs from guide
@@ -133,7 +156,9 @@ but none of the inputs are accepted:
 + AutoDC:
   + NTNXLAB, ntnxlab.local, root:nutanix/4u
   + samba --version Version 4.2.14-Debian
-  - https://gitlab.com/mlavi/alpine-dc
+  - https://gitlab.com/mlavi/alpine-dc (fork)
+  - yum install samba-ldap
+    - https://help.ubuntu.com/lts/serverguide/samba-ldap.html.en
 + PE:
   + user01@ntnxlab.local auth test fine
 
