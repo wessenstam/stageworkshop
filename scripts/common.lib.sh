@@ -64,7 +64,7 @@ function CheckArgsExist {
 }
 
 function Download {
-  local           _ATTEMPTS=2
+  local           _ATTEMPTS=5
   local              _ERROR=0
   local _HTTP_RANGE_ENABLED='--continue-at -'
   local               _LOOP=0
@@ -80,7 +80,8 @@ function Download {
     (( _LOOP++ ))
     log "${1}..."
     local _OUTPUT=''
-    curl ${CURL_OPTS} ${_HTTP_RANGE_ENABLED} --remote-name --location ${1}
+    # curl ${CURL_OPTS} ${_HTTP_RANGE_ENABLED} --remote-name --location ${1}
+    curl ${CURL_OPTS} --remote-name --location ${1}
     _OUTPUT=$?
     #DEBUG=1; if [[ ${DEBUG} ]]; then log "DEBUG: curl exited ${_OUTPUT}."; fi
 

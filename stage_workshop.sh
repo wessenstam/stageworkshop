@@ -5,9 +5,10 @@
 . scripts/common.lib.sh # source common routines
 Dependencies 'install' 'sshpass';
 
-WORKSHOPS=("Calm Introduction Workshop (AOS/AHV PC 5.7.1)" \
-"Calm Introduction Workshop (AOS/AHV PC 5.6.x)" \
+WORKSHOPS=(\
 "Calm Introduction Workshop (AOS/AHV PC 5.8)" \
+"Calm Introduction Workshop (AOS/AHV PC 5.7.1)" \
+"Calm Introduction Workshop (AOS/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Change Cluster Input File" \
@@ -167,7 +168,8 @@ function stage_clusters {
     cat <<EOM
 Progress of individual clusters can be monitored by:
  $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
-   https://${MY_PE_HOST}:9440/
+   https://admin:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/ -- You can login to PE, see tasks in flight, and PC registration complete."
+
  $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PC_HOST} 'tail -f stage_calmhow_pc.log'
    https://${MY_PC_HOST}:9440/
 

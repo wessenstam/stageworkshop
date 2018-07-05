@@ -340,15 +340,52 @@ function PC_Project {
 }
 
 function Calm_Update {
+  local _ATTEMPTS=12
   local _CALM_BIN=/usr/local/nutanix/epsilon
   local _CONTAINER
+  local    _ERROR=19
+  local     _LOOP=0
+  local    _SLEEP=10
+  local      _URL=http://${LDAP_HOST}:8080
 
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
+    log "Bypassing download of updated containers."
+  else
+    remote_exec 'ssh' 'LDAP_SERVER' \
+      'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${MY_PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
+      'OPTIONAL'
+
+    while true ; do
+      (( _LOOP++ ))
+      _TEST=$(curl ${CURL_HTTP_OPTS} ${_URL} \
+        | tr -d \") # wonderful addition of "" around HTTP status code by cURL
+
+      if (( ${_TEST} == 200 )); then
+        log "Success reaching ${_URL}"
+        break;
+      elif (( ${_LOOP} > ${_ATTEMPTS} )); then
+        log "Warning ${_ERROR} @${1}: Giving up after ${_LOOP} tries."
+        return ${_ERROR}
+      else
+        log "@${1} ${_LOOP}/${_ATTEMPTS}=${_TEST}: sleep ${_SLEEP} seconds..."
+        log "SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} ${LDAP_HOST} "\
+          'python -m SimpleHTTPServer 8080 || python -m http.server 8080'
+        sleep ${_SLEEP}
+      fi
+    done
+
+    Download ${_URL}/epsilon.tar
+    Download ${_URL}/nucalm.tar
+    # remote_exec 'ssh' 'LDAP_SERVER' 'pkill python' 'OPTIONAL'
+  fi
+
+  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
+    ls -lh ${HOME}/*tar
     mkdir ${HOME}/calm.backup || true
     cp ${_CALM_BIN}/*tar ${HOME}/calm.backup/ \
     && genesis stop nucalm epsilon \
-    && docker rm -f $(docker ps -aq) \
-    && docker rmi -f $(docker images -q) \
+    && docker rm -f $(docker ps -aq) || true \
+    && docker rmi -f $(docker images -q) || true \
     && cp ${HOME}/*tar ${_CALM_BIN}/ \
     && cluster start # ~75 seconds to start both containers
 
@@ -369,13 +406,21 @@ function Calm_Update {
 
 log `basename "$0"`": __main__: PID=$$"
 
+CheckArgsExist 'MY_PE_HOST'
+Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
+
+if [[ ! -z "${1}" ]]; then
+  # hidden bonus
+  log "Don't forget: $0 first.last@nutanixdc.local%password"
+  Calm_Update && exit 0
+fi
+
 CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION'
 
 ATTEMPTS=2
    SLEEP=10
 
-Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
-&& PC_Init \
+PC_Init \
 && PC_UI \
 && PC_LDAP \
 && PC_SMTP \
