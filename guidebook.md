@@ -5,6 +5,7 @@
 This is a work in progress and your milage may vary!
 
 ## Prerequisites ##
+
 1. Tested on Mac, probably works on Linux.
 2. A terminal, command line: git, jq, and sshpass.
 
@@ -12,14 +13,18 @@ This is a work in progress and your milage may vary!
 
 The entire Global Technical Sales Enablement team has delivered an amazing amount of content and automation for Nutanix TechSummits and Workshops. Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants. Thank you!
 
-## For the Impatient ##
+### For the Impatient ###
 
     export PE=10.21.X.37 && export PE_PASSWORD='nx2Tech###!' && EMAIL=first.last@nutanix.com \
     && git clone https://github.com/mlavi/stageworkshop.git && cd stageworkshop \
     && echo "${PE}|${PE_PASSWORD}|${EMAIL}" >> clusters.txt && echo “Start foundation now” \
-    && ./stage_workshop.sh -f clusters.txt -w 1 #calm
+    && ./stage_workshop.sh -f clusters.txt -w 1 #latest calm
 
-    sleep 60*70 && lynx https://admin@${MY_HPOC}:9440/
+    sleep 60*30 && lynx https://admin:${PE_PASSWORD}@${PE}:9440/
+
+## Bugs, Priorities, Notes ##
+
+See [the planning and working document](bugs.md).
 
 ### Timing ###
 
