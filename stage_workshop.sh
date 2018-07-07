@@ -3,6 +3,8 @@
 # use !/bin/bash -x to debug command substitution and evaluation instead of echo.
 
 . scripts/common.lib.sh # source common routines
+. scripts/global.vars.sh
+
 Dependencies 'install' 'sshpass';
 
 WORKSHOPS=(\
@@ -144,7 +146,7 @@ function stage_clusters {
       log "Error: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
       exit 15
     fi
-    cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh ${PE_CONFIG} ${PC_CONFIG}" && cd ..
+    cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${PE_CONFIG} ${PC_CONFIG}" && cd ..
 
     cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' && cd ..
 

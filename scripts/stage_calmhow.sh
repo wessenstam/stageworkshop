@@ -424,7 +424,7 @@ EOF
 
 function PC_Configure {
   local _CONTAINER
-  local _PC_FILES='common.lib.sh stage_calmhow_pc.sh'
+  local _PC_FILES='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
   log "Send configuration scripts to PC and remove: ${_PC_FILES}"
   remote_exec 'scp' 'PC' "${_PC_FILES}" && rm -f ${_PC_FILES}
 
@@ -452,6 +452,7 @@ function PC_Configure {
 # Source Nutanix environments (for PATH and other things)
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh # source common routines, additional global variables
+. global.vars.sh
 
 log `basename "$0"`": PID=$$"
 

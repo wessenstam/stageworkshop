@@ -13,14 +13,17 @@ but none of the inputs are accepted:
     - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
 - document public cloud account/credentials
   - Add to: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
+- GoKaran feedback by July 9
+- CI/CD pipeline demo
+- LAMP v2 application improvements
+- Calm videos/spreadsheet
 
-# PC 5.7.1 #
+# Backlog #
 
 - update default or create new project
 - fix role mappings, logins on PE, PC
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
   - improve/run poc_samba_users.sh
-- Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 - nuclei (run local from container?)
   - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
     - vs: cat /etc/nutanix/release_version
@@ -45,16 +48,12 @@ but none of the inputs are accepted:
         subnet_reference_list: []
         user_reference_list: []
   - nuclei authconfig (run local from container?) See notes#nuceli section, below.
-  - (localize?) and upload blueprint via nuclei (see unit tests)?
-  - Default project environment set, enable marketplace item, launch!
-  - Karan: by PC version, add to cache and pre-stage?
-  - Enable multiple cloud account settings, then environments, then marketplace launch
-  - PE, PC: clear our warnings: resolve/ack issues for cleanliness?
-  - nutanix@PC Linux account password change?
-  - OPTIMIZATION: Upload AutoDC image in parallel with PC.tar
-
-# Overall TODO #
-
+- (localize?) and upload blueprint via nuclei (see unit tests)?
+- Default project environment set, enable marketplace item, launch!
+- Karan: by PC version, add to cache and pre-stage?
+- Enable multiple cloud account settings, then environments, then marketplace launch
+- PE, PC: clear our warnings: resolve/ack issues for cleanliness?
+- nutanix@PC Linux account password change?
 - PC 5.6:
   - Revalidate it works, add AOS 5.5 dependency note
 - SRE Clusters of HPOC (10.63.x.x)
@@ -76,18 +75,24 @@ but none of the inputs are accepted:
     Secondary Subnet: 255.255.252.0
     Secondary Gateway: 10.63.28.1
     Secondary IP Range: 10.63.31.146-149
-
+  - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 - Calm 5.8 bootcamp labs and 5.5-6 bugs
   - https://github.com/nutanixworkshops/introcalm
   vs. https://github.com/mlavi/calm_workshop
-- file Calm bugs from guide
+  - file Calm bugs from guide
+- Boxcutter for AHV:
+  - extend scripts/vmdisk2image-pc.sh to
+    - https://qemu.weilnetz.de/doc/qemu-doc.html#disk_005fimages_005fssh
+      qemu-system-x86_64 -drive file=ssh://[user@]server[:port]/path[?host_key_check=host_key_check]
+    - download (NFS?)/export image
+    - upload/import image
+  - drive into Jenkinsfile pipeline job
+    - periodic runs: weekly?
+  - Base images/boxes: https://github.com/chef/bento
 - Refactor 10.21 out further: mostly done! move to bats?
-- create cache, use cache, propagate cache to PC, fall back to global
-- review, refactor & migrate to bugs.txt: TODO, TOFIX comments
 - refactor out all passwords, hardcoded values to variables
   - SSP Admins
 - Create adminuser2, assign privs, use it instead of base admin user (drop privs/delete at end?)
-- Insure exit codes unique/consistent, error messages consistent
 - Bash test framework for unit tests and on blueprints?
   - https://kitchen.ci/ which can do spec, BATS, etc. = https://github.com/test-kitchen/test-kitchen
     - https://kitchen.ci/docs/getting-started/writing-test
@@ -110,22 +115,23 @@ but none of the inputs are accepted:
     - external URLs working (PC x, sshpass, jq, autodc, etc.)
     - userX login to PE, PC
     - userX new project, upload, run blueprint
-- Base images/boxes: https://github.com/chef/bento
-  - https://qemu.weilnetz.de/doc/qemu-doc.html#disk_005fimages_005fssh
-    qemu-system-x86_64 -drive file=ssh://[user@]server[:port]/path[?host_key_check=host_key_check]
-
-  + clear; MY_PE_PASSWORD='nx2Tech!'; sshpass -p "${MY_PE_PASSWORD}" \
-  ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
-  nutanix@10.21.${MY_HPOC_NUMBER}.37 'pkill tail; ps -efww|grep calm'
-+ AutoDC:
-  + NTNXLAB, ntnxlab.local, root:nutanix/4u
-  + samba --version Version 4.2.14-Debian
-  - https://wiki.archlinux.org/index.php/samba
-  - https://gitlab.com/mlavi/alpine-dc (fork)
+    - GOOD: user01@ntnxlab.local auth test fine@PE, bats?
+- AutoDC:
+  - GOOD:
+    - NTNXLAB, ntnxlab.local, root:nutanix/4u
+    - samba --version Version 4.2.14-Debian
+    - https://wiki.archlinux.org/index.php/samba
+    - https://gitlab.com/mlavi/alpine-dc (fork)
   - yum install samba-ldap
     - https://help.ubuntu.com/lts/serverguide/samba-ldap.html.en
-+ PE:
-  + user01@ntnxlab.local auth test fine
+  - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
+- DOCUMENTATION:
+  - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
+  - Insure exit codes unique/consistent, error messages consistent
+- OPTIMIZATION:
+  - Upload AutoDC image in parallel with PC.tar
+  - restore http_resume check/attempt
+  - create cache, use cache, propagate cache to PC, fall back to global
 
 # Notes #
 
@@ -133,6 +139,7 @@ but none of the inputs are accepted:
 
 - https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
 - One more: @anthony.c?
+- https://gitlab.com/Chandru.tkc/Serviceability_shared/
 
 ## Push Button Calm #
 

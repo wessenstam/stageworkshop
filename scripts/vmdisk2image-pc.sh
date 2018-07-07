@@ -1,24 +1,9 @@
 #!/usr/bin/env bash
 
-function Determine_PE {
-  local _HOLD=$(nuclei cluster.list format=json \
-    | jq '.entities[] | select(.status.state == "COMPLETE")' \
-    | jq '. | select(.status.resources.network.external_ip != null)')
-
-  if (( $? > 0 )); then
-    log "Error: couldn't resolve clusters $?"
-    exit 10
-  else
-    export CLUSTER_NAME=$(echo ${_HOLD} | jq .status.name | tr -d \")
-    export   MY_PE_HOST=$(echo ${_HOLD} | jq .status.resources.network.external_ip | tr -d \")
-
-    log "Success: ${CLUSTER_NAME} PE external IP=${MY_PE_HOST}"
-  fi
-}
-
 export PATH=${PATH}:${HOME}
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
+. global.vars.sh
 
 Dependencies 'install' 'jq'
 
@@ -75,3 +60,50 @@ if (( $? != 0 )); then
 fi
 log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
 log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
+
+exit 0
+
+NOTES:
+
+This makes an arbitrary VM disk on a cluster available as a Disk image
+to the AHV Image Service via Prism Central
+(and presumably, available to all AHV clusters controlled by PC?).
+
+The next step is to move images between clusters, but this is
+https://jira.nutanix.com/browse/FEAT-2185 = AHV: Support OVF/OVA Import/Export
+
+In the meantime, because NFS and SFTP are interfaces into ADFS,
+we can use either of two methods to move VM disk images between clusters:
+
+1. Easiest option = Copy the VMDisk via NFS between clusters:
+   - On the source AHV cluster with the VM+Disk, use Gear > Filesystem Whitelist
+     to add the target AHV cluster:
+     - PC (or PE) IP address and netmask: 255.255.255.0 should be sufficient.
+  - On the destination cluster, use PC: Explore > Images > Add Image button
+  - Image Source: URL radio button
+  - Use nfs://PE_ADDRESS/NFSpath
+  - Watch progress via tasks
+2. Raw VMdisk image download and conversion to infrastructure artifact:
+  - From the source cluster, download a VM disk via SFTP://PE:2222/NFSPATH
+    using PC authentication (admin, etc.) or cluster lockdown SSH keys.
+  - Convert the image to QCOW2.
+  - Upload to a object storage or web server
+  - On the destination cluster, use PC: Explore > Images > Add Image button
+  - Image Source: URL radio button
+  - Use http URL
+  - Watch progress via tasks
+
+Research:
+- My quest: https://jira.nutanix.com/browse/FEAT-5388
+
+- https://portal.nutanix.com/#/page/docs/details?targetId=AHV-Admin-Guide-v55:ahv-upload-images-ndfs-windows-t.html
+  - explains SFTP is prism auth
+- discussion of iptables for SFTP:2222 access:
+  - https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000XevaCAC
+  - how to access nutanix ports from different subnet.
+    - https://portal.nutanix.com/#/page/kbs/details?targetId=kA0600000008TsmCAE
+- Configure a Filesystem Whitelist
+  - https://portal.nutanix.com/#/page/docs/details?targetId=Migration-Guide-AOS-v58:vmm-vm-migrate-whitelist-t.html#task_a5d_54d_d6
+- Provide Read Access to a Nutanix Cluster
+  - https://portal.nutanix.com/#/page/docs/details?targetId=Migration-Guide-AOS-v58:vmm-target-ahv-cluster-provide-read-access-t.html
+- Overall VM+metadata move https://portal.nutanix.com/#/page/kbs/details?targetId=kA032000000TTqoCAG

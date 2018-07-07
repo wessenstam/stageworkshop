@@ -403,11 +403,16 @@ function Calm_Update {
 # Source Nutanix environments (for PATH and other things such as ncli)
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
+. global.vars.sh
 
 log `basename "$0"`": __main__: PID=$$"
 
-CheckArgsExist 'MY_PE_HOST'
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
+
+if [[ -z "${MY_PE_HOST}" ]]; then
+  Determine_PE
+  . global.vars.sh
+fi
 
 if [[ ! -z "${1}" ]]; then
   # hidden bonus
