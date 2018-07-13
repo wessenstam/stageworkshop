@@ -23,7 +23,10 @@ function acli {
 
 function PE_Init
 {
-  CheckArgsExist 'HPOC_PREFIX OCTET4 SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME SLEEP ATTEMPTS OCTET4 OCTET3 OCTET2 OCTET1'
+  CheckArgsExist 'HPOC_PREFIX OCTET4 MY_EMAIL \
+    SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
+    MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
+    SLEEP ATTEMPTS'
 
   local _DATA_SERVICE_IP=${HPOC_PREFIX}.$(($OCTET4 + 1))
 
@@ -32,15 +35,19 @@ function PE_Init
     log "IDEMPOTENCY: Data Services IP set, skip."
   else
     log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
-    ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
-    ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" --subject="[PE_Init:Config SMTP:alert test] `ncli cluster get-params`" \
-    && ${HOME}/serviceability/bin/send-email
+    ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
+      from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
+    ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
+      --subject="[PE_Init:Config SMTP:alert test] `ncli cluster get-params`" \
+      && ${HOME}/serviceability/bin/send-email
 
     log "Configure NTP"
-    ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
+    ncli cluster add-to-ntp-servers \
+      servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
     log "Rename default container to ${MY_CONTAINER_NAME}"
-    default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
+    default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
+      | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
     ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
 
     log "Rename default storage pool to ${MY_SP_NAME}"
@@ -48,9 +55,10 @@ function PE_Init
     ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
 
     log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
-    (ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
-        && log "Container ${MY_IMG_CONTAINER_NAME} exists" \
-        || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
+    (ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
+      | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
+      && log "Container ${MY_IMG_CONTAINER_NAME} exists" \
+      || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
 
     # Set external IP address:
     #ncli cluster edit-params external-ip-address=${MY_PE_HOST}
@@ -228,7 +236,7 @@ function AuthenticationServer()
           elif (( ${_LOOP} > ${_ATTEMPTS} )); then
             log "Error ${_ERROR}: ${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
             acli "-y vm.delete ${LDAP_SERVER}"
-            log "Remediate by deleting the ${LDAP_SERVER} VM from PE (which was just attempted by this script) and then running $_"
+            log "Remediate by deleting the ${LDAP_SERVER} VM from PE (just attempted by this script) and then running $_"
             exit ${_ERROR}
           else
             log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
@@ -242,7 +250,7 @@ function AuthenticationServer()
 
         while true ; do
           (( _LOOP++ ))
-          # TODO: service reload better? vs. force-reload and restart
+          # TODO:100 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
             "samba-tool dns zonecreate dc1 ${OCTET3}.${OCTET2}.${OCTET1}.in-addr.arpa && service samba-ad-dc restart" \
             'OPTIONAL'
@@ -254,7 +262,7 @@ function AuthenticationServer()
             log "Success: DNS record dc1.${MY_DOMAIN_FQDN} set."
             break
           elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-            log "Error ${_ERROR}: ${LDAP_SERVER}: giving up after ${_LOOP} tries; deleting VM."
+            log "Error ${_ERROR}: ${LDAP_SERVER}: giving up after ${_LOOP} tries; deleting VM..."
             acli "-y vm.delete ${LDAP_SERVER}"
             exit ${_ERROR}
           else
@@ -386,31 +394,31 @@ function PC_Init
     rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
 
     log "Deploy Prism Central..."
-    # TODO: Parameterize DNS Servers & add secondary
-    # TODO: make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
+    # TODO:120 Parameterize DNS Servers & add secondary
+    # TODO:90 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     local _LDAP_SERVER=
     HTTP_BODY=$(cat <<EOF
 {
-    "resources": {
-        "should_auto_register":true,
-        "version":"${MY_PC_VERSION}",
-        "pc_vm_list":[{
-            "data_disk_size_bytes":536870912000,
-            "nic_list":[{
-                "network_configuration":{
-                    "subnet_mask":"255.255.255.128",
-                    "network_uuid":"${MY_NET_UUID}",
-                    "default_gateway":"${HPOC_PREFIX}.1"
-                },
-                "ip_list":["${MY_PC_HOST}"]
-            }],
-            "dns_server_ip_list":["${LDAP_HOST}"],
-            "container_uuid":"${MY_CONTAINER_UUID}",
-            "num_sockets":8,
-            "memory_size_bytes":42949672960,
-            "vm_name":"Prism Central ${MY_PC_RELEASE}"
-        }]
-    }
+  "resources": {
+    "should_auto_register":true,
+    "version":"${MY_PC_VERSION}",
+    "pc_vm_list":[{
+      "data_disk_size_bytes":536870912000,
+      "nic_list":[{
+        "network_configuration":{
+          "subnet_mask":"255.255.255.128",
+          "network_uuid":"${MY_NET_UUID}",
+          "default_gateway":"${HPOC_PREFIX}.1"
+        },
+        "ip_list":["${MY_PC_HOST}"]
+      }],
+      "dns_server_ip_list":["${LDAP_HOST}"],
+      "container_uuid":"${MY_CONTAINER_UUID}",
+      "num_sockets":8,
+      "memory_size_bytes":42949672960,
+      "vm_name":"Prism Central ${MY_PC_RELEASE}"
+    }]
+  }
 }
 EOF
     )
@@ -428,7 +436,7 @@ function PC_Configure {
   log "Send configuration scripts to PC and remove: ${_PC_FILES}"
   remote_exec 'scp' 'PC' "${_PC_FILES}" && rm -f ${_PC_FILES}
 
-  _PC_FILES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
+  _PC_FILES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm id_rsa.pub'
   log "OPTIONAL: Send binary dependencies to PC: ${_PC_FILES}"
   remote_exec 'scp' 'PC' "${_PC_FILES}" 'OPTIONAL'
 
@@ -483,6 +491,7 @@ esac
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
 
+log "Adding key to PE/CVMs..." && SSH_PubKey || true # new function, non-blocking.
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_Init \
 && PE_Configure \
@@ -491,7 +500,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_Auth \
 && PC_Init \
 && Check_Prism_API_Up 'PC'
-# Some parallelization possible to critical path; not much: would require pre-requestite checks.
+# Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';

@@ -16,9 +16,6 @@ WORKSHOPS=(\
 "Change Cluster Input File" \
 "Validate Staged Clusters" \
 "Quit")
-ATTEMPTS=40;
-   SLEEP=60;
-#CURL_OPTS="${CURL_OPTS} --verbose"
 
 # Get list of clusters from user
 function get_file {
@@ -125,7 +122,7 @@ function stage_clusters {
   local _DEPENDENCIES=''
 
   if [[ -d cache ]]; then
-    #TODO: proper cache detection and downloads
+    #TODO:60 proper cache detection and downloads
     _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
   fi
 
@@ -164,19 +161,24 @@ function stage_clusters {
       log "No Calm container updates found in cache/pc-${MY_PC_VERSION}/"
     fi
 
+    SSHKEY=${HOME}/.ssh/id_rsa.pub
+    if [[ -e ${SSHKEY} ]]; then
+      log "Sending ${SSHKEY} for additon to cluster..."
+      remote_exec 'SCP' 'PE' ${SSHKEY} 'OPTIONAL'
+    fi
+
     log "Remote execution configuration script on PE@${MY_PE_HOST}"
     remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
 Progress of individual clusters can be monitored by:
  $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'tail -f stage_calmhow.log'
-   https://admin:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/ -- You can login to PE, see tasks in flight, and PC registration complete."
+   You can login to PE to see tasks in flight and eventually PC registration completes:
+   https://admin:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
 
  $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PC_HOST} 'tail -f stage_calmhow_pc.log'
    https://${MY_PC_HOST}:9440/
 
- sshpass -p ${MY_PE_PASSWORD} scp ${SSH_OPTS} nutanix@${MY_PE_HOST}:stage_calmhow.log logs/ && \
- sshpass -p 'nutanix/4u' scp ${SSH_OPTS} nutanix@${MY_PC_HOST}:stage_calmhow_pc.log logs/
 EOM
   done
   exit
@@ -201,15 +203,21 @@ function validate_clusters {
 
 # Display script usage
 function usage {
+  local _CONTINUE=1
   cat << EOF
 
     Interactive Usage: ./stage_workshop.sh
 Non-interactive Usage: ./stage_workshop.sh -f [cluster_list_file] -w [workshop_number]
 
 Available Workshops:
-1) Calm Introduction Workshop (AOS/AHV 5.6)
-2) Citrix XenDesktop on Nutanix AHV (AOS/AHV 5.6)
+EOF
 
+#TOFIX #TOOO major bug for workshops list
+for WORKSHOP in "${WORKSHOPS}"; do
+  echo ${WORKSHOP}
+done
+
+cat << EOF
 See README.md for more information :+1:
 
 EOF

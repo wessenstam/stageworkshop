@@ -3,7 +3,7 @@
 # Dependencies: curl, ncli, nuclei, jq #sshpass (removed, needed for remote)
 
 function PC_LDAP
-{ # TODO: configure case for each authentication server type?
+{ # TODO:140 configure case for each authentication server type?
   local _GROUP
   local _HTTP_BODY
   local _TEST
@@ -27,7 +27,7 @@ EOF
     https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
   log "_TEST=|${_TEST}|"
 
-  log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO: hardcoded
+  log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO:10 hardcoded role mappings
   for _GROUP in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
     _HTTP_BODY=$(cat <<EOF
     {
@@ -52,19 +52,13 @@ function SSP_Auth {
   local _LDAP_UUID
 
   log "Find ${LDAP_SERVER} uuid"
-  _HTTP_BODY=$(cat <<EOF
-  {
-    "kind": "directory_service"
-  }
-EOF
-  )
   _LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+    --user admin:${MY_PE_PASSWORD} --data "{ "kind": "directory_service" }" \
     https://localhost:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
   log "_LDAP_UUID=|${_LDAP_UUID}|"
 
-  # TODO: test ldap connection
+  # TODO:50 bats? test ldap connection
 
   log "Connect SSP Authentication (spec-ssp-authrole.json)..."
   _HTTP_BODY=$(cat <<EOF
@@ -104,7 +98,7 @@ EOF
     https://localhost:9440/api/nutanix/v3/directory_services/${_LDAP_UUID})
   log "SSP_CONNECT=|${SSP_CONNECT}|"
 
-  # TODO: SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
+  # TODO:30 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
 }
 
 function Enable_Calm
@@ -124,14 +118,6 @@ EOF
     --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
   log "_TEST=|${_TEST}|"
-
-  if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
-    echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
-    echo modify_firewall -o open -i eth0 -p 8090 -a
-    echo TOFIX: remote_exec 'SSH' 'PE'
-    echo allssh "cat /srv/pillar/iptables.sls |grep 8090"
-    echo allssh sudo cat /home/docker/epsilon/conf/karan_hosts.txt
-  fi
 }
 
 function PC_UI
@@ -141,7 +127,7 @@ function PC_UI
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
 {"type":"custom_login_screen","key":"product_title","value":"PC-${MY_PC_VERSION}"} \
-{"type":"custom_login_screen","key":"title","value":"Welcome_to_NutanixWorkshops.com"} \
+{"type":"custom_login_screen","key":"title","value":"Welcome_to_NutanixWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"welcome_banner","key":"disable_video","value":true} \
 {"type":"disable_2048","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \
@@ -167,7 +153,7 @@ EOF
 
 function PC_Init
 { # depends on ncli
-  # TODO: PC_Init: NCLI, type 'cluster get-smtp-server' config
+  # TODO:40 PC_Init: NCLI, type 'cluster get-smtp-server' config for idempotency?
 
   local _TEST
   local OLD_PW='nutanix/4u'
@@ -176,6 +162,7 @@ function PC_Init
   ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
   if (( $? != 0 )); then
    log "Warning: password not reset: $?."# exit 10
+   # TOFIX: nutanix@PC Linux account password change as well?
   fi
 #   _HTTP_BODY=$(cat <<EOF
 # {"oldPassword": "${OLD_PW}","newPassword": "${MY_PE_PASSWORD}"}
@@ -209,10 +196,6 @@ function PC_Init
       "remindLater":null
   }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
   log "PULSE _TEST=|${_TEST}|"
-
-  # Prism Central upgrade
-  #log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
-  #cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
 }
 
 function Images
@@ -298,7 +281,6 @@ function PC_SMTP {
 }
 
 function Enable_Flow {
-  # Enable Flow
   ## (API; Didn't work. Used nuclei instead)
   ## https://10.21.8.39:9440/api/nutanix/v3/services/microseg
   ## {"state":"ENABLE"}
@@ -306,8 +288,8 @@ function Enable_Flow {
 
   log "Enable Nutanix Flow..."
   nuclei microseg.enable
-  local _MICROSEGSTATUS=$(nuclei microseg.get_status)
-  log "Done with result: $_MICROSEGSTATUS"
+  local _MICROSEG_STATUS=$(nuclei microseg.get_status)
+  log "Result: $_MICROSEG_STATUS"
 }
 
 function PC_Project {
@@ -339,6 +321,24 @@ function PC_Project {
     # {"spec":{"access_control_policy_list":[],"project_detail":{"name":"mark.lavi.test1","resources":{"external_user_group_reference_list":[],"user_reference_list":[],"environment_reference_list":[],"account_reference_list":[],"subnet_reference_list":[{"kind":"subnet","name":"Primary","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"},{"kind":"subnet","name":"Secondary","uuid":"4689bc7f-61dd-4527-bc7a-9d737ae61322"}],"default_subnet_reference":{"kind":"subnet","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"}},"description":"test from NuCLeI!"},"user_list":[],"user_group_list":[]},"api_version":"3.1","metadata":{"creation_time":"2018-06-22T03:54:59Z","spec_version":0,"kind":"project","last_update_time":"2018-06-22T03:55:00Z","uuid":"1be7f66a-5006-4061-b9d2-76caefedd298","categories":{},"owner_reference":{"kind":"user","name":"admin","uuid":"00000000-0000-0000-0000-000000000000"}}}
 }
 
+function PC_Update {
+  log "This function not implemented yet."
+  log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
+  cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
+}
+
+function Karan {
+  # #Done:0 Karan, may defer to 5.8.1
+  echo Karan: by PC version, add to cache and pre-stage?
+  log "This function not implemented yet."
+  if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
+    echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
+    echo modify_firewall -o open -i eth0 -p 8090 -a
+    echo TOFIX: remote_exec 'SSH' 'PE'
+    echo allssh "cat /srv/pillar/iptables.sls |grep 8090"
+    echo allssh sudo cat /home/docker/epsilon/conf/karan_hosts.txt
+  fi
+}
 function Calm_Update {
   local _ATTEMPTS=12
   local _CALM_BIN=/usr/local/nutanix/epsilon
@@ -410,6 +410,7 @@ log `basename "$0"`": __main__: PID=$$"
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 
 if [[ -z "${MY_PE_HOST}" ]]; then
+  log "MY_PE_HOST unset, determining..."
   Determine_PE
   . global.vars.sh
 fi
@@ -425,6 +426,7 @@ CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION'
 ATTEMPTS=2
    SLEEP=10
 
+log "Adding key to PC VMs..." && SSH_PubKey || true # new function, non-blocking.
 PC_Init \
 && PC_UI \
 && PC_LDAP \
@@ -434,8 +436,8 @@ PC_Init \
 && Images \
 && Enable_Flow \
 && Check_Prism_API_Up 'PC'
-# TODO: Karan
-PC_Project
+
+PC_Project # TODO:20 PC_Project is a new function, non-blocking at end.
 
 if (( $? == 0 )); then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \

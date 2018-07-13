@@ -11,19 +11,19 @@ but none of the inputs are accepted:
     AutoDC pending
     AutoDC complete
     - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
-- document public cloud account/credentials
-  - Add to: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
+- TODO: document public cloud account/credentials
 - GoKaran feedback by July 9
 - CI/CD pipeline demo
-- LAMP v2 application improvements
+- LAMP v2 application improvements (blocked on reboot)
 - Calm videos/spreadsheet
 
 # Backlog #
 
-- update default or create new project
-- fix role mappings, logins on PE, PC
+- TODO: update default or create new project
+- TOFO: fix role mappings, logins on PE, PC
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
   - improve/run poc_samba_users.sh
+- TODO: Add link: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
 - nuclei (run local from container?)
   - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
     - vs: cat /etc/nutanix/release_version
@@ -48,14 +48,11 @@ but none of the inputs are accepted:
         subnet_reference_list: []
         user_reference_list: []
   - nuclei authconfig (run local from container?) See notes#nuceli section, below.
-- (localize?) and upload blueprint via nuclei (see unit tests)?
-- Default project environment set, enable marketplace item, launch!
-- Karan: by PC version, add to cache and pre-stage?
-- Enable multiple cloud account settings, then environments, then marketplace launch
-- PE, PC: clear our warnings: resolve/ack issues for cleanliness?
-- nutanix@PC Linux account password change?
-- PC 5.6:
-  - Revalidate it works, add AOS 5.5 dependency note
+- TODO: (localize?) and upload blueprint via nuclei (see unit tests)?
+- TODO: Default project environment set, enable marketplace item, launch!
+- TODO: Enable multiple cloud account settings, then environments, then marketplace launch
+- TODO: PE, PC: clear our warnings: resolve/ack issues for cleanliness?
+- TODO: PC 5.6 revalidate it works, add AOS 5.5 dependency note
 - SRE Clusters of HPOC (10.63.x.x)
   - Cluster IP: https://10.63.30.150:9440/console/#login
     Prism UI Credentials: admin/nx2Tech975!
@@ -76,7 +73,7 @@ but none of the inputs are accepted:
     Secondary Gateway: 10.63.28.1
     Secondary IP Range: 10.63.31.146-149
   - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
-- Calm 5.8 bootcamp labs and 5.5-6 bugs
+- TODO: Calm 5.8 bootcamp labs and 5.5-6 bugs
   - https://github.com/nutanixworkshops/introcalm
   vs. https://github.com/mlavi/calm_workshop
   - file Calm bugs from guide
@@ -93,6 +90,8 @@ but none of the inputs are accepted:
 - refactor out all passwords, hardcoded values to variables
   - SSP Admins
 - Create adminuser2, assign privs, use it instead of base admin user (drop privs/delete at end?)
+- ncli rsyslog
+- Add widget Deployed Applications to (default) dashboard
 - Bash test framework for unit tests and on blueprints?
   - https://kitchen.ci/ which can do spec, BATS, etc. = https://github.com/test-kitchen/test-kitchen
     - https://kitchen.ci/docs/getting-started/writing-test
@@ -140,6 +139,10 @@ but none of the inputs are accepted:
 - https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
 - One more: @anthony.c?
 - https://gitlab.com/Chandru.tkc/Serviceability_shared/
+  - pc-automate/installpc.py
+  - 24:     "heartbeat":    "/PrismGateway/services/rest/v1/heartbeat",
+  - 326: def validate_cluster(entity):
+  - 500: def add_network_to_project(name,directory_uuid):
 
 ## Push Button Calm #
 

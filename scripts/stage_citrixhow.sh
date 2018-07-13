@@ -10,7 +10,7 @@ function pc_send_file {
 }
 
 # Loging date format
-#TODO: Make logging format configurable
+#Never:0 Make logging format configurable
 #MY_LOG_DATE='date +%Y-%m-%d %H:%M:%S'
 # Script file name
 MY_SCRIPT_NAME=`basename "$0"`
@@ -316,7 +316,7 @@ rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
 
 # Deploy Prism Central
 my_log "Deploy Prism Central"
-# TODO: Parameterize DNS Servers & add secondary
+# TODO:80 Parameterize DNS Servers & add secondary
 MY_DEPLOY_BODY=$(cat <<EOF
 {
   "resources": {

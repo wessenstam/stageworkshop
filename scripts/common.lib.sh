@@ -25,10 +25,22 @@ function CheckArgsExist {
   fi
 }
 
+function SSH_PubKey {
+  local _SSHKEY=${HOME}/id_rsa.pub
+  local _NAME=${MY_EMAIL//\./_DOT_}
+  _NAME=${_NAME/@/_AT_}
+  if [[ -e ${_SSHKEY} ]]; then
+    log "Adding ${_SSHKEY} under ${_NAME} label..."
+    log "Note that a period and other symbols aren't allowed to be a key name."
+    ncli cluster add-public-key name=${_NAME} file-path=${_SSHKEY}
+  fi
+}
+
 function Determine_PE {
+  log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
   local _HOLD=$(nuclei cluster.list format=json \
-    | jq '.entities[] | select(.status.state == "COMPLETE")' \
-    | jq '. | select(.status.resources.network.external_ip != null)')
+    | ./jq '.entities[] | select(.status.state == "COMPLETE")' \
+    | ./jq '. | select(.status.resources.network.external_ip != null)')
 
   if (( $? > 0 )); then
     log "Error: couldn't resolve clusters $?"
@@ -82,7 +94,7 @@ function Download {
   done
 }
 
-function remote_exec { # TODO: similaries to Check_Prism_API_Up
+function remote_exec {
 # Argument ${1} = REQIRED: ssh or scp
 # Argument ${2} = REQIRED: PE, PC, or LDAP_SERVER
 # Argument ${3} = REQIRED: command configuration
@@ -94,6 +106,7 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
   local     _HOST
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
+  local   _PW_INIT='nutanix/4u' # TODO:110 hardcoded p/w
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
@@ -103,12 +116,12 @@ function remote_exec { # TODO: similaries to Check_Prism_API_Up
       ;;
     'PC' )
           _HOST=${MY_PC_HOST}
-      _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
+      _PASSWORD=${_PW_INIT}
       ;;
     'LDAP_SERVER' )
        _ACCOUNT='root'
           _HOST=${LDAP_HOST}
-      _PASSWORD='nutanix/4u' # TODO: hardcoded p/w
+      _PASSWORD=${_PW_INIT}
          _SLEEP=7
       ;;
   esac
@@ -261,7 +274,7 @@ function Dependencies {
   esac
 }
 
-function Check_Prism_API_Up { # TODO: similaries to remote_exec
+function Check_Prism_API_Up {
 # Argument ${1} = REQUIRED: PE or PC
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
@@ -270,6 +283,7 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
   local     _HOST
   local     _LOOP=0
   local _PASSWORD="${MY_PE_PASSWORD}"
+  local  _PW_INIT='Nutanix/4u'
   local    _SLEEP=${SLEEP}
   local     _TEST=0
 
@@ -295,8 +309,8 @@ function Check_Prism_API_Up { # TODO: similaries to remote_exec
       _SLEEP=${3}
     fi
 
-    if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_PASSWORD} != 'Nutanix/4u' ]]; then
-      _PASSWORD='Nutanix/4u' # TODO: hardcoded p/w
+    if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_PASSWORD} != ${_PW_INIT} ]]; then
+      _PASSWORD=${_PW_INIT}
       log "Warning @${1}: Fallback on ${_HOST}: try initial password next cycle..."
       _SLEEP=0 #break
     fi

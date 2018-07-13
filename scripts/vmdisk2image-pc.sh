@@ -75,26 +75,36 @@ https://jira.nutanix.com/browse/FEAT-2185 = AHV: Support OVF/OVA Import/Export
 In the meantime, because NFS and SFTP are interfaces into ADFS,
 we can use either of two methods to move VM disk images between clusters:
 
-1. Easiest option = Copy the VMDisk via NFS between clusters:
+1. Easiest option = Copy the raw, uncompressed VMDisk via NFS between clusters:
    - On the source AHV cluster with the VM+Disk, use Gear > Filesystem Whitelist
      to add the target AHV cluster:
      - PC (or PE) IP address and netmask: 255.255.255.0 should be sufficient.
+     - nuclei cluster update $CLUSTER_NAME nfs_subnet_whitelist=
+       - Comma separated list of subnets (of the form 'a.b.c.d/l.m.n.o') that are allowed to send NFS reques
   - On the destination cluster, use PC: Explore > Images > Add Image button
-  - Image Source: URL radio button
-  - Use nfs://PE_ADDRESS/NFSpath
+    - Image Source: URL radio button
+    - Use nfs://PE_ADDRESS/NFSpath
+    - nuclei image...
   - Watch progress via tasks
 2. Raw VMdisk image download and conversion to infrastructure artifact:
   - From the source cluster, download a VM disk via SFTP://PE:2222/NFSPATH
     using PC authentication (admin, etc.) or cluster lockdown SSH keys.
-  - Convert the image to QCOW2.
+  - Convert the image to QCOW2
+    - TODO: Dependencies('qemu')
+    - qemu-img convert -c -p -f raw ./c7e11d23-5602-40b1-837e-229ac18270c6 -O qcow2 centos7-ml2.qcow2
+      - man qemu-img # suggests a snapshot can be exported as well: -c = compress, -p = progress
+      - can use nfs URLs for transport, formats support: ftp(s), http(s) URLs?
   - Upload to a object storage or web server
   - On the destination cluster, use PC: Explore > Images > Add Image button
   - Image Source: URL radio button
   - Use http URL
   - Watch progress via tasks
+3. Possibly consider Packer:
+  - TODO: Andrew Nelson's blog from my quest...
+  - Jenkins job? Calm downloadable image index vs. AHV image macro?
 
-Research:
-- My quest: https://jira.nutanix.com/browse/FEAT-5388
+# Research:
+- My quest = https://jira.nutanix.com/browse/FEAT-5388
 
 - https://portal.nutanix.com/#/page/docs/details?targetId=AHV-Admin-Guide-v55:ahv-upload-images-ndfs-windows-t.html
   - explains SFTP is prism auth
