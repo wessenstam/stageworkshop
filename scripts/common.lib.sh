@@ -309,6 +309,10 @@ function Check_Prism_API_Up {
       _SLEEP=${3}
     fi
 
+    if (( ${_TEST} == 401 )); then
+      log "Warning: unauthorized ${1} user or password."
+    fi
+
     if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_PASSWORD} != ${_PW_INIT} ]]; then
       _PASSWORD=${_PW_INIT}
       log "Warning @${1}: Fallback on ${_HOST}: try initial password next cycle..."

@@ -1,7 +1,8 @@
-example_pocs.txt
-cache/
-logs/
 .DS_Store
+.imdone/
 .kitchen/
 .kitchen.local.yml
+cache/
+example_pocs.txt
 Gemfile.lock
+logs/
