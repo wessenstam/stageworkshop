@@ -24,6 +24,7 @@ but none of the inputs are accepted:
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
   - improve/run poc_samba_users.sh
 - TODO: Add link: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
+- TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
 - nuclei (run local from container?)
   - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
     - vs: cat /etc/nutanix/release_version

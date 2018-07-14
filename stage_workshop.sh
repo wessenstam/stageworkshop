@@ -12,7 +12,6 @@ WORKSHOPS=(\
 
 function usage {
   # Display script usage
-  local _CONTINUE=1
   cat << EOF
 
 See README.md and guidebook.md for more information.
@@ -141,7 +140,7 @@ function stage_clusters {
       #TODO:60 proper cache detection and downloads
       local _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
       log "Sending cached dependencies (optional)..."
-      cd cache && remote_exec 'SCP' 'PE' "-v ${_DEPENDENCIES}" 'OPTIONAL' \
+      cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' \
         && cd ..
     fi
 
