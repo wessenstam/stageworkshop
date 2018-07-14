@@ -50,21 +50,6 @@ function select_workshop {
   select WORKSHOP in "${WORKSHOPS[@]}"
   do
     case $WORKSHOP in
-      # "Calm Workshop (AOS/AHV 5.5+)")
-      #   PE_CONFIG=stage_calmhow.sh
-      #   PC_CONFIG=stage_calmhow_pc.sh
-      #   break
-      #   ;;
-      # "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)")
-      #   PE_CONFIG=stage_citrixhow.sh
-      #   PC_CONFIG=stage_citrixhow_pc.sh
-      #   break
-      #   ;;
-      # "Tech Summit 2018")
-      #   PE_CONFIG=stage_ts18.sh
-      #   PC_CONFIG=stage_ts18_pc.sh
-      #   break
-      #   ;;
       "Change ${_CLUSTER_FILE}")
         get_file
         break
@@ -109,13 +94,6 @@ function stage_clusters {
   # Send configuration scripts to remote clusters and execute Prism Element script
   Dependencies 'install' 'sshpass'
 
-  local _DEPENDENCIES=''
-
-  if [[ -d cache ]]; then
-    #TODO:60 proper cache detection and downloads
-    _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
-  fi
-
   log "WORKSHOP #${WORKSHOP_NUM} = ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}"
   #  case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
   case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
@@ -158,6 +136,15 @@ function stage_clusters {
     . scripts/global.vars.sh # re-import for relative settings
 
     Check_Prism_API_Up 'PE' 60
+
+    if [[ -d cache ]]; then
+      #TODO:60 proper cache detection and downloads
+      local _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
+      log "Sending cached dependencies (optional)..."
+      cd cache && remote_exec 'SCP' 'PE' "-v ${_DEPENDENCIES}" 'OPTIONAL' \
+        && cd ..
+    fi
+
     if (( $? == 0 )) ; then
       log "Sending configuration script(s) to PE@${MY_PE_HOST}"
     else
@@ -166,9 +153,6 @@ function stage_clusters {
     fi
 
     cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${PE_CONFIG} ${PC_CONFIG}" \
-      && cd ..
-
-    cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' \
       && cd ..
 
     # For Calm container updates...
@@ -196,18 +180,24 @@ function stage_clusters {
     remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
-Progress of individual clusters can be monitored by:
- $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PE_HOST} 'date; tail -f stage_calmhow.log'
-   You can login to PE to see tasks in flight and eventually PC registration completes:
-   https://admin:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
 
- $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} nutanix@${MY_PC_HOST} 'date; tail -f stage_calmhow_pc.log'
-   https://${MY_PC_HOST}:9440/
+Progress of individual clusters can be monitored by:
+
+$ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
+    nutanix@${MY_PE_HOST} 'date; tail -f stage_calmhow.log'
+  You can login to PE to see tasks in flight and eventual PC registration:
+  https://admin:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
+
+$ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
+    nutanix@${MY_PC_HOST} 'date; tail -f stage_calmhow_pc.log'
+  https://${MY_PC_HOST}:9440/
 
 EOM
   done
   exit
 }
+
+
 
 function validate_clusters {
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
