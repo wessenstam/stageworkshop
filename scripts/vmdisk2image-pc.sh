@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+echo <<EoM
+  $. = Run on PC: provide a VM name@PE, will upload disk image.
+EoM
+
 export PATH=${PATH}:${HOME}
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
@@ -99,8 +103,8 @@ we can use either of two methods to move VM disk images between clusters:
   - Image Source: URL radio button
   - Use http URL
   - Watch progress via tasks
-3. Possibly consider Packer:
-  - TODO: Andrew Nelson's blog from my quest...
+3. Possibly consider Packer to synthesize image artifact:
+  - TODO: Andrew Nelson's blog http://virtual-hiking.blogspot.com/2015/10/using-packer-to-build-images-for.html
   - Jenkins job? Calm downloadable image index vs. AHV image macro?
 
 # Research:
@@ -117,3 +121,8 @@ we can use either of two methods to move VM disk images between clusters:
 - Provide Read Access to a Nutanix Cluster
   - https://portal.nutanix.com/#/page/docs/details?targetId=Migration-Guide-AOS-v58:vmm-target-ahv-cluster-provide-read-access-t.html
 - Overall VM+metadata move https://portal.nutanix.com/#/page/kbs/details?targetId=kA032000000TTqoCAG
+
+versus image download:
+- nuclei -output_format json image.get WindowsServer2016-Base.qcow2
+- https://10.21.5.39:9440/api/nutanix/v3/images/9367da60-157d-4e7f-9adb-e8e83f8f23e0/file
+- for PC, not PE

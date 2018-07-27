@@ -478,8 +478,9 @@ case ${MY_PC_VERSION} in
     MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.1/v1/pc-5.7.1-stable-prism_central_metadata.json'
     ;;
-  5.8 )
+  5.8 | 5.8.0.1 )
     MY_PC_META_URL=http://download.nutanix.com/pc/one-click-pc-deployment/5.8/v1/euphrates-5.8-stable-prism_central_metadata.json
+    MY_PC_META_URL=http://download.nutanix.com/pc/one-click-pc-deployment/5.8.0.1/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json
     ;;
   *)
     log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"

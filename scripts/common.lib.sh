@@ -188,6 +188,40 @@ function Dependencies {
       log "Install ${2}..."
       export PATH=${PATH}:${HOME}
 
+      _LSB=/etc/lsb-release #Linux Standards Base
+      if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
+        echo "Found Ubuntu"
+        case "${2}" in
+          sshpass )
+            if [[ -z `which ${2}` ]]; then
+              sudo apt-get install --yes sshpass
+            else
+              log "Success: found ${2}."
+            fi
+            if (( $? > 0 )) ; then
+              log "Error: can't install ${2}."
+              exit 98
+            fi
+            ;;
+          jq )
+            if [[ -z `which ${2}` ]]; then
+              if [[ ! -e jq-linux64 ]]; then
+                # https://stedolan.github.io/jq/download/#checksums_and_signatures
+                #Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+                sudo apt-get install --yes jq
+              fi
+              if (( $? > 0 )); then
+                log "Error: can't install ${2}."
+                exit 98
+              #else
+                #chmod u+x jq-linux64 && ln -s jq-linux64 jq
+              fi
+            else
+              log "Success: found ${2}."
+            fi
+            ;;
+        esac
+      fi
       if [[ `uname --operating-system` == "GNU/Linux" ]]; then
         # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
         case "${2}" in

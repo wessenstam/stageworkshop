@@ -180,7 +180,10 @@ function stage_clusters {
 
     cat <<EOM
 
-Progress of individual clusters can be monitored by:
+Cluster automation progress can be monitored via Prism Element and Central.
+
+If your SSH key has been uploaded to Prism > Gear > Cluster Lockdown,
+the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
 $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
     nutanix@${MY_PE_HOST} 'date; tail -f stage_calmhow.log'
@@ -189,14 +192,12 @@ $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
 
 $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
     nutanix@${MY_PC_HOST} 'date; tail -f stage_calmhow_pc.log'
-  https://${MY_PC_HOST}:9440/
+  https://admin@${MY_PC_HOST}:9440/
 
 EOM
   done
   exit
 }
-
-
 
 function validate_clusters {
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`

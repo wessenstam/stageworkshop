@@ -11,10 +11,12 @@ but none of the inputs are accepted:
     AutoDC pending
     AutoDC complete
     - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
-- TODO: document public cloud account/credentials
-- GoKaran feedback by July 9
+- TODO:
+  - exp, this week, 3 mos.
+  - document public cloud account/credentials
 - CI/CD pipeline demo
-- LAMP v2 application improvements (blocked on reboot)
+- LAMP v2 application improvements (reboot nice to have)
+- Lab 9 Monitoring App
 - Calm videos/spreadsheet
 
 # Backlog #
@@ -93,7 +95,8 @@ but none of the inputs are accepted:
 - Create adminuser2, assign privs, use it instead of base admin user (drop privs/delete at end?)
 - ncli rsyslog
 - Add widget Deployed Applications to (default) dashboard
-- Bash test framework for unit tests and on blueprints?
+
+# Bash test framework for unit tests and on blueprints?
   - https://kitchen.ci/ which can do spec, BATS, etc. = https://github.com/test-kitchen/test-kitchen
     - https://kitchen.ci/docs/getting-started/writing-test
     - https://serverspec.org/ DSL Spec TDD
@@ -116,7 +119,8 @@ but none of the inputs are accepted:
     - userX login to PE, PC
     - userX new project, upload, run blueprint
     - GOOD: user01@ntnxlab.local auth test fine@PE, bats?
-- AutoDC:
+
+# AutoDC:
   - GOOD:
     - NTNXLAB, ntnxlab.local, root:nutanix/4u
     - samba --version Version 4.2.14-Debian
@@ -125,10 +129,12 @@ but none of the inputs are accepted:
   - yum install samba-ldap
     - https://help.ubuntu.com/lts/serverguide/samba-ldap.html.en
   - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
-- DOCUMENTATION:
+
+# DOCUMENTATION:
   - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
   - Insure exit codes unique/consistent, error messages consistent
-- OPTIMIZATION:
+
+# OPTIMIZATION:
   - Upload AutoDC image in parallel with PC.tar
   - restore http_resume check/attempt
   - create cache, use cache, propagate cache to PC, fall back to global
