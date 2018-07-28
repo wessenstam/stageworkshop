@@ -131,6 +131,11 @@ function remote_exec {
     exit ${_ERROR}
   fi
 
+  if [[ ! -z ${4} ]]; then
+    _ATTEMPTS=1
+       _SLEEP=0
+  fi
+
   while true ; do
     (( _LOOP++ ))
     case "${1}" in
@@ -160,9 +165,14 @@ function remote_exec {
       if [[ ${DEBUG} ]]; then log "${3} executed properly."; fi
       return 0
     elif (( ${_LOOP} == ${_ATTEMPTS} )); then
-      _ERROR=11
-      log "Error ${_ERROR}: giving up after ${_LOOP} tries."
-      exit ${_ERROR}
+      if [[ -z ${4} ]]; then
+        _ERROR=11
+        log "Error ${_ERROR}: giving up after ${_LOOP} tries."
+        exit ${_ERROR}
+      else
+        log "Optional: giving up."
+        break
+      fi
     else
       log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_SLEEP}..."
       sleep ${_SLEEP}
