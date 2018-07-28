@@ -213,7 +213,6 @@ function Dependencies {
               # https://pkgs.org/download/sshpass
               # https://sourceforge.net/projects/sshpass/files/sshpass/
             elif [[ `uname -s` == "Darwin" ]]; then
-              #MacOS
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
             fi
             ;;
@@ -226,8 +225,8 @@ function Dependencies {
               # https://stedolan.github.io/jq/download/#checksums_and_signatures
               if [[ ! -e jq-linux64 ]]; then
                 Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
-                chmod u+x jq-linux64 && ln -s jq-linux64 jq
               fi
+              chmod u+x jq-linux64 && ln -s jq-linux64 jq
             elif [[ `uname -s` == "Darwin" ]]; then
               brew install jq
             fi

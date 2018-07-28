@@ -6,12 +6,15 @@ This is a work in progress and your milage may vary!
 
 ## Prerequisites ##
 
-1. Tested on Mac, probably works on Linux.
-2. A terminal, command line: git, jq, and sshpass.
+1. Tested on Mac and Ubuntu.
+2. On Mac, requires https://brew.sh installed.
+3. A terminal, command line: git, jq, and sshpass.
 
 ### Acknowledgements ###
 
-The entire Global Technical Sales Enablement team has delivered an amazing amount of content and automation for Nutanix TechSummits and Workshops. Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants. Thank you!
+The entire Global Technical Sales Enablement team has delivered an amazing amount of content and automation for Nutanix TechSummits and Workshops.
+ Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants.
+ Thank you!
 
 ### For the Impatient ###
 
@@ -44,16 +47,6 @@ We'll round up to the nearest half minute.
 | Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
 | :------------- | :------------- | --- | ---------- |
 | __start__ | 11:26:53 | 09:07:55 | 03:15:35 |
-| Dependencies 'install' | 1 |
-| PE_Init | 1 |
-| Network_Configure | 0.5 |
-| AuthenticationServer 'AutoDC' | 2 |
-| PE_Configure | 0.5 |
-| PE_Auth | 0.5 |
-| PC_Init | 7.5 |
-| Check_Prism_API_Up 'PC' | 16 |
-| PC_Configure | 0.5 |
-| Dependencies 'remove' | 0.5 |
 | __end__ | 11:54:28 | 09:34:09 | 03:35:25 |
 
 4. 1.5 min = PC:stage_calmhow_pc.sh
@@ -61,15 +54,6 @@ We'll round up to the nearest half minute.
 | Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
 | :------------- | :------------- | --- | ---------- |
 | __start (localtime)__ | 04:54:27 | 02:34:08 | 20:35:24 |
-| Dependencies 'install' | 0.5 |
-| PC_Init | 0.5 |
-| PC_UI | 0.5 |
-| PC_LDAP | 0.5 |
-| SSP_Auth | 0.5 |
-| CALM | 0.5 |
-| Images | background |
-| Check_Prism_API_Up 'PC' | 0.5 |
-| Dependencies 'remove' | 0.5 |
 | __end (localtime)__ | 04:55:57 | 02:35:37 | 20:36:45 |
 
 5. 2 min: manual configuration of Calm default project.
