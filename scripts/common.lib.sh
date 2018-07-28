@@ -172,6 +172,8 @@ function remote_exec {
 
 function Dependencies {
   local _ERROR
+  local _LSB=/etc/lsb-release #Linux Standards Base
+  local _CPE=/etc/os-release # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
 
   if [[ -z ${1} ]]; then
     _ERROR=20
@@ -187,112 +189,54 @@ function Dependencies {
     'install')
       log "Install ${2}..."
       export PATH=${PATH}:${HOME}
-
-      _LSB=/etc/lsb-release #Linux Standards Base
-      if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
-        echo "Found Ubuntu"
+      if [[ -z `which ${2}` ]]; then
         case "${2}" in
           sshpass )
-            if [[ -z `which ${2}` ]]; then
+            if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
               sudo apt-get install --yes sshpass
-            else
-              log "Success: found ${2}."
-            fi
-            if (( $? > 0 )) ; then
-              log "Error: can't install ${2}."
-              exit 98
+            elif [[ -e ${_CPE} && `grep 'ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+              # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
+              if [[ ! -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
+                Download http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
+              fi
+              sudo rpm -ivh sshpass-1.06-2.el7.x86_64.rpm
+              # https://pkgs.org/download/sshpass
+              # https://sourceforge.net/projects/sshpass/files/sshpass/
+            elif [[ `uname -s` == "Darwin" ]]; then
+              #MacOS
+              brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
             fi
             ;;
           jq )
-            if [[ -z `which ${2}` ]]; then
+            if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
               if [[ ! -e jq-linux64 ]]; then
-                # https://stedolan.github.io/jq/download/#checksums_and_signatures
-                #Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
                 sudo apt-get install --yes jq
               fi
-              if (( $? > 0 )); then
-                log "Error: can't install ${2}."
-                exit 98
-              #else
-                #chmod u+x jq-linux64 && ln -s jq-linux64 jq
-              fi
-            else
-              log "Success: found ${2}."
-            fi
-            ;;
-        esac
-      fi
-      if [[ `uname --operating-system` == "GNU/Linux" ]]; then
-        # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
-        case "${2}" in
-          sshpass )
-            if [[ -z `which ${2}` ]]; then
-              if [[ -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
-                sudo rpm -ihv sshpass-1.06-2.el7.x86_64.rpm
-              else
-                sudo rpm -ivh http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
-                # https://pkgs.org/download/sshpass
-                # https://sourceforge.net/projects/sshpass/files/sshpass/
-              fi
-              if (( $? > 0 )) ; then
-                log "Error: can't install ${2}."
-                exit 98
-              fi
-            else
-              log "Success: found ${2}."
-            fi
-            ;;
-          jq )
-            if [[ -z `which ${2}` ]]; then
+            elif [[ -e ${_CPE} && `grep 'ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+              # https://stedolan.github.io/jq/download/#checksums_and_signatures
               if [[ ! -e jq-linux64 ]]; then
-                # https://stedolan.github.io/jq/download/#checksums_and_signatures
                 Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
-              fi
-              if (( $? > 0 )); then
-                log "Error: can't install ${2}."
-                exit 98
-              else
                 chmod u+x jq-linux64 && ln -s jq-linux64 jq
               fi
-            else
-              log "Success: found ${2}."
-            fi
-            ;;
-        esac
-      elif [[ `uname -s` == "Darwin" ]]; then
-        #MacOS
-        case "${2}" in
-          sshpass )
-            if [[ -z `which ${2}` ]]; then
-              brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
-              if (( $? > 0 )); then
-                _ERROR=98
-                log "Error ${_ERROR}: can't install ${2}."
-                exit ${_ERROR}
-              fi
-            else
-              log "Success: found ${2}."
-            fi
-            ;;
-          jq )
-            if [[ -z `which ${2}` ]]; then
+            elif [[ `uname -s` == "Darwin" ]]; then
               brew install jq
-              if (( $? > 0 )); then
-                _ERROR=98
-                log "Error ${_ERROR}: can't install ${2}."
-                exit ${_ERROR}
-              fi
-            else
-              log "Success: found ${2}."
             fi
             ;;
         esac
-      fi #MacOS
+
+        if (( $? > 0 )); then
+          _ERROR=98
+          log "Error ${_ERROR}: can't install ${2}."
+          exit ${_ERROR}
+        fi
+      else
+        log "Success: found ${2}."
+      fi
       ;;
     'remove')
       log "Removing ${2}..."
-      if [[ `uname --operating-system` == "GNU/Linux" ]]; then
-        # probably on NTNX CVM or PCVM = CentOS7
+      if [[ -e ${_CPE} && `grep 'ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+        #TODO: assuming we're on PC or PE VM.
         case "${2}" in
           sshpass )
             sudo rpm -e sshpass
@@ -302,7 +246,7 @@ function Dependencies {
             ;;
         esac
       else
-        log "FEATURE: don't remove Dependencies on Mac."
+        log "Feature: don't remove Dependencies on Mac OS Darwin or Ubuntu."
       fi
       ;;
   esac
