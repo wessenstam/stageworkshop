@@ -194,7 +194,7 @@ function Dependencies {
           sshpass )
             if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
               sudo apt-get install --yes sshpass
-            elif [[ -e ${_CPE} && `grep 'ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+            elif [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}' ` == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
               if [[ ! -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
                 Download http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
@@ -212,7 +212,7 @@ function Dependencies {
               if [[ ! -e jq-linux64 ]]; then
                 sudo apt-get install --yes jq
               fi
-            elif [[ -e ${_CPE} && `grep 'ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+            elif [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
               # https://stedolan.github.io/jq/download/#checksums_and_signatures
               if [[ ! -e jq-linux64 ]]; then
                 Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
@@ -235,7 +235,7 @@ function Dependencies {
       ;;
     'remove')
       log "Removing ${2}..."
-      if [[ -e ${_CPE} && `grep 'ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+      if [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
         #TODO: assuming we're on PC or PE VM.
         case "${2}" in
           sshpass )
