@@ -6,24 +6,34 @@ This is a work in progress and your milage may vary!
 
 ## Prerequisites ##
 
-1. Tested on Mac and Ubuntu.
-2. On Mac, requires https://brew.sh installed.
-3. A terminal, command line: git, jq, and sshpass.
+1. Tested on Ubuntu and Mac (Mac requires https://brew.sh installed).
+3. A terminal with command line git.
 
 ### Acknowledgements ###
 
-The entire Global Technical Sales Enablement team has delivered an amazing amount of content and automation for Nutanix TechSummits and Workshops.
- Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants.
+The entire Global Technical Sales Enablement team has delivered an amazing
+ amount of content and automation for Nutanix TechSummits and Workshops. Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants.
  Thank you!
 
 ### For the Impatient ###
 
+    echo "Start Foundation on your HPoC now, we'll wait 40 minutes..."
+
     export PE=10.21.X.37 && export PE_PASSWORD='nx2Tech###!' && EMAIL=first.last@nutanix.com \
-    && git clone https://github.com/mlavi/stageworkshop.git && cd stageworkshop \
-    && echo "${PE}|${PE_PASSWORD}|${EMAIL}" >> clusters.txt && echo “Start foundation now” \
+    && cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 | grep Cloning | awk -F\' '{print $2}') \
+    && echo "${PE}|${PE_PASSWORD}|${EMAIL}" > clusters.txt \
     && ./stage_workshop.sh -f clusters.txt -w 1 #latest calm
 
     sleep 60*30 && lynx https://admin:${PE_PASSWORD}@${PE}:9440/
+
+While Foundation typically takes ~30 minutes, we'll:
+
+1. Set the Prism Element (PE) IP address, password, and your email address,
+2. Change directory into the cloned git repository,
+3. Put settings into a configuration file,
+4. Stage the cluster with the configuration file and the latest Calm workshop.
+
+Approximately 30 minutes later, you can login to PE to get to PC and follow step #7 below to finish push button Calm automation.
 
 ## Bugs, Priorities, Notes ##
 
@@ -40,9 +50,10 @@ We'll round up to the nearest half minute.
 | NX-1060 | 30 | N/A | N/A |
 | NX-3060-G5 | 25 | 35 | 33 |
 
-2. 0.5 min = ./stage_workshop.sh
+2. 0.5 min per cluster = ./stage_workshop.sh
 
 3. 28/26/20 min = PE:stage_calmhow.sh
+Typical download and install of Prism Central is 17 minutes of waiting!
 
 | Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
 | :------------- | :------------- | --- | ---------- |
@@ -56,7 +67,7 @@ We'll round up to the nearest half minute.
 | __start (localtime)__ | 04:54:27 | 02:34:08 | 20:35:24 |
 | __end (localtime)__ | 04:55:57 | 02:35:37 | 20:36:45 |
 
-5. 2 min: manual configuration of Calm default project.
+5. 2 min: Login to PC, manual configuration of Calm default project (see step 7, below).
 
 ## Procedure ##
 

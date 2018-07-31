@@ -2,6 +2,10 @@
 # -x
 # use !/bin/bash -x to debug command substitution and evaluation instead of echo.
 
+# See stage_clusters for WORKSHOPS keyword mappings to scripts and variables, e.g.:
+# - use Calm | Citrix | Summit
+# - use PC #.# and then see stage_calmhow.sh: main for MY_PC_META_URL mappings from MY_PC_VERSION.
+
 WORKSHOPS=(\
 "Calm Workshop (AOS/AHV PC 5.8)" \
 "Calm Workshop (AOS/AHV PC 5.7.1)" \
@@ -93,36 +97,31 @@ function stage_clusters {
   # Send configuration scripts to remote clusters and execute Prism Element script
   Dependencies 'install' 'sshpass'
 
-  log "WORKSHOP #${WORKSHOP_NUM} = ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}"
-  #  case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
-  case ${WORKSHOPS[$((${WORKSHOP_NUM}-1))]} in
-    "Calm Workshop (AOS/AHV PC 5.7.1)")
-      MY_PC_VERSION=5.7.1
-         PE_CONFIG+=stage_calmhow.sh
-         PC_CONFIG+=stage_calmhow_pc.sh
-      ;;
-    "Calm Workshop (AOS/AHV PC 5.6.x)")
-      MY_PC_VERSION=5.6
-         PE_CONFIG+=stage_calmhow.sh
-         PC_CONFIG+=stage_calmhow_pc.sh
-      ;;
-    "Calm Workshop (AOS/AHV PC 5.8)")
-      MY_PC_VERSION=5.8
-         PE_CONFIG+=stage_calmhow.sh
-         PC_CONFIG+=stage_calmhow_pc.sh
-      ;;
-    "Citrix Desktop on AHV Workshop (AOS/AHV PC 5.6)")
-      PE_CONFIG+=stage_citrixhow.sh
-      PC_CONFIG+=stage_citrixhow_pc.sh
-      ;;
-    "Tech Summit 2018")
-      PE_CONFIG+=stage_ts18.sh
-      PC_CONFIG+=stage_ts18_pc.sh
-      ;;
-    # *)
-    #   echo "No one should ever see this. Time to panic."
-    #   ;;
-  esac
+  local _WORKSHOP=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
+  log "WORKSHOP #${WORKSHOP_NUM} = ${_WORKSHOP}"
+
+  if (( $(echo ${_WORKSHOP} | grep -i Calm | wc -l) > 0 )); then
+    PE_CONFIG=stage_calmhow.sh
+    PC_CONFIG=stage_calmhow_pc.sh
+  fi
+  if (( $(echo ${_WORKSHOP} | grep -i Citrix | wc -l) > 0 )); then
+    PE_CONFIG=stage_citrixhow.sh
+    PC_CONFIG=stage_citrixhow_pc.sh
+  fi
+  if (( $(echo ${_WORKSHOP} | grep -i Summit | wc -l) > 0 )); then
+    PE_CONFIG=stage_ts18.sh
+    PC_CONFIG=stage_ts18_pc.sh
+  fi
+
+  if (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
+    MY_PC_VERSION=5.6
+  fi
+  if (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
+    MY_PC_VERSION=5.7.1
+  fi
+  if (( $(echo ${_WORKSHOP} | grep -i "PC 5.8" | wc -l) > 0 )); then
+    MY_PC_VERSION=5.8.0.1
+  fi
 
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
   do
@@ -140,8 +139,9 @@ function stage_clusters {
       #TODO:60 proper cache detection and downloads
       local _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
       log "Sending cached dependencies (optional)..."
-      cd cache && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' \
-        && cd ..
+      pushd cache \
+        && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' \
+        && popd
     fi
 
     if (( $? == 0 )) ; then
@@ -151,20 +151,21 @@ function stage_clusters {
       exit 15
     fi
 
-    cd scripts && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${PE_CONFIG} ${PC_CONFIG}" \
-      && cd ..
+    pushd scripts \
+      && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${PE_CONFIG} ${PC_CONFIG}" \
+      && popd
 
     # For Calm container updates...
     if [[ -d cache/pc-${MY_PC_VERSION}/ ]]; then
       log "Uploading PC updates in background..."
-      cd cache/pc-${MY_PC_VERSION} \
+      pushd cache/pc-${MY_PC_VERSION} \
       && pkill scp || true
       for _CONTAINER in epsilon nucalm ; do \
         if [[ -f ${_CONTAINER}.tar ]]; then \
           remote_exec 'SCP' 'PE' ${_CONTAINER}.tar 'OPTIONAL' & \
         fi
       done
-      cd ../..
+      popd
     else
       log "No PC updates found in cache/pc-${MY_PC_VERSION}/"
     fi
@@ -180,7 +181,7 @@ function stage_clusters {
 
     cat <<EOM
 
-Cluster automation progress can be monitored via Prism Element and Central.
+Cluster automation progress for ${_WORKSHOP} can be monitored via Prism Element and Central.
 
 If your SSH key has been uploaded to Prism > Gear > Cluster Lockdown,
 the following will fail silently, use ssh nutanix@{PE|PC} instead.
@@ -196,6 +197,7 @@ $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
 
 EOM
   done
+  log "So far, ${0} has run for ${SECONDS} seconds..."
   exit
 }
 
@@ -233,7 +235,11 @@ WORKSHOPS[${#WORKSHOPS[@]}]="Quit"
 
 # Check if file passed via command line, otherwise prompt for cluster list file
 while getopts "f:w:\?" opt; do
-  log "Checking option: ${opt} with arguent ${OPTARG}"
+
+  if [[ ${DEBUG} ]]; then
+    log "Checking option: ${opt} with arguent ${OPTARG}"
+  fi
+
   case ${opt} in
     f )
       if [ -f ${OPTARG} ]; then

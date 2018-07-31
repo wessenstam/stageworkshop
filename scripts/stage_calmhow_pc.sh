@@ -442,6 +442,7 @@ PC_Project # TODO:20 PC_Project is a new function, non-blocking at end.
 if (( $? == 0 )); then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
   && log "PC = https://${MY_PC_HOST}:9440" \
+  && log "${0} ran for ${SECONDS} seconds." \
   && log "$0: done!_____________________" && echo
 else
   log "Error: failed to reach PC!"

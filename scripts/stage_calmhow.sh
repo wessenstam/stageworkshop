@@ -479,7 +479,6 @@ case ${MY_PC_VERSION} in
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.1/v1/pc-5.7.1-stable-prism_central_metadata.json'
     ;;
   5.8 | 5.8.0.1 )
-    MY_PC_META_URL=http://download.nutanix.com/pc/one-click-pc-deployment/5.8/v1/euphrates-5.8-stable-prism_central_metadata.json
     MY_PC_META_URL=http://download.nutanix.com/pc/one-click-pc-deployment/5.8.0.1/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json
     ;;
   *)
@@ -508,7 +507,9 @@ if (( $? == 0 )) ; then
   log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
   log "PE = https://${MY_PE_HOST}:9440"
   log "PC = https://${MY_PC_HOST}:9440"
+  log "${0} ran for ${SECONDS} seconds."
   log "$0: main: done!_____________________"
+
   echo
 else
   log "Error 18: in main functional chain, exit!"
