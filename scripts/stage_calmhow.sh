@@ -303,7 +303,7 @@ function PE_Auth
   fi
 }
 
-function PE_Configure
+function PE_License
 {
   CheckArgsExist 'CURL_POST_OPTS MY_PE_PASSWORD'
 
@@ -491,16 +491,17 @@ esac
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
 
-log "Adding key to PE/CVMs..." && SSH_PubKey || true # new function, non-blocking.
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
+&& PE_License \
 && PE_Init \
-&& PE_Configure \
 && Network_Configure \
 && AuthenticationServer \
 && PE_Auth \
 && PC_Init \
 && Check_Prism_API_Up 'PC'
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
+
+log "Adding key to PE/CVMs..." && SSH_PubKey || true # new function, non-blocking.
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';

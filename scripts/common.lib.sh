@@ -30,7 +30,7 @@ function SSH_PubKey {
   local _NAME=${MY_EMAIL//\./_DOT_}
   _NAME=${_NAME/@/_AT_}
   if [[ -e ${_SSHKEY} ]]; then
-    log "Adding ${_SSHKEY} under ${_NAME} label..."
+    log "Locally adding ${_SSHKEY} under ${_NAME} label..."
     log "Note that a period and other symbols aren't allowed to be a key name."
     ncli cluster add-public-key name=${_NAME} file-path=${_SSHKEY}
   fi

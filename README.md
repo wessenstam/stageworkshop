@@ -1,6 +1,6 @@
 This script supports staging HPoC clusters for [Nutanix Workshops](http://www.nutanixworkshops.com).
-It greatly automates the majority of the [Workshop Setup Guide](http://www.nutanixworkshops.com/en/latest/setup/).
-Now you can have push-button Calm in about an hour.
+It automates the majority of the [Workshop Setup Guide](http://www.nutanixworkshops.com/en/latest/setup/).
+After HPoC Foundation, you can have push-button Calm in about half an hour!
 
 # Table of Contents #
 
