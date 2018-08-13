@@ -464,30 +464,7 @@ function PC_Configure {
 
 log `basename "$0"`": PID=$$"
 
-CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
-
-case ${MY_PC_VERSION} in
-  5.6 | 5.6.1 )
-    MY_PC_META_URL=\ #'http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
-    'http://download.nutanix.com/pc/one-click-pc-deployment/5.6.1/v1/euphrates-5.6.1-stable-prism_central_metadata.json'
-    ;;
-  5.7.0.1 )
-    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
-    ;;
-  5.7 | 5.7.1 )
-    MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
-    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.1/v1/pc-5.7.1-stable-prism_central_metadata.json'
-    ;;
-  5.8 | 5.8.0.1 )
-    MY_PC_META_URL=http://download.nutanix.com/pc/one-click-pc-deployment/5.8.0.1/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json
-    ;;
-  *)
-    log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
-    log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
-    log 'then find: Additional Releases (on lower left side)'
-    log 'Provide the metadata URL from: PC 1-click deploy from PE'
-    ;;
-esac
+CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION MY_PC_META_URL'
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
 

@@ -7,12 +7,12 @@
 # - use PC #.# and then see stage_calmhow.sh: main for MY_PC_META_URL mappings from MY_PC_VERSION.
 
 WORKSHOPS=(\
-"Calm Workshop (AOS/AHV PC 5.8)" \
-"Calm Workshop (AOS/AHV PC 5.7.1)" \
+"Calm Workshop (AOS/AHV PC 5.8.x)" \
+"Calm Workshop (AOS/AHV PC 5.7.x)" \
 "Calm Workshop (AOS/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
-)
+) # Adjust stage_clusters as needed
 
 function usage {
   # Display script usage
@@ -94,6 +94,7 @@ function select_workshop {
 }
 
 function stage_clusters {
+  # Adjust as needed with $WORKSHOPS
   # Send configuration scripts to remote clusters and execute Prism Element script
   Dependencies 'install' 'sshpass'
 
@@ -114,13 +115,27 @@ function stage_clusters {
   fi
 
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.6
+     MY_PC_VERSION=5.6
+    MY_PC_META_URL=\ #'http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+    'http://download.nutanix.com/pc/one-click-pc-deployment/5.6.1/v1/euphrates-5.6.1-stable-prism_central_metadata.json'
   fi
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.7.1
+     MY_PC_VERSION=5.7.1
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
+    MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.1/v1/pc-5.7.1-stable-prism_central_metadata.json'
   fi
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.8" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.8.0.1
+     MY_PC_VERSION=5.8.1
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.0.1/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json'
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.1/v1/pc_deploy-5.8.1.json'
+  fi
+
+  if [[ -z ${MY_PC_META_URL} ]]; then
+    log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
+    log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
+    log 'then find: Additional Releases (on lower left side)'
+    log 'Provide the metadata URL from: PC 1-click deploy from PE'
   fi
 
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
@@ -177,7 +192,7 @@ function stage_clusters {
     fi
 
     log "Remote execution configuration script on PE@${MY_PE_HOST}"
-    remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
+    remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} MY_PC_META_URL=${MY_PC_META_URL} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
 
     cat <<EOM
 
