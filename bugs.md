@@ -12,12 +12,14 @@ but none of the inputs are accepted:
     AutoDC complete
     - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
 - TODO:
-  - exp, this week, 3 mos.
+  - download 403 detection
   - document public cloud account/credentials
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
 - Lab 9 Monitoring App
 - Calm videos/spreadsheet
+- Calm workshop updates for 5.9
+- Multi product demo
 
 # Backlog #
 

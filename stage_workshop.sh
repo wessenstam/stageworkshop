@@ -2,9 +2,11 @@
 # -x
 # use !/bin/bash -x to debug command substitution and evaluation instead of echo.
 
-# See stage_clusters for WORKSHOPS keyword mappings to scripts and variables, e.g.:
+# For WORKSHOPS keyword mappings to scripts and variables, see function stage_clusters:
 # - use Calm | Citrix | Summit
-# - use PC #.# and then see stage_calmhow.sh: main for MY_PC_META_URL mappings from MY_PC_VERSION.
+# - use PC #.#
+# See main function to update:
+# - MY_PC_META_URL mapping for MY_PC_VERSION
 
 WORKSHOPS=(\
 "Calm Workshop (AOS/AHV PC 5.8.x)" \
@@ -14,8 +16,7 @@ WORKSHOPS=(\
 #"Tech Summit 2018" \
 ) # Adjust stage_clusters as needed
 
-function usage {
-  # Display script usage
+function script_usage {
   cat << EOF
 
 See README.md and guidebook.md for more information.
@@ -115,13 +116,14 @@ function stage_clusters {
   fi
 
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
-     MY_PC_VERSION=5.6
+     MY_PC_VERSION=5.6.1
     MY_PC_META_URL=\ #'http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
     'http://download.nutanix.com/pc/one-click-pc-deployment/5.6.1/v1/euphrates-5.6.1-stable-prism_central_metadata.json'
   fi
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
-     MY_PC_VERSION=5.7.1
+     MY_PC_VERSION=5.7.0.1
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.0.1/v1/pc-5.7.0.1-stable-prism_central_metadata.json'
+     MY_PC_VERSION=5.7.1
     MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.7.1/v1/pc-5.7.1-stable-prism_central_metadata.json'
   fi
@@ -129,13 +131,15 @@ function stage_clusters {
      MY_PC_VERSION=5.8.1
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.0.1/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json'
     MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.1/v1/pc_deploy-5.8.1.json'
+     MY_PC_VERSION=5.8.2
+    MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/v1/pc_deploy-5.8.2.json'
   fi
 
   if [[ -z ${MY_PC_META_URL} ]]; then
     log "Errror: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
     log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
-    log 'then find: Additional Releases (on lower left side)'
-    log 'Provide the metadata URL from: PC 1-click deploy from PE'
+    log ' - Try to find ${MY_PC_VERSION} in the Additional Releases section on the lower left side'
+    log ' - Then provide the metadata URL for the "PC 1-click deploy from PE" option.'
   fi
 
   for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
@@ -212,7 +216,7 @@ $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
 
 EOM
   done
-  log "So far, ${0} has run for ${SECONDS} seconds..."
+  log "${0} has run for ${SECONDS} seconds..."
   exit
 }
 
@@ -261,7 +265,7 @@ while getopts "f:w:\?" opt; do
         CLUSTER_LIST=${OPTARG}
       else
         echo "Error: file not found = ${OPTARG}"
-        usage
+        script_usage
       fi
       ;;
     w )
@@ -270,11 +274,11 @@ while getopts "f:w:\?" opt; do
         WORKSHOP_NUM=${OPTARG}
       else
         echo "Error: workshop not found = ${OPTARG}"
-        usage
+        script_usage
       fi
       ;;
     \? )
-      usage
+      script_usage
       ;;
   esac
 done
@@ -284,10 +288,10 @@ if [[ -n ${CLUSTER_LIST} && -n ${WORKSHOP_NUM} ]]; then
   stage_clusters
 elif [[ -n ${CLUSTER_LIST} ]]; then
   log "Error: missing ${_CLUSTER_FILE} argument."
-  usage
+  script_usage
 elif [[ -n ${WORKSHOP_NUM} ]]; then
   log "Error: missing workshop number argument."
-  usage
+  script_usage
 elif [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == ${_VALIDATE} ]]; then
   validate_clusters
 else

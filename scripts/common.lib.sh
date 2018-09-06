@@ -30,8 +30,8 @@ function SSH_PubKey {
   local _NAME=${MY_EMAIL//\./_DOT_}
   _NAME=${_NAME/@/_AT_}
   if [[ -e ${_SSHKEY} ]]; then
-    log "Locally adding ${_SSHKEY} under ${_NAME} label..."
     log "Note that a period and other symbols aren't allowed to be a key name."
+    log "Locally adding ${_SSHKEY} under ${_NAME} label..."
     ncli cluster add-public-key name=${_NAME} file-path=${_SSHKEY}
   fi
 }
@@ -58,6 +58,7 @@ function Download {
   local              _ERROR=0
   local _HTTP_RANGE_ENABLED='--continue-at -'
   local               _LOOP=0
+  local             _OUTPUT=''
   local              _SLEEP=2
 
   if [[ -z ${1} ]]; then
@@ -69,7 +70,7 @@ function Download {
   while true ; do
     (( _LOOP++ ))
     log "${1}..."
-    local _OUTPUT=''
+    _OUTPUT=''
     # curl ${CURL_OPTS} ${_HTTP_RANGE_ENABLED} --remote-name --location ${1}
     curl ${CURL_OPTS} --remote-name --location ${1}
     _OUTPUT=$?

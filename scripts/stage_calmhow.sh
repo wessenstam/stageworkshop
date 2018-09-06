@@ -23,12 +23,12 @@ function acli {
 
 function PE_Init
 {
-  CheckArgsExist 'HPOC_PREFIX OCTET4 MY_EMAIL \
+  CheckArgsExist 'HPOC_PREFIX octet MY_EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
     MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
     SLEEP ATTEMPTS'
 
-  local _DATA_SERVICE_IP=${HPOC_PREFIX}.$(($OCTET4 + 1))
+  local _DATA_SERVICE_IP=${HPOC_PREFIX}.$((${octet[3]} + 1))
 
   if [[ `ncli cluster get-params | grep 'External Data' | \
          awk -F: '{print $2}' | tr -d '[:space:]'` == "${_DATA_SERVICE_IP}" ]]; then
@@ -252,7 +252,7 @@ function AuthenticationServer()
           (( _LOOP++ ))
           # TODO:100 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
-            "samba-tool dns zonecreate dc1 ${OCTET3}.${OCTET2}.${OCTET1}.in-addr.arpa && service samba-ad-dc restart" \
+            "samba-tool dns zonecreate dc1 ${octet[2]}.${octet[1]}.${octet[0]}.in-addr.arpa && service samba-ad-dc restart" \
             'OPTIONAL'
           sleep ${_SLEEP}
 
@@ -336,7 +336,7 @@ function PE_License
     #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
     #curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data
-    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET3}' password = '${MY_PE_PASSWORD}'"}' \
+    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${octet[2]}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
   fi
 }
@@ -375,8 +375,8 @@ function PC_Init
     PC_Download
 
     local _CHECKSUM=$(md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}')
-    if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
-      log "Error: md5sum ${_CHECKSUM} does't match on: ${MY_PC_SRC_URL##*/} removing and exit!"
+    if [[ `cat ${MY_PC_META_URL##*/} | ./jq -r .hex_md5` != ${_CHECKSUM} ]]; then
+      log "Error: md5sum ${_CHECKSUM} doesn't match on: ${MY_PC_SRC_URL##*/} removing and exit!"
       rm -f ${MY_PC_SRC_URL##*/}
       exit 2
     else
@@ -391,7 +391,7 @@ function PC_Init
     MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
 
     log "Delete PC sources to free CVM space..."
-    rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
+    rm -f ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
 
     log "Deploy Prism Central..."
     # TODO:120 Parameterize DNS Servers & add secondary
@@ -467,6 +467,8 @@ log `basename "$0"`": PID=$$"
 CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION MY_PC_META_URL'
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
+# TODO X: new function, non-blocking. moved up, trying parallelization
+log "Adding key to PE/CVMs..." && SSH_PubKey || true &
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_License \
@@ -478,7 +480,6 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && Check_Prism_API_Up 'PC'
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
-log "Adding key to PE/CVMs..." && SSH_PubKey || true # new function, non-blocking.
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
@@ -486,7 +487,7 @@ if (( $? == 0 )) ; then
   log "PE = https://${MY_PE_HOST}:9440"
   log "PC = https://${MY_PC_HOST}:9440"
   log "${0} ran for ${SECONDS} seconds."
-  log "$0: main: done!_____________________"
+  log "$0: done!_____________________"
 
   echo
 else

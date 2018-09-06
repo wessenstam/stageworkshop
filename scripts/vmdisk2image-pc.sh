@@ -84,7 +84,7 @@ we can use either of two methods to move VM disk images between clusters:
      to add the target AHV cluster:
      - PC (or PE) IP address and netmask: 255.255.255.0 should be sufficient.
      - nuclei cluster update $CLUSTER_NAME nfs_subnet_whitelist=
-       - Comma separated list of subnets (of the form 'a.b.c.d/l.m.n.o') that are allowed to send NFS reques
+       - Comma separated list of subnets (of the form 'a.b.c.d/l.m.n.o') that are allowed to send NFS request
   - On the destination cluster, use PC: Explore > Images > Add Image button
     - Image Source: URL radio button
     - Use nfs://PE_ADDRESS/NFSpath
