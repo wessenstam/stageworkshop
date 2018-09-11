@@ -420,7 +420,7 @@ function AOS_Upload {
 }
 #__main()____________
 
-# Source Nutanix environments (for PATH and other things such as ncli)
+# Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
 . global.vars.sh

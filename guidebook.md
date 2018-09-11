@@ -7,7 +7,7 @@ This is a work in progress and your milage may vary!
 ## Prerequisites ##
 
 1. Tested on Ubuntu and Mac (Mac requires https://brew.sh installed).
-3. A terminal with command line git.
+2. A terminal with command line git.
 
 ### Acknowledgements ###
 

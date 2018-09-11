@@ -239,7 +239,8 @@ function validate_clusters {
 
 #__main__
 
-. scripts/common.lib.sh # source common routines
+# Source Workshop common routines + global variables
+. scripts/common.lib.sh
 . scripts/global.vars.sh
 
     _VALIDATE='Validate Staged Clusters'

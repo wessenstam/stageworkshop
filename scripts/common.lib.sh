@@ -26,8 +26,8 @@ function CheckArgsExist {
 }
 
 function SSH_PubKey {
+  local   _NAME=${MY_EMAIL//\./_DOT_}
   local _SSHKEY=${HOME}/id_rsa.pub
-  local _NAME=${MY_EMAIL//\./_DOT_}
   _NAME=${_NAME/@/_AT_}
   if [[ -e ${_SSHKEY} ]]; then
     log "Note that a period and other symbols aren't allowed to be a key name."
@@ -183,8 +183,8 @@ function remote_exec {
 
 function Dependencies {
   local _ERROR
-  local _LSB=/etc/lsb-release #Linux Standards Base
   local _CPE=/etc/os-release # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
+  local _LSB=/etc/lsb-release #Linux Standards Base
 
   if [[ -z ${1} ]]; then
     _ERROR=20
@@ -211,6 +211,11 @@ function Dependencies {
                 Download http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
               fi
               sudo rpm -ivh sshpass-1.06-2.el7.x86_64.rpm
+              if (( $? > 0 )); then
+                _ERROR=31
+                log "Error ${_ERROR}: cannot install ${2}."
+                exit ${_ERROR}
+              fi
               # https://pkgs.org/download/sshpass
               # https://sourceforge.net/projects/sshpass/files/sshpass/
             elif [[ `uname -s` == "Darwin" ]]; then

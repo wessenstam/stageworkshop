@@ -457,9 +457,9 @@ function PC_Configure {
 
 #__main()__________
 
-# Source Nutanix environments (for PATH and other things)
+# Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh # source common routines, additional global variables
+. common.lib.sh
 . global.vars.sh
 
 log `basename "$0"`": PID=$$"
@@ -479,7 +479,6 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PC_Init \
 && Check_Prism_API_Up 'PC'
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
-
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';

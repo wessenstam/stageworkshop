@@ -12,8 +12,11 @@ but none of the inputs are accepted:
     AutoDC complete
     - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
 - TODO:
+  - minimal bootstrap from PE/CVM
+    - refactor URLs to global.vars.sh
+    - detect HPOC networks and favor local URLs
   - download 403 detection
-  - document public cloud account/credentials
+- document public cloud account/credentials
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
 - Lab 9 Monitoring App
