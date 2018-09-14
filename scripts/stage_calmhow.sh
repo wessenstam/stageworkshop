@@ -307,7 +307,9 @@ function PE_License
 {
   CheckArgsExist 'CURL_POST_OPTS MY_PE_PASSWORD'
 
+  log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
   Check_Prism_API_Up 'PC' 2 0
+
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip"
   else
@@ -390,7 +392,9 @@ function PC_Download
 
 function PC_Init
 {
+  log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
   Check_Prism_API_Up 'PC' 2 0
+
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else

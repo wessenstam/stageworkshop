@@ -58,6 +58,8 @@ function SSP_Auth {
     | jq -r .entities[0].metadata.uuid)
   log "_LDAP_UUID=|${_LDAP_UUID}|"
 
+  # TODO: get directory service name _LDAP_NAME
+  _LDAP_NAME=${LDAP_SERVER}
   # TODO:50 bats? test ldap connection
 
   log "Connect SSP Authentication (spec-ssp-authrole.json)..."
@@ -99,6 +101,84 @@ EOF
   log "SSP_CONNECT=|${SSP_CONNECT}|"
 
   # TODO:30 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
+  # PUT https://10.21.47.39:9440/api/nutanix/v3/directory_services/9d8c2c33-9d95-438c-a7f4-2187120ae99e = spec-ssp-direcory_service.json
+  # TODO: make directory_type variable?
+  log "Enable SSP Admin Authentication (spec-ssp-direcory_service.json)..."
+  _HTTP_BODY=$(cat <<EOF
+  {
+    "spec": {
+      "name": "${_LDAP_NAME}",
+      "resources": {
+        "service_account": {
+          "username": "${MY_DOMAIN_USER}@${MY_DOMAIN_FQDN}",
+          "password": "${MY_DOMAIN_PASS}"
+        },
+        "url": "ldaps://${LDAP_HOST}/",
+        "directory_type": "ACTIVE_DIRECTORY",
+        "domain_name": "${MY_DOMAIN_FQDN}"
+      }
+    },
+    "metadata": {
+      "kind": "directory_service",
+      "spec_version": 0,
+      "uuid": "${_LDAP_UUID}",
+      "categories": {}
+    },
+    "api_version": "3.1.0"
+  }
+EOF
+  )
+  SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
+    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
+    https://localhost:9440/api/nutanix/v3/directory_services/${_LDAP_UUID})
+  log "SSP_CONNECT=|${SSP_CONNECT}|"
+  # POST https://10.21.47.39:9440/api/nutanix/v3/groups = spec-ssp-groups.json
+  # TODO can we skip previous step?
+  log "Enable SSP Admin Authentication (spec-ssp-groupauth_2.json)..."
+  _HTTP_BODY=$(cat <<EOF
+  {
+    "spec": {
+      "name": "${_LDAP_NAME}",
+      "resources": {
+        "service_account": {
+          "username": "${MY_DOMAIN_USER}@${MY_DOMAIN_FQDN}",
+          "password": "${MY_DOMAIN_PASS}"
+        },
+        "url": "ldaps://${LDAP_HOST}/",
+        "directory_type": "ACTIVE_DIRECTORY",
+        "domain_name": "${MY_DOMAIN_FQDN}"
+        "admin_user_reference_list": [],
+        "admin_group_reference_list": [
+          {
+            "kind": "user_group",
+            "name": "cn=ssp admins,cn=users,dc=ntnxlab,dc=local",
+            "uuid": "45d495e1-b797-4a26-a45b-0ef589b42186"
+          }
+        ]
+      }
+    },
+    "api_version": "3.1",
+    "metadata": {
+      "last_update_time": "2018-09-14T13:02:55Z",
+      "kind": "directory_service",
+      "uuid": "${_LDAP_UUID}",
+      "creation_time": "2018-09-14T13:02:55Z",
+      "spec_version": 2,
+      "owner_reference": {
+        "kind": "user",
+        "name": "admin",
+        "uuid": "00000000-0000-0000-0000-000000000000"
+      },
+      "categories": {}
+    }
+  }
+  EOF
+    )
+    SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
+      --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
+      https://localhost:9440/api/nutanix/v3/directory_services/${_LDAP_UUID})
+    log "SSP_CONNECT=|${SSP_CONNECT}|"
+
 }
 
 function Enable_Calm
@@ -114,6 +194,7 @@ function Enable_Calm
   }
 EOF
   )
+  _HTTP_BODY='{"enable_nutanix_apps":true,"state":"ENABLE"}'
   _TEST=$(curl ${CURL_POST_OPTS} \
     --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
@@ -327,18 +408,6 @@ function PC_Update {
   cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
 }
 
-function Karan {
-  # #Done:0 Karan, may defer to 5.8.1
-  echo Karan: by PC version, add to cache and pre-stage?
-  log "This function not implemented yet."
-  if [[ ${MY_PC_VERSION} == '5.7.0.1' ]]; then
-    echo https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000LJ1aCAG
-    echo modify_firewall -o open -i eth0 -p 8090 -a
-    echo TOFIX: remote_exec 'SSH' 'PE'
-    echo allssh "cat /srv/pillar/iptables.sls |grep 8090"
-    echo allssh sudo cat /home/docker/epsilon/conf/karan_hosts.txt
-  fi
-}
 function Calm_Update {
   local _ATTEMPTS=12
   local _CALM_BIN=/usr/local/nutanix/epsilon
