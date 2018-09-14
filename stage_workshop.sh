@@ -45,9 +45,10 @@ function stage_clusters {
     PC_CONFIG=stage_ts18_pc.sh
   fi
 
+  _ENVIRONMENT_VARS="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION}"
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/"
-    cd scripts && MY_EMAIL=${MY_EMAIL} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} ./${PE_CONFIG} >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1
+    cd scripts && ${_ENVIRONMENT_VARS} ./${PE_CONFIG} >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1
   else
     for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
     do
@@ -103,7 +104,7 @@ function stage_clusters {
       fi
 
       log "Remote execution configuration script on PE@${MY_PE_HOST}"
-      remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG%%.sh}.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "${_ENVIRONMENT_VARS} nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG%%.sh}.log 2>&1 &"
 
       cat <<EOM
 
