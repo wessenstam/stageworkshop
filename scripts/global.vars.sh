@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+PRISM_ADMIN=admin
       octet=(${MY_PE_HOST//./ }) # zero index
 HPOC_PREFIX=${octet[0]}.${octet[1]}.${octet[2]}
  MY_PC_HOST=${HPOC_PREFIX}.$((${octet[3]} + 2))

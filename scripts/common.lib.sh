@@ -293,7 +293,7 @@ function Check_Prism_API_Up {
 
   while true ; do
     (( _LOOP++ ))
-    _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${_PASSWORD} \
+    _TEST=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${_PASSWORD} \
       -X POST --data '{ "kind": "cluster" }' \
       https://${_HOST}:9440/api/nutanix/v3/clusters/list \
       | tr -d \") # wonderful addition of "" around HTTP status code by cURL

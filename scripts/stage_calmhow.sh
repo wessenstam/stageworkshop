@@ -312,14 +312,14 @@ function PE_License
     log "IDEMPOTENCY: PC API responds, skip"
   else
     log "Validate EULA on PE"
-    curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data '{
+    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data '{
       "username": "SE with stage_calmhow.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
     }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
 
     log "Disable Pulse in PE"
-    curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT --data '{
+    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
       "enable": false,
@@ -332,10 +332,10 @@ function PE_License
 
     #echo; log "Create PE Banner Login" # TODO: for PC, login banner
     # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
-    # curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data \
+    # curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data \
     #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
-    #curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} -X POST --data
+    #curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${octet[2]}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
   fi
@@ -343,7 +343,35 @@ function PE_License
 
 function PC_Download
 {
-  CheckArgsExist 'MY_PC_META_URL'
+  CheckArgsExist 'MY_PC_VERSION'
+
+  MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/'${MY_PC_VERSION}
+
+  case ${MY_PC_VERSION} in
+    5.6.1 )
+      MY_PC_META_URL+=\ #'http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
+     '/v1/euphrates-5.6.1-stable-prism_central_metadata.json'
+      ;;
+    5.7.0.1 | 5.7.1 )
+      MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
+      MY_PC_META_URL+="/v1/pc-${MY_PC_VERSION}-stable-prism_central_metadata.json"
+      ;;
+    5.8.0.1 )
+      MY_PC_META_URL+='/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json'
+      ;;
+    5.8.1 | 5.8.2 | 5.9 | 5.10 | 5.11 )
+      MY_PC_META_URL+="/v1/pc_deploy-${MY_PC_VERSION}.json"
+      ;;
+    * )
+      _ERROR=22
+      log "Error ${_ERROR}: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
+      log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
+      log " - Find ${MY_PC_VERSION} in the Additional Releases section on the lower left side"
+      log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option.'
+      exit ${_ERROR}
+      ;;
+  esac
+
   if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
     log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
     Download "${MY_PC_META_URL}"
@@ -423,7 +451,7 @@ function PC_Init
 EOF
     )
     local _TEST
-    _TEST=$(curl ${CURL_POST_OPTS} --user admin:${MY_PE_PASSWORD} \
+    _TEST=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} \
       -X POST --data "${HTTP_BODY}" \
       https://localhost:9440/api/nutanix/v3/prism_central)
     log "_TEST=|${_TEST}|"
@@ -464,12 +492,14 @@ function PC_Configure {
 
 log `basename "$0"`": PID=$$"
 
-CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION MY_PC_META_URL'
+CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
-# TODO X: new function, non-blocking. moved up, trying parallelization
+
+.# non-blocking function moved up for parallelization
 log "Adding key to PE/CVMs..." && SSH_PubKey || true &
 
+# Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_License \
 && PE_Init \
@@ -478,7 +508,6 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && PE_Auth \
 && PC_Init \
 && Check_Prism_API_Up 'PC'
-# Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
 if (( $? == 0 )) ; then
   PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';

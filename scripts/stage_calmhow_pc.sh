@@ -23,7 +23,7 @@ EOF
   )
 
   _TEST=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
   log "_TEST=|${_TEST}|"
 
@@ -39,7 +39,7 @@ EOF
 EOF
     )
     _TEST=$(curl ${CURL_POST_OPTS} \
-      --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+      --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
       https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
     log "Cluster Admin=${_GROUP}, _TEST=|${_TEST}|"
   done
@@ -53,7 +53,7 @@ function SSP_Auth {
 
   log "Find ${LDAP_SERVER} uuid"
   _LDAP_UUID=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} --data "{ "kind": "directory_service" }" \
+    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} --data "{ "kind": "directory_service" }" \
     https://localhost:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
   log "_LDAP_UUID=|${_LDAP_UUID}|"
@@ -94,7 +94,7 @@ function SSP_Auth {
 EOF
   )
   SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
+    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/directory_services/${_LDAP_UUID})
   log "SSP_CONNECT=|${SSP_CONNECT}|"
 
@@ -115,7 +115,7 @@ function Enable_Calm
 EOF
   )
   _TEST=$(curl ${CURL_POST_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
   log "_TEST=|${_TEST}|"
 }
@@ -139,14 +139,14 @@ EOF
 
   for _HTTP_BODY in ${_JSON}; do
     _TEST=$(curl ${CURL_HTTP_OPTS} \
-      --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+      --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
       https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
     log "_TEST=|${_TEST}|${_HTTP_BODY}"
   done
 
   _HTTP_BODY='{"type":"UI_CONFIG","key":"autoLogoutTime","value": 3600000}'
        _TEST=$(curl ${CURL_HTTP_OPTS} \
-    --user admin:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
+    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_HTTP_BODY}" \
     https://localhost:9440/PrismGateway/services/rest/v1/application/user_data)
   log "autoLogoutTime _TEST=|${_TEST}|"
 }
@@ -159,7 +159,7 @@ function PC_Init
   local OLD_PW='nutanix/4u'
 
   log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
-  ncli user reset-password user-name=admin password=${MY_PE_PASSWORD}
+  ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
   if (( $? != 0 )); then
    log "Warning: password not reset: $?."# exit 10
    # TOFIX: nutanix@PC Linux account password change as well?
@@ -168,7 +168,7 @@ function PC_Init
 # {"oldPassword": "${OLD_PW}","newPassword": "${MY_PE_PASSWORD}"}
 # EOF
 #   )
-#   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "admin:${OLD_PW}" -X POST --data "${_HTTP_BODY}" \
+#   PC_TEST=$(curl ${CURL_HTTP_OPTS} --user "${PRISM_ADMIN}:${OLD_PW}" -X POST --data "${_HTTP_BODY}" \
 #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
 #   log "cURL reset password PC_TEST=${PC_TEST}"
 
@@ -177,7 +177,7 @@ function PC_Init
     servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
   log "Validate EULA@PC"
-  _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
+  _TEST=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST -d '{
       "username": "SE",
       "companyName": "NTNX",
       "jobTitle": "SE"
@@ -185,7 +185,7 @@ function PC_Init
   log "EULA _TEST=|${_TEST}|"
 
   log "Disable Pulse@PC"
-  _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X PUT -d '{
+  _TEST=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT -d '{
       "emailContactList":null,
       "enable":false,
       "verbosityType":null,
@@ -273,8 +273,8 @@ function PC_SMTP {
   #log "sleep ${_SLEEP}..."; sleep ${_SLEEP}
   #log $(ncli cluster get-smtp-server | grep Status | grep success)
   log $(ncli cluster send-test-email recipient=${MY_EMAIL} \
-    subject="PC_SMTP https://admin:${MY_PE_PASSWORD}@${MY_PC_HOST}:9440 Testing.")
-  # local _TEST=$(curl ${CURL_HTTP_OPTS} --user admin:${MY_PE_PASSWORD} -X POST -d '{
+    subject="PC_SMTP https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PC_HOST}:9440 Testing.")
+  # local _TEST=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST -d '{
   #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
   #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
   # log "_TEST=|${_TEST}|"
