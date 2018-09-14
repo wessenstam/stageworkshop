@@ -46,8 +46,8 @@ function stage_clusters {
   fi
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
-    MY_EMAIL=${MY_EMAIL} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG%%.sh}}.log 2>&1
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/"
+    MY_EMAIL=${MY_EMAIL} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} scripts/${PE_CONFIG} >> ${HOME}/${PE_CONFIG%%.sh}}.log 2>&1
   else
     for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
     do

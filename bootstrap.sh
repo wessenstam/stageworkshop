@@ -66,7 +66,7 @@ pushd ${REPO}-${BRANCH}/ \
     MY_PE_HOST=${MY_PE_HOST} \
    PRISM_ADMIN=${PRISM_ADMIN} \
 MY_PE_PASSWORD=${MY_PE_PASSWORD} \
-sh stage_workshop.sh -f - \
+./stage_workshop.sh -f - \
   && popd && echo "Cleaning up..." \
   && rm -rf ${URL##*/} ${0} ${REPO}-${BRANCH}/
 
