@@ -233,7 +233,7 @@ function Dependencies {
                 Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
               fi
               chmod u+x jq-linux64 && ln -s jq-linux64 jq
-              export PATH+=.;
+              export PATH+=:`pwd`
             elif [[ `uname -s` == "Darwin" ]]; then
               brew install jq
             fi
