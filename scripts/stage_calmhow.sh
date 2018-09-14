@@ -412,8 +412,8 @@ function PC_Init
     fi
 
     log "Prism Central upload..."
-    ncli software upload file-path=/home/nutanix/${MY_PC_SRC_URL##*/} \
-      meta-file-path=/home/nutanix/${MY_PC_META_URL##*/} \
+    ncli software upload file-path=`pwd`/${MY_PC_SRC_URL##*/} \
+      meta-file-path=`pwd`/${MY_PC_META_URL##*/} \
       software-type=PRISM_CENTRAL_DEPLOY
 
     MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
@@ -421,7 +421,7 @@ function PC_Init
     log "Delete PC sources to free CVM space..."
     rm -f ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
 
-    log "Deploy Prism Central..."
+    log "Deploy Prism Central (typically takes 17+ minutes)..."
     # TODO:120 Parameterize DNS Servers & add secondary
     # TODO:90 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     local _LDAP_SERVER=
@@ -454,7 +454,7 @@ EOF
     _TEST=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} \
       -X POST --data "${HTTP_BODY}" \
       https://localhost:9440/api/nutanix/v3/prism_central)
-    log "_TEST=|${_TEST}|"
+    #log "_TEST=|${_TEST}|"
   fi
 }
 
