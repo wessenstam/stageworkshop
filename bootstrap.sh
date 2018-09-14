@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 # Example use:
-# curl https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \
-# && MY_EMAIL=mark.lavi sh ${_#/}
+# curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && MY_EMAIL=mark.lavi sh ${_##*/}
 
 . /etc/profile.d/nutanix_env.sh
 
@@ -13,6 +12,9 @@ EMAIL_DOMAIN=nutanix.com
          URL=https://github.com/mlavi/stageworkshop/archive/master.zip
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
+  echo
+  PRISM_ADMIN=admin
+  read -p "OPTIONAL: What is this cluster's admin username? [Default: ${PRISM_ADMIN}] " PRISM_ADMIN
   echo; echo '    Note: Your password input will not be displayed.'
   read -s -p "REQUIRED: What is this${CLUSTER_NAME} cluster's admin password? " -r _PW1 ; echo
   read -s -p " CONFIRM:             ${CLUSTER_NAME} cluster's admin password? " -r _PW2 ; echo
@@ -29,11 +31,6 @@ fi
 
 MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' | \
   awk -F: '{print $2}' | tr -d '[:space:]')
-
-if [[ -z ${PRISM_ADMIN} ]]; then
-  PRISM_ADMIN=admin
-  read -p "OPTIONAL: What is this cluster's admin username? [Default: ${PRISM_ADMIN}] " PRISM_ADMIN
-fi
 
 if [[ -z ${MY_EMAIL} ]]; then
   echo "    Note: @${EMAIL_DOMAIN} will be added if domain omitted."

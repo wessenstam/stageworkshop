@@ -214,7 +214,7 @@ function select_workshop {
     esac
   done
 
-  echo -e "\nAre you sure you want to stage ${WORKSHOP} to the clusters in ${CLUSTER_LIST}? \
+  echo -e "\nAre you sure you want to stage ${WORKSHOP} to the cluster(s) provided? \
     \nYour only 'undo' option is running Foundation on your cluster(s) again."
   read -p '(Y/N)' -n 1 -r
 
@@ -235,7 +235,6 @@ function select_workshop {
     _VALIDATE='Validate Staged Clusters'
 _CLUSTER_FILE='Cluster Input File'
  CLUSTER_LIST=
- WORKSHOP_NUM=0
 
 # NONWORKSHOPS appended to end of WORKSHOPS
              WORKSHOP_COUNT=${#WORKSHOPS[@]}
