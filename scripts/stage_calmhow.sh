@@ -403,7 +403,7 @@ function PC_Init
     PC_Download
 
     local _CHECKSUM=$(md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}')
-    if [[ `cat ${MY_PC_META_URL##*/} | ./jq -r .hex_md5` != ${_CHECKSUM} ]]; then
+    if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
       log "Error: md5sum ${_CHECKSUM} doesn't match on: ${MY_PC_SRC_URL##*/} removing and exit!"
       rm -f ${MY_PC_SRC_URL##*/}
       exit 2

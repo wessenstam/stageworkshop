@@ -39,8 +39,8 @@ function SSH_PubKey {
 function Determine_PE {
   log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
   local _HOLD=$(nuclei cluster.list format=json \
-    | ./jq '.entities[] | select(.status.state == "COMPLETE")' \
-    | ./jq '. | select(.status.resources.network.external_ip != null)')
+    | jq '.entities[] | select(.status.state == "COMPLETE")' \
+    | jq '. | select(.status.resources.network.external_ip != null)')
 
   if (( $? > 0 )); then
     log "Error: couldn't resolve clusters $?"
@@ -233,6 +233,7 @@ function Dependencies {
                 Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
               fi
               chmod u+x jq-linux64 && ln -s jq-linux64 jq
+              export PATH+=.;
             elif [[ `uname -s` == "Darwin" ]]; then
               brew install jq
             fi
