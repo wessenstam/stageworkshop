@@ -2,7 +2,6 @@
 
 - bug report from mike.bujara@, james
 - TODO:
-  - Bug: From bootstrap, workshop choice #5, reset to specify a file in stage_workshop.sh
   - refactor URLs into global.vars.sh?
   - detect HPOC networks and favor local URLs
   - download 403 detection
