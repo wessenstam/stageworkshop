@@ -48,7 +48,7 @@ function stage_clusters {
   _ENVIRONMENT_VARS="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION}"
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/"
-    cd scripts && ${_ENVIRONMENT_VARS} ./${PE_CONFIG} >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1
+    cd scripts && "${_ENVIRONMENT_VARS} ./${PE_CONFIG}" >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1
   else
     for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
     do
