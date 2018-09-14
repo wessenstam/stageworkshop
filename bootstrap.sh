@@ -55,13 +55,14 @@ FILESPEC=(${URL//\// })
 if [[ ! -d ${REPO}-${BRANCH} ]]; then
   curl --remote-name --location ${URL} \
   && echo "Success: ${URL##*/}" \
-  && unzip ${URL##*/} \
-  && pushd ${REPO}-${BRANCH}/ \
-  && chmod -R u+x *sh
+  && unzip ${URL##*/}
 fi
 
 echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST}...\n"
-      MY_EMAIL=${MY_EMAIL} \
+
+pushd ${REPO}-${BRANCH}/ \
+  && chmod -R u+x *sh \
+  &&  MY_EMAIL=${MY_EMAIL} \
     MY_PE_HOST=${MY_PE_HOST} \
    PRISM_ADMIN=${PRISM_ADMIN} \
 MY_PE_PASSWORD=${MY_PE_PASSWORD} \
