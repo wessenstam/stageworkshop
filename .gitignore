@@ -1,0 +1,9 @@
+.DS_Store
+.imdone/
+.kitchen/
+.kitchen.local.yml
+cache/
+example_pocs.txt
+Gemfile.lock
+logs/
+stageworkshop-master/
