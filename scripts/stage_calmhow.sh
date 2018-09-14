@@ -496,8 +496,7 @@ CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
 
 #Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
 
-.# non-blocking function moved up for parallelization
-log "Adding key to PE/CVMs..." && SSH_PubKey || true &
+log "Adding key to PE/CVMs..." && SSH_PubKey || true & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \

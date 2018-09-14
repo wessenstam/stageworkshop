@@ -446,7 +446,8 @@ CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION'
 ATTEMPTS=2
    SLEEP=10
 
-log "Adding key to PC VMs..." && SSH_PubKey || true # new function, non-blocking.
+log "Adding key to PC VMs..." && SSH_PubKey || true & # non-blocking, parallel suitable
+
 PC_Init \
 && PC_UI \
 && PC_LDAP \
