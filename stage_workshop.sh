@@ -46,7 +46,8 @@ function stage_clusters {
   fi
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
-    echo "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD}"
+    MY_EMAIL=${MY_EMAIL} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD}" nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG$%%.sh}}.log 2>&1
+    echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/"
   else
     for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
     do
@@ -102,7 +103,7 @@ function stage_clusters {
       fi
 
       log "Remote execution configuration script on PE@${MY_PE_HOST}"
-      remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> stage_calmhow.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG%%.sh}.log 2>&1 &"
 
       cat <<EOM
 
@@ -112,12 +113,12 @@ function stage_clusters {
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
   $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PE_HOST} 'date; tail -f stage_calmhow.log'
+      nutanix@${MY_PE_HOST} 'date; tail -f ${PE_CONFIG%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
 
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PC_HOST} 'date; tail -f stage_calmhow_pc.log'
+      nutanix@${MY_PC_HOST} 'date; tail -f ${PC_CONFIG%%.sh}.log'
     https://${PRISM_ADMIN}@${MY_PC_HOST}:9440/
 
 EOM
@@ -253,7 +254,7 @@ while getopts "f:w:\?" opt; do
   case ${opt} in
     f )
       if [[ ${OPTARG} == '-' ]]; then
-        log "CLI override."
+        log "${_CLUSTER_FILE} override, checking environment variables..."
         CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD'
         CLUSTER_LIST=${OPTARG}
       elif [[ -f ${OPTARG} ]]; then
@@ -281,8 +282,8 @@ shift $((OPTIND -1))
 
 if [[ -n ${CLUSTER_LIST} && -n ${WORKSHOP_NUM} ]]; then
   stage_clusters
-elif [[ -n ${CLUSTER_LIST} ]]; then
-  log "Error: missing ${_CLUSTER_FILE} argument."
+elif [[ -z ${CLUSTER_LIST} ]]; then
+  log "Error:|${CLUSTER_LIST}| missing ${_CLUSTER_FILE} argument."
   script_usage
 elif [[ -n ${WORKSHOP_NUM} ]]; then
   log "Error: missing workshop number argument."
