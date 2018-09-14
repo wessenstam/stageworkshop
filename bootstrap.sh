@@ -13,9 +13,12 @@ EMAIL_DOMAIN=nutanix.com
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   echo
-  PRISM_ADMIN=admin
-  read -p "OPTIONAL: What is this cluster's admin username? [Default: ${PRISM_ADMIN}] " PRISM_ADMIN
-  echo; echo '    Note: Your password input will not be displayed.'
+  read -p "OPTIONAL: What is this cluster's admin username? [Default: admin] " PRISM_ADMIN
+  if [[ -z ${PRISM_ADMIN} ]]; then
+    PRISM_ADMIN=admin
+  fi
+
+  echo; echo '    Note: Password will not be displayed.'
   read -s -p "REQUIRED: What is this${CLUSTER_NAME} cluster's admin password? " -r _PW1 ; echo
   read -s -p " CONFIRM:             ${CLUSTER_NAME} cluster's admin password? " -r _PW2 ; echo
 
@@ -34,15 +37,15 @@ MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' | \
 
 if [[ -z ${MY_EMAIL} ]]; then
   echo "    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
-  read -p "REQUIRED: What's your email? " MY_EMAIL
+  read -p "REQUIRED: Email address for cluster admin? " MY_EMAIL
+fi
 
-  _WC_ARG='--lines'
-  if [[ `uname -s` == "Darwin" ]]; then
-    _WC_ARG='-l'
-  fi
-  if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
-    MY_EMAIL+=@${EMAIL_DOMAIN}
-  fi
+_WC_ARG='--lines'
+if [[ `uname -s` == "Darwin" ]]; then
+  _WC_ARG='-l'
+fi
+if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
+  MY_EMAIL+=@${EMAIL_DOMAIN}
 fi
 
 FILESPEC=(${URL//\// })
@@ -57,14 +60,14 @@ if [[ ! -d ${REPO}-${BRANCH} ]]; then
   && chmod -R u+x *sh
 fi
 
-echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST}..."
+echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST}...\n"
       MY_EMAIL=${MY_EMAIL} \
     MY_PE_HOST=${MY_PE_HOST} \
    PRISM_ADMIN=${PRISM_ADMIN} \
 MY_PE_PASSWORD=${MY_PE_PASSWORD} \
-./stage_workshop.sh -f -\
+sh stage_workshop.sh -f -\
   && popd \
-  && rm -f ${URL##*/}
+  && echo rm -f ${URL##*/} ${0} ${REPO}-${BRANCH}/
 
 exit
 
