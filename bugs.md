@@ -2,9 +2,9 @@
 
 - bug report from mike.bujara@, james
 - TODO:
-  - minimal bootstrap from PE/CVM
-    - refactor URLs into global.vars.sh?
-    - detect HPOC networks and favor local URLs
+  - Bug: From bootstrap, workshop choice #5, reset to specify a file in stage_workshop.sh
+  - refactor URLs into global.vars.sh?
+  - detect HPOC networks and favor local URLs
   - download 403 detection
 - document public cloud account/credentials
 - CI/CD pipeline demo
