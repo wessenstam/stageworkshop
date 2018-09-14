@@ -195,6 +195,7 @@ function select_workshop {
   do
     case $WORKSHOP in
       "Change ${_CLUSTER_FILE}")
+        CLUSTER_LIST= # reset
         get_file
         break
         ;;
@@ -238,7 +239,6 @@ function select_workshop {
 
 # Source Workshop common routines + global variables
 . scripts/common.lib.sh
-#. scripts/global.vars.sh
 
     _VALIDATE='Validate Staged Clusters'
 _CLUSTER_FILE='Cluster Input File'
