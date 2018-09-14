@@ -1,19 +1,9 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- bug report from mike.bujara@nutanix.com:
-  - I created the cluster file and run it with stage_Workshop and it gives me the menu
-but none of the inputs are accepted:
-    - ./stage_Workshop.sh
-    - example_poc.txt
-    - 2 (no response, back to menu)
-    - Test 10/10|Substate=running, exec properly, sleep 7 seconds..
-    Error 12: AutoDC VM running, giving up after 11 tries.
-    AutoDC pending
-    AutoDC complete
-    - PC_Configure|OPTIONAL: send bin to PC, sshpass: no such file or dir _TEST 3/3 Error 11 giving up after 3 tries...
+- bug report from mike.bujara@, james
 - TODO:
   - minimal bootstrap from PE/CVM
-    - refactor URLs to global.vars.sh
+    - refactor URLs into global.vars.sh?
     - detect HPOC networks and favor local URLs
   - download 403 detection
 - document public cloud account/credentials
