@@ -210,7 +210,8 @@ vm_snapshot
 volume_group
 volume_group_backup
 volume_group_snapshot
-webhook````
+webhook
+````
 
 ### nuclei authconfig (run local from container?) ####
 
@@ -227,7 +228,8 @@ add-role-mapping
 add-to-role-mapping-values
 remove-from-role-mapping-values
 get-directory-values-by-type
-test-ldap-connection````
+test-ldap-connection
+````
 
 ## File servers for container updates ##
 
@@ -263,3 +265,19 @@ test-ldap-connection````
   - mac: sudo mount -v -r -t nfs -o resvport,nobrowse,nosuid,locallocks,nfc,actimeo=1 10.21.34.37:/SelfServiceContainer/ nfstest
 - mount AFS and then put a web/S/FTP server on top
 - python -m SimpleHTTPServer 8080 || python -m http.server 8080
+
+# Git Notes
+
+```
+$ git remote show
+origin
+
+$ git remote add nutanixworkshops https://github.com/nutanixworkshops/stageworkshop.git
+
+$ git remote show
+nutanixworkshops
+origin
+
+$ git fetch nutanixworkshops
+$ git merge nutanixworkshops/master
+````
