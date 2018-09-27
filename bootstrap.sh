@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 
-echo "This script should be run on a Nutanix CVM,"
-echo "see https://github.com/nutanixworkshops/stageworkshop for details."
-
 # Example use from a Nutanix CVM:
 # curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && MY_EMAIL=mark.lavi sh ${_##*/}
 
-. /etc/profile.d/nutanix_env.sh
-if (( $. > 0 )) ; then
+echo -e "For details please see: https://github.com/nutanixworkshops/stageworkshop\n"
+
+_ERROR=0
+
+. /etc/profile.d/nutanix_env.sh || _ERROR=1
+
+if (( ${_ERROR} == 1 )); then
   echo "Error: This script should be run on a Nutanix CVM!"
-  exit 1
+  exit ${_ERROR}
 fi
 
 CLUSTER_NAME=' '
@@ -17,6 +19,7 @@ CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' \
               | awk -F: '{print $2}' | tr -d '[:space:]')
 EMAIL_DOMAIN=nutanix.com
          URL=https://github.com/nutanixworkshops/stageworkshop/archive/master.zip
+         URL=https://github.com/mlavi/stageworkshop/archive/master.zip
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   echo
