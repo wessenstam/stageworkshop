@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 
-# Example use:
-# curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && MY_EMAIL=mark.lavi sh ${_##*/}
+# Example use from a Nutanix CVM:
+# curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && MY_EMAIL=mark.lavi sh ${_##*/}
 
-. /etc/profile.d/nutanix_env.sh
+echo -e "For details please see: https://github.com/nutanixworkshops/stageworkshop\n"
+
+_ERROR=0
+
+. /etc/profile.d/nutanix_env.sh || _ERROR=1
+
+if (( ${_ERROR} == 1 )); then
+  echo "Error: This script should be run on a Nutanix CVM!"
+  exit ${_ERROR}
+fi
 
 CLUSTER_NAME=' '
-CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' | \
-       awk -F: '{print $2}' | tr -d '[:space:]')
+CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' \
+              | awk -F: '{print $2}' | tr -d '[:space:]')
 EMAIL_DOMAIN=nutanix.com
          URL=https://github.com/mlavi/stageworkshop/archive/master.zip
+         URL=https://github.com/nutanixworkshops/stageworkshop/archive/master.zip
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   echo
@@ -32,8 +42,8 @@ if [[ -z ${MY_PE_PASSWORD} ]]; then
   fi
 fi
 
-MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' | \
-  awk -F: '{print $2}' | tr -d '[:space:]')
+MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
+  | awk -F: '{print $2}' | tr -d '[:space:]')
 
 if [[ -z ${MY_EMAIL} ]]; then
   echo "    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
@@ -75,5 +85,6 @@ if [[ ${1} == 'clean' ]]; then
 fi
 exit
 
-determine if I'm on HPOC nw variant for a local URL
-   local _HTTP_RANGE_ENABLED='--continue-at -'
+TODO:
+- determine if I'm on HPOC nw variant for a local URL, etc.
+- local _HTTP_RANGE_ENABLED='--continue-at -'

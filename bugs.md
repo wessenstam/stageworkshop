@@ -210,7 +210,8 @@ vm_snapshot
 volume_group
 volume_group_backup
 volume_group_snapshot
-webhook````
+webhook
+````
 
 ### nuclei authconfig (run local from container?) ####
 
@@ -227,7 +228,8 @@ add-role-mapping
 add-to-role-mapping-values
 remove-from-role-mapping-values
 get-directory-values-by-type
-test-ldap-connection````
+test-ldap-connection
+````
 
 ## File servers for container updates ##
 
@@ -238,6 +240,7 @@ test-ldap-connection````
   - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
   - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
   - smb://pocfs/    = \\pocfs\iso\ and \images\
+  - smb://pocfs.nutanixdc.local use: auth
     - WIN> nslookup pocfs.nutanixdc.local
     - smbclient -I 10.21.249.12 \\\\pocfs\\images \
       --user mark.lavi@nutanixdc.local --command "prompt ; cd /Calm-EA/pc-5.7.1/ ; mget *tar"
@@ -262,3 +265,21 @@ test-ldap-connection````
   - mac: sudo mount -v -r -t nfs -o resvport,nobrowse,nosuid,locallocks,nfc,actimeo=1 10.21.34.37:/SelfServiceContainer/ nfstest
 - mount AFS and then put a web/S/FTP server on top
 - python -m SimpleHTTPServer 8080 || python -m http.server 8080
+
+# Git Notes
+
+https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project
+
+```
+$ git remote show
+origin
+
+$ git remote add nutanixworkshops https://github.com/nutanixworkshops/stageworkshop.git
+
+$ git remote show
+nutanixworkshops
+origin
+
+$ git fetch nutanixworkshops
+$ git merge nutanixworkshops/master
+````
