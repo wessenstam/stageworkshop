@@ -18,8 +18,8 @@ CLUSTER_NAME=' '
 CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' \
               | awk -F: '{print $2}' | tr -d '[:space:]')
 EMAIL_DOMAIN=nutanix.com
-         URL=https://github.com/nutanixworkshops/stageworkshop/archive/master.zip
          URL=https://github.com/mlavi/stageworkshop/archive/master.zip
+         URL=https://github.com/nutanixworkshops/stageworkshop/archive/master.zip
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   echo
