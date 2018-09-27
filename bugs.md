@@ -238,6 +238,7 @@ test-ldap-connection````
   - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
   - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
   - smb://pocfs/    = \\pocfs\iso\ and \images\
+  - smb://pocfs.nutanixdc.local use: auth
     - WIN> nslookup pocfs.nutanixdc.local
     - smbclient -I 10.21.249.12 \\\\pocfs\\images \
       --user mark.lavi@nutanixdc.local --command "prompt ; cd /Calm-EA/pc-5.7.1/ ; mget *tar"
