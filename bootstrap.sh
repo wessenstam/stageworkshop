@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 
 # Example use from a Nutanix CVM:
-# curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && MY_EMAIL=mark.lavi sh ${_##*/}
+# curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
-echo -e "For details please see: https://github.com/nutanixworkshops/stageworkshop\n"
+if [[ -z ${SOURCE} ]]; then
+  ORGANIZATION=nutanixworkshops
+    REPOSITORY=stageworkshop
+        BRANCH=master
+else
+    URL_SOURCE=(${SOURCE//\// }) # zero index
+  ORGANIZATION=${URL_SOURCE[2]}
+    REPOSITORY=${URL_SOURCE[3]}
+        BRANCH=${URL_SOURCE[4]}
+fi
+
+BASE_URL=https://github.com/${ORGANIZATION}/${REPOSITORY}
+ ARCHIVE=${BASE_URL}/archive/${BRANCH}.zip
+
+echo -e "For details, please see: ${BASE_URL}\n"
 
 _ERROR=0
 
@@ -11,6 +25,7 @@ _ERROR=0
 
 if (( ${_ERROR} == 1 )); then
   echo "Error: This script should be run on a Nutanix CVM!"
+  #echo RESTORE:
   exit ${_ERROR}
 fi
 
@@ -18,17 +33,16 @@ CLUSTER_NAME=' '
 CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' \
               | awk -F: '{print $2}' | tr -d '[:space:]')
 EMAIL_DOMAIN=nutanix.com
-         URL=https://github.com/mlavi/stageworkshop/archive/master.zip
-         URL=https://github.com/nutanixworkshops/stageworkshop/archive/master.zip
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
+  _PRISM_ADMIN=admin
   echo
-  read -p "OPTIONAL: What is this cluster's admin username? [Default: admin] " PRISM_ADMIN
+  read -p "OPTIONAL: What is this cluster's admin username? [Default: ${_PRISM_ADMIN}] " PRISM_ADMIN
   if [[ -z ${PRISM_ADMIN} ]]; then
-    PRISM_ADMIN=admin
+    PRISM_ADMIN=${_PRISM_ADMIN}
   fi
 
-  echo; echo '    Note: Password will not be displayed.'
+  echo -e "\n    Note: Password will not be displayed."
   read -s -p "REQUIRED: What is this${CLUSTER_NAME} cluster's admin password? " -r _PW1 ; echo
   read -s -p " CONFIRM:             ${CLUSTER_NAME} cluster's admin password? " -r _PW2 ; echo
 
@@ -46,7 +60,7 @@ MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
   | awk -F: '{print $2}' | tr -d '[:space:]')
 
 if [[ -z ${MY_EMAIL} ]]; then
-  echo "    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
+  echo -e "\n    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
   read -p "REQUIRED: Email address for cluster admin? " MY_EMAIL
 fi
 
@@ -58,19 +72,16 @@ if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
   MY_EMAIL+=@${EMAIL_DOMAIN}
 fi
 
-FILESPEC=(${URL//\// })
-    REPO=${FILESPEC[((${#FILESPEC} - 3))]}
-  BRANCH=$(echo ${URL##*/} | awk -F.zip '{print $1}')
-
-if [[ ! -d ${REPO}-${BRANCH} ]]; then
-  curl --remote-name --location ${URL} \
-  && echo "Success: ${URL##*/}" \
-  && unzip ${URL##*/}
+if [[ ! -d ${REPOSITORY}-${BRANCH} ]]; then
+  echo -e "\nNo cache: retrieving ${ARCHIVE} ..."
+  curl --remote-name --location ${ARCHIVE} \
+  && echo "Success: ${ARCHIVE##*/}" \
+  && unzip ${ARCHIVE##*/}
 fi
 
-echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST}...\n"
+echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST} ...\n"
 
-pushd ${REPO}-${BRANCH}/ \
+pushd ${REPOSITORY}-${BRANCH}/ \
   && chmod -R u+x *sh \
   &&  MY_EMAIL=${MY_EMAIL} \
     MY_PE_HOST=${MY_PE_HOST} \
@@ -81,8 +92,12 @@ MY_PE_PASSWORD=${MY_PE_PASSWORD} \
 
 if [[ ${1} == 'clean' ]]; then
   echo "Cleaning up..."
-  rm -rf ${URL##*/} ${0} ${REPO}-${BRANCH}/
+  rm -rf ${ARCHIVE##*/} ${0} ${REPOSITORY}-${BRANCH}/
+else
+  echo "OPTIONAL: Please consider running ${0} clean"
 fi
+
+echo "    Done: ${0} ran for ${SECONDS} seconds."
 exit
 
 TODO:

@@ -3,7 +3,7 @@
 # use !/bin/bash -x to debug command substitution and evaluation instead of echo.
 
 # For WORKSHOPS keyword mappings to scripts and variables:
-# - use Calm | Citrix | Summit
+# - use Calm || Citrix || Summit
 # - use PC #.#
 
 WORKSHOPS=(\
@@ -23,10 +23,11 @@ function stage_clusters {
   log "WORKSHOP #${WORKSHOP_NUM} = ${_WORKSHOP}"
 
   # Map to latest and greatest version of each point release
+  # Metadata URLs are specified in stage_calmhow.sh function PC_Download
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.6.1
+    MY_PC_VERSION=5.6.2
   elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.7.1
+    MY_PC_VERSION=5.7.1.1
   elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.8" | wc -l) > 0 )); then
     MY_PC_VERSION=5.8.2
   fi
@@ -48,7 +49,7 @@ function stage_clusters {
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440"
     get_configuration
-    cd scripts && eval "${CONFIGURATION} ./${PE_CONFIG}" #>> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1
+    cd scripts && eval "${CONFIGURATION} ./${PE_CONFIG}" >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1 &
   else
     for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
     do

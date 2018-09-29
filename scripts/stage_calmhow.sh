@@ -347,22 +347,21 @@ function PC_Download
 {
   CheckArgsExist 'MY_PC_VERSION'
 
-  MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/'${MY_PC_VERSION}
+  MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/'${MY_PC_VERSION}'/v'
+        _VERSION=1
 
   case ${MY_PC_VERSION} in
-    5.6.1 )
-      MY_PC_META_URL+=\ #'http://10.21.250.221/images/ahv/techsummit/euphrates-5.6-stable-prism_central_metadata.json'
-     '/v1/euphrates-5.6.1-stable-prism_central_metadata.json'
+    5.6.2 | 5.8.0.1 )
+      _VERSION=2
       ;;
-    5.7.0.1 | 5.7.1 )
-      MY_PC_META_URL='http://10.21.249.53/pc-5.7.1-stable-prism_central_metadata.json'
-      MY_PC_META_URL+="/v1/pc-${MY_PC_VERSION}-stable-prism_central_metadata.json"
+    5.6.1 | 5.6.2 )
+      MY_PC_META_URL+="${_VERSION}/euphrates-${MY_PC_VERSION}-stable-prism_central_metadata.json"
       ;;
-    5.8.0.1 )
-      MY_PC_META_URL+='/v2/euphrates-5.8.0.1-stable-prism_central_metadata.json'
+    5.7.0.1 | 5.7.1 | 5.7.1.1 )
+      MY_PC_META_URL+="${_VERSION}/pc-${MY_PC_VERSION}-stable-prism_central_metadata.json"
       ;;
-    5.8.1 | 5.8.2 | 5.9 | 5.10 | 5.11 )
-      MY_PC_META_URL+="/v1/pc_deploy-${MY_PC_VERSION}.json"
+    5.8.0.1 | 5.8.1 | 5.8.2 | 5.9 | 5.10 | 5.11 )
+      MY_PC_META_URL+="${_VERSION}/pc_deploy-${MY_PC_VERSION}.json"
       ;;
     * )
       _ERROR=22
