@@ -17,7 +17,13 @@ fi
 BASE_URL=https://github.com/${ORGANIZATION}/${REPOSITORY}
  ARCHIVE=${BASE_URL}/archive/${BRANCH}.zip
 
-echo -e "For details, please see: ${BASE_URL}\n"
+if [[ ${1} == 'clean' ]]; then
+ echo "Cleaning up..."
+ rm -rf ${ARCHIVE##*/} ${0} ${REPOSITORY}-${BRANCH}/
+ exit 0
+fi
+
+echo -e "\nFor details, please see: ${BASE_URL}\n"
 
 _ERROR=0
 
@@ -37,7 +43,7 @@ EMAIL_DOMAIN=nutanix.com
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   _PRISM_ADMIN=admin
   echo
-  read -p "OPTIONAL: What is this cluster's admin username? [Default: ${_PRISM_ADMIN}] " PRISM_ADMIN
+  read -p "Optional: What is this cluster's admin username? [Default: ${_PRISM_ADMIN}] " PRISM_ADMIN
   if [[ -z ${PRISM_ADMIN} ]]; then
     PRISM_ADMIN=${_PRISM_ADMIN}
   fi
@@ -90,14 +96,16 @@ MY_PE_PASSWORD=${MY_PE_PASSWORD} \
 ./stage_workshop.sh -f - \
   && popd
 
-if [[ ${1} == 'clean' ]]; then
-  echo "Cleaning up..."
-  rm -rf ${ARCHIVE##*/} ${0} ${REPOSITORY}-${BRANCH}/
-else
-  echo "OPTIONAL: Please consider running ${0} clean"
-fi
+echo -e "\n    DONE: ${0} ran for ${SECONDS} seconds."
+cat <<EOM
+Optional: Please consider running ${0} clean.
 
-echo "    Done: ${0} ran for ${SECONDS} seconds."
+Watch progress with:
+          tail -f stage_workshop.log &
+or login to PE to see tasks in flight and eventual PC registration:
+          https://${MY_PE_HOST}:9440/
+EOM
+
 exit
 
 TODO:
