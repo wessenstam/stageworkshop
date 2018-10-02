@@ -23,6 +23,10 @@ if [[ ${1} == 'clean' ]]; then
  exit 0
 fi
 
+if [[ -f ${BRANCH}.zip ]]; then
+  sh ${HOME}/${0} clean
+fi
+
 echo -e "\nFor details, please see: ${BASE_URL}\n"
 
 _ERROR=0
@@ -62,9 +66,6 @@ if [[ -z ${MY_PE_PASSWORD} ]]; then
   fi
 fi
 
-MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
-  | awk -F: '{print $2}' | tr -d '[:space:]')
-
 if [[ -z ${MY_EMAIL} ]]; then
   echo -e "\n    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
   read -p "REQUIRED: Email address for cluster admin? " MY_EMAIL
@@ -85,6 +86,9 @@ if [[ ! -d ${REPOSITORY}-${BRANCH} ]]; then
   && unzip ${ARCHIVE##*/}
 fi
 
+MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
+  | awk -F: '{print $2}' | tr -d '[:space:]')
+
 echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST} ...\n"
 
 pushd ${REPOSITORY}-${BRANCH}/ \
@@ -101,7 +105,7 @@ cat <<EOM
 Optional: Please consider running ${0} clean.
 
 Watch progress with:
-          tail -f stage_workshop.log &
+          tail -f stage_calmhow.log &
 or login to PE to see tasks in flight and eventual PC registration:
           https://${MY_PE_HOST}:9440/
 EOM
