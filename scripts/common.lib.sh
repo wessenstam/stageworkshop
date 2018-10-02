@@ -5,6 +5,12 @@ function log {
   echo $(date "+%Y-%m-%d %H:%M:%S")"|$$|${CALLER}|${1}"
 }
 
+function TryURLs {
+  #TODO: trouble passing an array to this function
+  HTTP_CODE=$(curl ${CURL_OPTS} --write-out %{http_code} --head ${1} | tail -n1)
+  #log ${HTTP_CODE}
+}
+
 function CheckArgsExist {
   local _ARGUMENT
   local    _ERROR=88

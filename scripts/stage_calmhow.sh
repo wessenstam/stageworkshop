@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # -x
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
@@ -189,13 +189,36 @@ function AuthenticationServer()
 #   "status": 0
 # }
 
+        _ARGUMENT=("${LDAP_IMAGES[@]}")
+           _INDEX=0
+
+        if (( ${#_ARGUMENT[@]} == 0 )); then
+          _ERROR=29
+          log "Error ${_ERROR}: Missing array!"
+          exit ${_ERROR}
+        fi
+
+        while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+        do
+          #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
+          TryURLs ${_ARGUMENT[${_INDEX}]}
+          #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
+          if (( ${HTTP_CODE} == 200 )); then
+            SOURCE_URL="${_ARGUMENT[${_INDEX}]}"
+             HTTP_CODE= #reset
+            break
+          fi
+          ((_INDEX++))
+        done
+        log "Found ${SOURCE_URL}"
+
         # while true ; do
         #   (( _LOOP++ ))
         if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
           acli image.create ${LDAP_SERVER} \
             container=${MY_IMG_CONTAINER_NAME} \
             image_type=kDiskImage \
-            source_url=https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2 \
+            source_url=${SOURCE_URL} \
             wait=true
         fi
 

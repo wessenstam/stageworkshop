@@ -16,6 +16,9 @@
 # Backlog #
 
 - TODO: update default or create new project
+- TODO: PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
+  Error: Password requirements: Should be at least 8 characters long. Should have at least 1 lowercase character(s). Should have at least 1 uppercase character(s). Should have at least 1 digit(s). Should have at least 1 special character(s). Should differ by at least 4 characters from previous password. Should not be from last 5 passwords. Should not have more than 2 same consecutive character(s). Should not be a dictionary word or too simplistic/systematic. Should should have at least one character belonging to 4 out of the 4 supported classes (lowercase, uppercase, digits, special characters).
+  2018-10-02 10:56:27|92834|PC_Init|Warning: password not reset: 0.#
 - TOFO: fix role mappings, logins on PE, PC
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
   - improve/run poc_samba_users.sh
@@ -231,6 +234,19 @@ get-directory-values-by-type
 test-ldap-connection
 ````
 
+## Image Uploading ##
+TOFIX:
+- https://jira.nutanix.com/browse/FEAT-7112
+- https://jira.nutanix.com/browse/ENG-115366
+once PC image service takes control, rejects PE image uploads. Move to PC, not critical path.
+
+KB 4892 = https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000XePyCAK
+v3 API = http://developer.nutanix.com/reference/prism_central/v3/#images two steps:
+
+1. POST /images to create image metadata and get UUID, see logs/spec-image.json
+2. PUT images/uuid/file: upload uuid, body, checksum and checksum type: sha1, sha256
+or nuclei, only on PCVM or in container
+
 ## File servers for container updates ##
 
 - https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#What_you_get_with_each_reservation
@@ -266,7 +282,7 @@ test-ldap-connection
 - mount AFS and then put a web/S/FTP server on top
 - python -m SimpleHTTPServer 8080 || python -m http.server 8080
 
-# Git Notes
+# Git Notes #
 
 https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project
 

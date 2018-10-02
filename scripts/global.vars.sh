@@ -9,6 +9,11 @@ HPOC_PREFIX=${octet[0]}.${octet[1]}.${octet[2]}
     MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
 
+QCOW2_IMAGES=(\
+ 'http://10.21.250.221/images/ahv/techsummit' \
+    'https://s3.amazonaws.com/get-ahv-images' \
+)
+
    LDAP_SERVER='AutoDC'  # TODO:160 refactor LDAP_SERVER choice to input file, set default here.
      LDAP_HOST=${HPOC_PREFIX}.$((${octet[3]} + 3))
  MY_DOMAIN_URL="ldaps://${LDAP_HOST}/"
@@ -17,6 +22,10 @@ MY_DOMAIN_NAME='NTNXLAB'
 MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
+   LDAP_IMAGES=(\
+'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
+   'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
+)
 
   MY_PRIMARY_NET_NAME='Primary'
   MY_PRIMARY_NET_VLAN='0'

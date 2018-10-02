@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # -x
 # Dependencies: curl, ncli, nuclei, jq #sshpass (removed, needed for remote)
 
@@ -172,7 +172,7 @@ EOF
       "categories": {}
     }
   }
-  EOF
+EOF
     )
     SSP_CONNECT=$(curl ${CURL_POST_OPTS} \
       --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
@@ -281,61 +281,36 @@ function PC_Init
 
 function Images
 { # depends on nuclei
-  # TOFIX: https://jira.nutanix.com/browse/FEAT-7112
-  # https://jira.nutanix.com/browse/ENG-115366
-  # once PC image service takes control, rejects PE image uploads. Move to PC, not critical path.
-  # KB 4892 = https://portal.nutanix.com/#/page/kbs/details?targetId=kA00e000000XePyCAK
-  # v3 API = http://developer.nutanix.com/reference/prism_central/v3/#images two steps:
-  # 1. POST /images to create image metadata and get UUID
-    #   {
-    #   "spec": {
-    #     "name": "string",
-    #     "resources": {
-    #       "image_type": "string",
-    #       "checksum": {
-    #         "checksum_algorithm": "string",
-    #         "checksum_value": "string"
-    #       },
-    #       "source_uri": "string",
-    #       "version": {
-    #         "product_version": "string",
-    #         "product_name": "string"
-    #       },
-    #       "architecture": "string"
-    #     },
-    #     "description": "string"
-    #   },
-    #   "api_version": "3.1.0",
-    #   "metadata": {
-    #     "last_update_time": "2018-05-20T16:45:50.090Z",
-    #     "kind": "image",
-    #     "uuid": "string",
-    #     "project_reference": {
-    #       "kind": "project",
-    #       "name": "string",
-    #       "uuid": "string"
-    #     },
-    #     "spec_version": 0,
-    #     "creation_time": "2018-05-20T16:45:50.090Z",
-    #     "spec_hash": "string",
-    #     "owner_reference": {
-    #       "kind": "user",
-    #       "name": "string",
-    #       "uuid": "string"
-    #     },
-    #     "categories": {},
-    #     "name": "string"
-    #   }
-    # }
-  # 2.  PUT images/uuid/file: upload uuid, body, checksum and checksum type: sha1, sha256
-  # or nuclei, only on PCVM or in container
 
   for IMG in CentOS7-06252018.qcow2 Windows2012R2-04282018.qcow2 Windows10-1709-04282018.qcow2 ; do
-    log "${IMG} image.create..."
+    #log "DEBUG: ${IMG} image.create..."
+
+    _ARGUMENT=("${QCOW2_IMAGES[@]}")
+       _INDEX=0
+
+    if (( ${#_ARGUMENT[@]} == 0 )); then
+      _ERROR=29
+      log "Error ${_ERROR}: Missing array!"
+      exit ${_ERROR}
+    fi
+
+    while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+    do
+      #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
+      TryURLs ${_ARGUMENT[${_INDEX}]}/${IMG}
+      #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
+      if (( ${HTTP_CODE} == 200 )); then
+        SOURCE_URL="${_ARGUMENT[${_INDEX}]}/${IMG}"
+         HTTP_CODE= #reset
+        break
+      fi
+      ((_INDEX++))
+    done
+    log "Found ${SOURCE_URL}"
+
     nuclei image.create name=${IMG} \
        description="${0} via stage_calmhow_pc for ${IMG}" \
-       #source_uri=http://10.21.250.221/images/ahv/techsummit/${IMG}
-       source_uri=https://s3.amazonaws.com/get-ahv-images/${IMG}
+       source_uri=${SOURCE_URL}
      log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
      log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
     if (( $? != 0 )); then
