@@ -369,29 +369,36 @@ function PE_License
 function PC_Download
 {
   CheckArgsExist 'MY_PC_VERSION'
+  _VERSION=1
 
-  MY_PC_META_URL='http://download.nutanix.com/pc/one-click-pc-deployment/'${MY_PC_VERSION}'/v'
-        _VERSION=1
-
+  # When adding a new PC version, update BOTH case stanzas below...
   case ${MY_PC_VERSION} in
-    5.6.2 | 5.8.0.1 )
+    5.9 | 5.6.2 | 5.8.0.1 )
       _VERSION=2
       ;;
+  esac
+
+  MY_PC_META_URL="http://download.nutanix.com/pc/one-click-pc-deployment/${MY_PC_VERSION}/v${_VERSION}/"
+
+  case ${MY_PC_VERSION} in
+    5.9 )
+      MY_PC_META_URL+="euphrates-${MY_PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
+      ;;
     5.6.1 | 5.6.2 )
-      MY_PC_META_URL+="${_VERSION}/euphrates-${MY_PC_VERSION}-stable-prism_central_metadata.json"
+      MY_PC_META_URL+="euphrates-${MY_PC_VERSION}-stable-prism_central_metadata.json"
       ;;
     5.7.0.1 | 5.7.1 | 5.7.1.1 )
-      MY_PC_META_URL+="${_VERSION}/pc-${MY_PC_VERSION}-stable-prism_central_metadata.json"
+      MY_PC_META_URL+="pc-${MY_PC_VERSION}-stable-prism_central_metadata.json"
       ;;
-    5.8.0.1 | 5.8.1 | 5.8.2 | 5.9 | 5.10 | 5.11 )
-      MY_PC_META_URL+="${_VERSION}/pc_deploy-${MY_PC_VERSION}.json"
+    5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
+      MY_PC_META_URL+="pc_deploy-${MY_PC_VERSION}.json"
       ;;
     * )
       _ERROR=22
       log "Error ${_ERROR}: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
       log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
       log " - Find ${MY_PC_VERSION} in the Additional Releases section on the lower left side"
-      log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option.'
+      log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
       exit ${_ERROR}
       ;;
   esac

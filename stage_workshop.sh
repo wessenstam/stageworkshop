@@ -5,8 +5,8 @@
 # For WORKSHOPS keyword mappings to scripts and variables:
 # - use Calm || Citrix || Summit
 # - use PC #.#
-
 WORKSHOPS=(\
+"Calm Workshop (AOS/AHV PC 5.9.x)" \
 "Calm Workshop (AOS/AHV PC 5.8.x)" \
 "Calm Workshop (AOS/AHV PC 5.7.x)" \
 "Calm Workshop (AOS/AHV PC 5.6.x)" \
@@ -24,12 +24,14 @@ function stage_clusters {
 
   # Map to latest and greatest version of each point release
   # Metadata URLs are specified in stage_calmhow.sh function PC_Download
-  if (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.6.2
-  elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.7.1.1
+  if (( $(echo ${_WORKSHOP} | grep -i "PC 5.9" | wc -l) > 0 )); then
+    MY_PC_VERSION=5.9
   elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.8" | wc -l) > 0 )); then
     MY_PC_VERSION=5.8.2
+  elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
+    MY_PC_VERSION=5.7.1.1
+  elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
+    MY_PC_VERSION=5.6.2
   fi
 
   # Map to staging scripts
