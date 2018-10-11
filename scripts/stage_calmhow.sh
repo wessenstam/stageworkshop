@@ -366,59 +366,6 @@ function PE_License
   fi
 }
 
-function PC_Download
-{
-  CheckArgsExist 'MY_PC_VERSION'
-  _VERSION=1
-
-  # When adding a new PC version, update BOTH case stanzas below...
-  case ${MY_PC_VERSION} in
-    5.9 | 5.6.2 | 5.8.0.1 )
-      _VERSION=2
-      ;;
-  esac
-
-  MY_PC_META_URL="http://download.nutanix.com/pc/one-click-pc-deployment/${MY_PC_VERSION}/v${_VERSION}/"
-
-  case ${MY_PC_VERSION} in
-    5.9 )
-      MY_PC_META_URL+="euphrates-${MY_PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
-      ;;
-    5.6.1 | 5.6.2 )
-      MY_PC_META_URL+="euphrates-${MY_PC_VERSION}-stable-prism_central_metadata.json"
-      ;;
-    5.7.0.1 | 5.7.1 | 5.7.1.1 )
-      MY_PC_META_URL+="pc-${MY_PC_VERSION}-stable-prism_central_metadata.json"
-      ;;
-    5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
-      MY_PC_META_URL+="pc_deploy-${MY_PC_VERSION}.json"
-      ;;
-    * )
-      _ERROR=22
-      log "Error ${_ERROR}: unsupported MY_PC_VERSION=${MY_PC_VERSION}!"
-      log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
-      log " - Find ${MY_PC_VERSION} in the Additional Releases section on the lower left side"
-      log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
-      exit ${_ERROR}
-      ;;
-  esac
-
-  if [[ ! -e ${MY_PC_META_URL##*/} ]]; then
-    log "Retrieving Prism Central metadata ${MY_PC_META_URL} ..."
-    Download "${MY_PC_META_URL}"
-  else
-    log "Warning: using cached ${MY_PC_META_URL##*/}"
-  fi
-
-  MY_PC_SRC_URL=$(cat ${MY_PC_META_URL##*/} | jq -r .download_url_cdn)
-
-  if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
-    pkill curl
-  fi
-  log "Retrieving Prism Central bits..."
-  Download "${MY_PC_SRC_URL}"
-}
-
 function PC_Init
 {
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
@@ -433,26 +380,17 @@ function PC_Init
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
     log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 
-    PC_Download
-
-    local _CHECKSUM=$(md5sum ${MY_PC_SRC_URL##*/} | awk '{print $1}')
-    if [[ `cat ${MY_PC_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
-      log "Error: md5sum ${_CHECKSUM} doesn't match on: ${MY_PC_SRC_URL##*/} removing and exit!"
-      rm -f ${MY_PC_SRC_URL##*/}
-      exit 2
-    else
-      log "Prism Central downloaded and passed MD5 checksum!"
-    fi
+    NTNX_Download 'PC'
 
     log "Prism Central upload..."
-    ncli software upload file-path=`pwd`/${MY_PC_SRC_URL##*/} \
-      meta-file-path=`pwd`/${MY_PC_META_URL##*/} \
+    ncli software upload file-path=`pwd`/${SOURCE_URL##*/} \
+      meta-file-path=`pwd`/${META_URL##*/} \
       software-type=PRISM_CENTRAL_DEPLOY
 
-    MY_PC_RELEASE=$(cat ${MY_PC_META_URL##*/} | jq -r .version_id)
+    local _VERSION_ID=$(cat ${META_URL##*/} | jq -r .version_id)
 
     log "Delete PC sources to free CVM space..."
-    rm -f ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
+    rm -f ${SOURCE_URL##*/} ${META_URL##*/}
 
     log "Deploy Prism Central (typically takes 17+ minutes)..."
     # TODO:150 Parameterize DNS Servers & add secondary
@@ -462,7 +400,7 @@ function PC_Init
 {
   "resources": {
     "should_auto_register":true,
-    "version":"${MY_PC_VERSION}",
+    "version":"${PC_VERSION}",
     "pc_vm_list":[{
       "data_disk_size_bytes":536870912000,
       "nic_list":[{
@@ -477,7 +415,7 @@ function PC_Init
       "container_uuid":"${MY_CONTAINER_UUID}",
       "num_sockets":8,
       "memory_size_bytes":42949672960,
-      "vm_name":"Prism Central ${MY_PC_RELEASE}"
+      "vm_name":"Prism Central ${_VERSION_ID}"
     }]
   }
 }
@@ -511,11 +449,16 @@ function PC_Configure {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-    "MY_EMAIL=${MY_EMAIL} MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION} \
+    "MY_EMAIL=${MY_EMAIL} MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION} \
     nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
+function AOS_Upgrade {
+  #this is a prototype, untried
+  ncli software upload software-type=nos \
+    meta-file-path=`pwd`/${META_URL##*/} file-path=`pwd`/${SOURCE_URL##*/}
+}
 #__main()__________
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
@@ -525,9 +468,9 @@ function PC_Configure {
 
 log `basename "$0"`": PID=$$"
 
-CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD MY_PC_VERSION'
+CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD PC_VERSION'
 
-#Dependencies 'install' 'jq' && PC_Download & #attempt at parallelization
+#Dependencies 'install' 'jq' && NTNX_Download 'PC' & #attempt at parallelization
 
 log "Adding key to PE/CVMs..." && SSH_PubKey || true & # non-blocking, parallel suitable
 

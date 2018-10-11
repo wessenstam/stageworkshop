@@ -207,7 +207,7 @@ function PC_UI
   local _JSON=$(cat <<EOF
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
-{"type":"custom_login_screen","key":"product_title","value":"PC-${MY_PC_VERSION}"} \
+{"type":"custom_login_screen","key":"product_title","value":"PC-${PC_VERSION}"} \
 {"type":"custom_login_screen","key":"title","value":"Welcome_to_NutanixWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"welcome_banner","key":"disable_video","value":true} \
 {"type":"disable_2048","key":"disable_video","value":true} \
@@ -339,7 +339,7 @@ function PC_SMTP {
 
 function Enable_Flow {
   ## (API; Didn't work. Used nuclei instead)
-  ## https://10.21.8.39:9440/api/nutanix/v3/services/microseg
+  ## https://localhost:9440/api/nutanix/v3/services/microseg
   ## {"state":"ENABLE"}
   # To disable flow run the following on PC: nuclei microseg.disable
 
@@ -397,7 +397,7 @@ function Calm_Update {
     log "Bypassing download of updated containers."
   else
     remote_exec 'ssh' 'LDAP_SERVER' \
-      'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${MY_PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
+      'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
       'OPTIONAL'
 
     while true ; do
@@ -443,26 +443,6 @@ function Calm_Update {
   fi
 }
 
-function AOS_Upload {
-  local _AOS_UPGRADE=5.8.0.1
-  AOS_META_URL=http://download.nutanix.com/releases/euphrates-${_AOS_UPGRADE}-metadata/v2/euphrates-${_AOS_UPGRADE}-metadata.json
-  Download "${AOS_META_URL}"
-  AOS_SRC_URL=$(cat euphrates-${_AOS_UPGRADE}-metadata.json \
-    | jq -r .download_url_cdn)
-  Download "${AOS_SRC_URL}"
-
-  local _CHECKSUM=$(md5sum ${AOS_SRC_URL##*/} | awk '{print $1}')
-  if [[ `cat ${AOS_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
-    log "Error: md5sum ${_CHECKSUM} does't match on: ${AOS_SRC_URL##*/} removing and exit!"
-    rm -f ${AOS_SRC_URL##*/}
-    exit 2
-  else
-    log "AOS ${_AOS_UPGRADE} downloaded and passed MD5 checksum!"
-  fi
-
-  ncli software upload software-type=nos \
-    meta-file-path=`pwd`/${AOS_META_URL##*/} file-path=`pwd`/${AOS_SRC_URL##*/}
-}
 #__main()____________
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
@@ -486,7 +466,7 @@ if [[ ! -z "${1}" ]]; then
   Calm_Update && exit 0
 fi
 
-CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD MY_PC_VERSION'
+CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD PC_VERSION'
 
 ATTEMPTS=2
    SLEEP=10
@@ -504,6 +484,7 @@ PC_Init \
 && Check_Prism_API_Up 'PC'
 
 PC_Project # TODO:50 PC_Project is a new function, non-blocking at end.
+# NTNX_Upload 'AOS' # function in common.lib.sh
 
 if (( $? == 0 )); then
   Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \

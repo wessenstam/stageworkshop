@@ -3,7 +3,7 @@
 - bug report from mike.bujara@, james
 - TODO:
   - refactor URLs into global.vars.sh?
-  - detect HPOC networks and favor local URLs
+    - detect HPOC networks and favor local URLs
   - download 403 detection
 - document public cloud account/credentials
 - CI/CD pipeline demo

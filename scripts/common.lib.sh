@@ -1,5 +1,101 @@
 #!/usr/bin/env bash
 
+function NTNX_Download
+{
+  local _META_URL="http://download.nutanix.com/"
+  local  _VERSION=1
+
+  if [[ ${1} == 'PC' ]]; then
+    CheckArgsExist 'PC_VERSION'
+
+    # When adding a new PC version, update BOTH case stanzas below...
+    case ${PC_VERSION} in
+      5.9 | 5.6.2 | 5.8.0.1 )
+        _VERSION=2
+        ;;
+    esac
+
+    _META_URL=+"pc/one-click-pc-deployment/${PC_VERSION}/v${_VERSION}/"
+
+    case ${PC_VERSION} in
+      5.9 )
+        _META_URL+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
+        ;;
+      5.6.1 | 5.6.2 )
+        _META_URL+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
+        ;;
+      5.7.0.1 | 5.7.1 | 5.7.1.1 )
+        _META_URL+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
+        ;;
+      5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
+        _META_URL+="pc_deploy-${PC_VERSION}.json"
+        ;;
+      * )
+        _ERROR=22
+        log "Error ${_ERROR}: unsupported PC_VERSION=${PC_VERSION}!"
+        log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
+        log " - Find ${PC_VERSION} in the Additional Releases section on the lower left side"
+        log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
+        exit ${_ERROR}
+        ;;
+    esac
+  else
+    CheckArgsExist 'AOS_VERSION AOS_UPGRADE'
+
+    # When adding a new AOS version, update BOTH case stanzas below...
+    case ${AOS_UPGRADE} in
+      5.8.0.1 )
+        _VERSION=2
+        ;;
+    esac
+
+    _META_URL+="/releases/euphrates-${AOS_UPGRADE}-metadata/v${_VERSION}/"
+
+    case ${AOS_UPGRADE} in
+      5.8.0.1 )
+        _META_URL+="euphrates-${AOS_UPGRADE}-metadata.json"
+        ;;
+      * )
+        _ERROR=22
+        log "Error ${_ERROR}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
+        # TODO: correct AOS_UPGRADE URL
+        log 'Browse to https://portal.nutanix.com/#/page/releases/AOSDetails'
+        log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower left side"
+        log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
+        exit ${_ERROR}
+        ;;
+    esac
+  fi
+
+  if [[ ! -e ${_META_URL##*/} ]]; then
+    log "Retrieving download metadata ${_META_URL} ..."
+    Download "${_META_URL}"
+  else
+    log "Warning: using cached download ${_META_URL##*/}"
+  fi
+
+  _SOURCE_URL=$(cat ${_META_URL##*/} | jq -r .download_url_cdn)
+
+  if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
+    pkill curl
+  fi
+  log "Retrieving Nutanix ${1} bits..."
+  Download "${_SOURCE_URL}"
+
+  local _CHECKSUM=$(md5sum ${_SOURCE_URL##*/} | awk '{print $1}')
+  if [[ `cat ${_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
+    log "Error: md5sum ${_CHECKSUM} doesn't match on: ${_SOURCE_URL##*/} removing and exit!"
+    rm -f ${_SOURCE_URL##*/}
+    exit 2
+  else
+    log "Success: bits downloaded and passed MD5 checksum!"
+  fi
+
+  # Set globals for next steps
+    META_URL=${_META_URL}
+  SOURCE_URL=${_SOURCE_URL}
+}
+
 function log {
   local CALLER=$(echo -n `caller 0 | awk '{print $2}'`)
   echo $(date "+%Y-%m-%d %H:%M:%S")"|$$|${CALLER}|${1}"

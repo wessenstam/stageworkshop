@@ -6,10 +6,10 @@
 # - use Calm || Citrix || Summit
 # - use PC #.#
 WORKSHOPS=(\
-"Calm Workshop (AOS/AHV PC 5.9.x)" \
-"Calm Workshop (AOS/AHV PC 5.8.x)" \
-"Calm Workshop (AOS/AHV PC 5.7.x)" \
-"Calm Workshop (AOS/AHV PC 5.6.x)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.9.x)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.8.x)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 ) # Adjust function stage_clusters for mappings as needed
@@ -25,13 +25,13 @@ function stage_clusters {
   # Map to latest and greatest version of each point release
   # Metadata URLs are specified in stage_calmhow.sh function PC_Download
   if (( $(echo ${_WORKSHOP} | grep -i "PC 5.9" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.9
+    PC_VERSION=5.9
   elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.8" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.8.2
+    PC_VERSION=5.8.2
   elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.7.1.1
+    PC_VERSION=5.7.1.1
   elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
-    MY_PC_VERSION=5.6.2
+    PC_VERSION=5.6.2
   fi
 
   # Map to staging scripts
@@ -88,9 +88,9 @@ function stage_clusters {
         && popd
 
       # For Calm container updates...
-      if [[ -d cache/pc-${MY_PC_VERSION}/ ]]; then
+      if [[ -d cache/pc-${PC_VERSION}/ ]]; then
         log "Uploading PC updates in background..."
-        pushd cache/pc-${MY_PC_VERSION} \
+        pushd cache/pc-${PC_VERSION} \
         && pkill scp || true
         for _CONTAINER in epsilon nucalm ; do \
           if [[ -f ${_CONTAINER}.tar ]]; then \
@@ -99,7 +99,7 @@ function stage_clusters {
         done
         popd
       else
-        log "No PC updates found in cache/pc-${MY_PC_VERSION}/"
+        log "No PC updates found in cache/pc-${PC_VERSION}/"
       fi
 
       SSHKEY=${HOME}/.ssh/id_rsa.pub
@@ -136,7 +136,7 @@ EOM
 }
 
 function get_configuration {
-  CONFIGURATION="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} MY_PC_VERSION=${MY_PC_VERSION}"
+  CONFIGURATION="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION}"
 }
 
 function validate_clusters {
