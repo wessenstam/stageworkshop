@@ -16,7 +16,6 @@ function NTNX_Download
     esac
 
     _META_URL=+"pc/one-click-pc-deployment/${PC_VERSION}/v${_VERSION}/"
-
     case ${PC_VERSION} in
       5.9 )
         _META_URL+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
@@ -34,7 +33,7 @@ function NTNX_Download
         _ERROR=22
         log "Error ${_ERROR}: unsupported PC_VERSION=${PC_VERSION}!"
         log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
-        log " - Find ${PC_VERSION} in the Additional Releases section on the lower left side"
+        log " - Find ${PC_VERSION} in the Additional Releases section on the lower right side"
         log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
         exit ${_ERROR}
         ;;
@@ -47,21 +46,28 @@ function NTNX_Download
       5.8.0.1 )
         _VERSION=2
         ;;
+      5.9 )
+        _VERSION=0
+        ;;
     esac
 
-    _META_URL+="/releases/euphrates-${AOS_UPGRADE}-metadata/v${_VERSION}/"
+    _META_URL+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
+
+    if (( $_VERSION > 0 )); then
+      _META_URL+="v${_VERSION}/"
+    fi
 
     case ${AOS_UPGRADE} in
-      5.8.0.1 )
+      5.8.0.1 | 5.9 )
         _META_URL+="euphrates-${AOS_UPGRADE}-metadata.json"
         ;;
       * )
-        _ERROR=22
+        _ERROR=23
         log "Error ${_ERROR}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
         # TODO: correct AOS_UPGRADE URL
-        log 'Browse to https://portal.nutanix.com/#/page/releases/AOSDetails'
-        log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower left side"
-        log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
+        log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
+        log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
+        log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
         exit ${_ERROR}
         ;;
     esac
