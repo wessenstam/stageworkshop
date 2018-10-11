@@ -2,8 +2,8 @@
 
 function NTNX_Download
 {
-  local _META_URL="http://download.nutanix.com/"
-  local  _VERSION=1
+  local _META_URL='http://download.nutanix.com/'
+  local  _VERSION=0
 
   if [[ ${1} == 'PC' ]]; then
     CheckArgsExist 'PC_VERSION'
@@ -13,9 +13,12 @@ function NTNX_Download
       5.9 | 5.6.2 | 5.8.0.1 )
         _VERSION=2
         ;;
+      * )
+        _VERSION=1
+        ;;
     esac
 
-    _META_URL=+"pc/one-click-pc-deployment/${PC_VERSION}/v${_VERSION}/"
+    _META_URL+="pc/one-click-pc-deployment/${PC_VERSION}/v${_VERSION}/"
     case ${PC_VERSION} in
       5.9 )
         _META_URL+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
@@ -45,9 +48,6 @@ function NTNX_Download
     case ${AOS_UPGRADE} in
       5.8.0.1 )
         _VERSION=2
-        ;;
-      5.9 )
-        _VERSION=0
         ;;
     esac
 
