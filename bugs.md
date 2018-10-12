@@ -1,10 +1,10 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- bug report from mike.bujara@, james
-- TODO:
-  - refactor URLs into global.vars.sh?
-    - detect HPOC networks and favor local URLs
+- refactor URLs into global.vars.sh?
+  - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
   - download 403 detection
+  - detect HPOC networks and favor local URLs
+- bug report from mike.bujara@, james
 - document public cloud account/credentials
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
@@ -12,6 +12,7 @@
 - Calm videos/spreadsheet
 - Calm workshop updates for 5.9
 - Multi product demo
+- OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
 
 # Backlog #
 

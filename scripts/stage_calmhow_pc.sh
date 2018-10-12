@@ -101,7 +101,7 @@ EOF
   log "SSP_CONNECT=|${SSP_CONNECT}|"
 
   # TODO:60 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
-  # PUT https://10.21.47.39:9440/api/nutanix/v3/directory_services/9d8c2c33-9d95-438c-a7f4-2187120ae99e = spec-ssp-direcory_service.json
+  # PUT https://localhost:9440/api/nutanix/v3/directory_services/9d8c2c33-9d95-438c-a7f4-2187120ae99e = spec-ssp-direcory_service.json
   # TODO:0 make directory_type variable?
   log "Enable SSP Admin Authentication (spec-ssp-direcory_service.json)..."
   _HTTP_BODY=$(cat <<EOF
@@ -132,7 +132,7 @@ EOF
     --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_HTTP_BODY}" \
     https://localhost:9440/api/nutanix/v3/directory_services/${_LDAP_UUID})
   log "SSP_CONNECT=|${SSP_CONNECT}|"
-  # POST https://10.21.47.39:9440/api/nutanix/v3/groups = spec-ssp-groups.json
+  # POST https://localhost:9440/api/nutanix/v3/groups = spec-ssp-groups.json
   # TODO:10 can we skip previous step?
   log "Enable SSP Admin Authentication (spec-ssp-groupauth_2.json)..."
   _HTTP_BODY=$(cat <<EOF
@@ -208,12 +208,12 @@ function PC_UI
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
 {"type":"custom_login_screen","key":"product_title","value":"PC-${PC_VERSION}"} \
-{"type":"custom_login_screen","key":"title","value":"Welcome_to_NutanixWorkshops.com,@${MY_DOMAIN_FQDN}"} \
+{"type":"custom_login_screen","key":"title","value":"Welcome_to_Nutanix.HandsOnWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"welcome_banner","key":"disable_video","value":true} \
 {"type":"disable_2048","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \
 {"type":"UI_CONFIG","key":"autoLogoutOverride","value":0} \
-{"type":"UI_CONFIG","key":"welcome_banner","value":"http://NutanixWorkshops.com"}
+{"type":"UI_CONFIG","key":"welcome_banner","value":"https://Nutanix.HandsOnWorkshops.com/workshops/6070f10d-3aa0-4c7e-b727-dc554cbc2ddf/start/"}
 EOF
   )
   local _TEST

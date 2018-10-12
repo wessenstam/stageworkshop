@@ -316,7 +316,31 @@ function Dependencies {
             elif [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}' ` == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
               if [[ ! -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
-                Download http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
+                 _ARGUMENT=("${SSHPASS_REPOS[@]}")
+                    _INDEX=0
+                SOURCE_URL=
+
+                if (( ${#_ARGUMENT[@]} == 0 )); then
+                  _ERROR=29
+                  log "Error ${_ERROR}: Missing array!"
+                  exit ${_ERROR}
+                fi
+
+                while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+                do
+                  #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
+                  TryURLs ${_ARGUMENT[${_INDEX}]}
+                  #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
+                  if (( ${HTTP_CODE} == 200 )); then
+                    SOURCE_URL="${_ARGUMENT[${_INDEX}]}"
+                     HTTP_CODE= #reset
+                    break
+                  fi
+                  ((_INDEX++))
+                done
+                log "Found ${SOURCE_URL}"
+
+                Download ${SOURCE_URL}
               fi
               sudo rpm -ivh sshpass-1.06-2.el7.x86_64.rpm
               if (( $? > 0 )); then
@@ -338,7 +362,31 @@ function Dependencies {
             elif [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
               # https://stedolan.github.io/jq/download/#checksums_and_signatures
               if [[ ! -e jq-linux64 ]]; then
-                Download https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+                 _ARGUMENT=("${JQ_REPOS[@]}")
+                    _INDEX=0
+                SOURCE_URL=
+
+                if (( ${#_ARGUMENT[@]} == 0 )); then
+                  _ERROR=29
+                  log "Error ${_ERROR}: Missing array!"
+                  exit ${_ERROR}
+                fi
+
+                while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+                do
+                  #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
+                  TryURLs ${_ARGUMENT[${_INDEX}]}
+                  #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
+                  if (( ${HTTP_CODE} == 200 )); then
+                    SOURCE_URL="${_ARGUMENT[${_INDEX}]}"
+                     HTTP_CODE= #reset
+                    break
+                  fi
+                  ((_INDEX++))
+                done
+                log "Found ${SOURCE_URL}"
+
+                Download ${SOURCE_URL}
               fi
               chmod u+x jq-linux64 && ln -s jq-linux64 jq
               export PATH+=:`pwd`

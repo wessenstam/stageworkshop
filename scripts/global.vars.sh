@@ -9,11 +9,16 @@ HPOC_PREFIX=${octet[0]}.${octet[1]}.${octet[2]}
     MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
 
-QCOW2_IMAGES=(\
+     JQ_REPOS=(\
+ 'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
+)
+ QCOW2_IMAGES=(\
  'http://10.21.250.221/images/ahv/techsummit' \
     'https://s3.amazonaws.com/get-ahv-images' \
 )
-
+SSHPASS_REPOS=(\
+ 'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+)
    LDAP_SERVER='AutoDC'  # TODO:160 refactor LDAP_SERVER choice to input file, set default here.
      LDAP_HOST=${HPOC_PREFIX}.$((${octet[3]} + 3))
  MY_DOMAIN_URL="ldaps://${LDAP_HOST}/"

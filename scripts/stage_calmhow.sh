@@ -117,7 +117,7 @@ function AuthenticationServer()
 
   case "${LDAP_SERVER}" in
     'ActiveDirectory')
-      log "Manual setup = http://www.nutanixworkshops.com/en/latest/setup/active_directory/active_directory_setup.html"
+      log "Manual setup = https://github.com/nutanixworkshops/labs/blob/master/setup/active_directory/active_directory_setup.rst"
       ;;
     'AutoDC')
       local _RESULT
@@ -189,8 +189,9 @@ function AuthenticationServer()
 #   "status": 0
 # }
 
-        _ARGUMENT=("${LDAP_IMAGES[@]}")
-           _INDEX=0
+         _ARGUMENT=("${LDAP_IMAGES[@]}")
+            _INDEX=0
+        SOURCE_URL=
 
         if (( ${#_ARGUMENT[@]} == 0 )); then
           _ERROR=29
