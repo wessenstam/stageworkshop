@@ -239,7 +239,7 @@ function PC_Init
   local _TEST
   local OLD_PW='nutanix/4u'
 
-  log "Reset PC password to PE password, must be done by nci@PC, not API or on PE"
+  log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
   ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
   if (( $? != 0 )); then
    log "Warning: password not reset: $?."# exit 10
