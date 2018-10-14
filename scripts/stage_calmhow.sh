@@ -59,7 +59,7 @@ function PE_Init
 
     log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
     (ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
-      | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
+      | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" > /dev/null 2>&1) \
       && log "Container ${MY_IMG_CONTAINER_NAME} exists" \
       || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
 

@@ -1,6 +1,5 @@
-#!/bin/bash
-# -x
-# use !/bin/bash -x to debug command substitution and evaluation instead of echo.
+#!/usr/bin/env bash
+# use bash -x to debug command substitution and evaluation instead of echo.
 
 # For WORKSHOPS keyword mappings to scripts and variables:
 # - use Calm || Citrix || Summit
@@ -25,6 +24,7 @@ function stage_clusters {
   local       _fields
   local       _sshkey
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
+
   log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop}"
 
   # Map to latest and greatest version of each point release
