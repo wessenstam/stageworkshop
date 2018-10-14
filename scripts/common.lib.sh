@@ -7,10 +7,9 @@ function NTNX_Download
   local _source_url
   local    _version=0
 
+  # When adding a new PC version, update BOTH case stanzas below...
   if [[ ${1} == 'PC' ]]; then
     CheckArgsExist 'PC_VERSION'
-
-    # When adding a new PC version, update BOTH case stanzas below...
     case ${PC_VERSION} in
       5.9 | 5.6.2 | 5.8.0.1 )
         _version=2
@@ -21,6 +20,7 @@ function NTNX_Download
     esac
 
     _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/v${_version}/"
+
     case ${PC_VERSION} in
       5.9 )
         _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
@@ -55,7 +55,7 @@ function NTNX_Download
 
     _meta_url+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
 
-    if (( $_version > 0 )); then
+    if (( ${_version} > 0 )); then
       _meta_url+="v${_version}/"
     fi
 
