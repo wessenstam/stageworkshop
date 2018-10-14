@@ -2,8 +2,10 @@
 
 function NTNX_Download
 {
-  local _META_URL='http://download.nutanix.com/'
-  local  _VERSION=0
+  local   _checksum
+  local   _meta_url='http://download.nutanix.com/'
+  local _source_url
+  local    _version=0
 
   if [[ ${1} == 'PC' ]]; then
     CheckArgsExist 'PC_VERSION'
@@ -11,34 +13,34 @@ function NTNX_Download
     # When adding a new PC version, update BOTH case stanzas below...
     case ${PC_VERSION} in
       5.9 | 5.6.2 | 5.8.0.1 )
-        _VERSION=2
+        _version=2
         ;;
       * )
-        _VERSION=1
+        _version=1
         ;;
     esac
 
-    _META_URL+="pc/one-click-pc-deployment/${PC_VERSION}/v${_VERSION}/"
+    _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/v${_version}/"
     case ${PC_VERSION} in
       5.9 )
-        _META_URL+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
+        _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
         ;;
       5.6.1 | 5.6.2 )
-        _META_URL+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
+        _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
         ;;
       5.7.0.1 | 5.7.1 | 5.7.1.1 )
-        _META_URL+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
+        _meta_url+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
         ;;
       5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
-        _META_URL+="pc_deploy-${PC_VERSION}.json"
+        _meta_url+="pc_deploy-${PC_VERSION}.json"
         ;;
       * )
-        _ERROR=22
-        log "Error ${_ERROR}: unsupported PC_VERSION=${PC_VERSION}!"
+        _error=22
+        log "Error ${_error}: unsupported PC_VERSION=${PC_VERSION}!"
         log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
         log " - Find ${PC_VERSION} in the Additional Releases section on the lower right side"
         log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
-        exit ${_ERROR}
+        exit ${_error}
         ;;
     esac
   else
@@ -47,87 +49,91 @@ function NTNX_Download
     # When adding a new AOS version, update BOTH case stanzas below...
     case ${AOS_UPGRADE} in
       5.8.0.1 )
-        _VERSION=2
+        _version=2
         ;;
     esac
 
-    _META_URL+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
+    _meta_url+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
 
-    if (( $_VERSION > 0 )); then
-      _META_URL+="v${_VERSION}/"
+    if (( $_version > 0 )); then
+      _meta_url+="v${_version}/"
     fi
 
     case ${AOS_UPGRADE} in
       5.8.0.1 | 5.9 )
-        _META_URL+="euphrates-${AOS_UPGRADE}-metadata.json"
+        _meta_url+="euphrates-${AOS_UPGRADE}-metadata.json"
         ;;
       * )
-        _ERROR=23
-        log "Error ${_ERROR}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
+        _error=23
+        log "Error ${_error}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
         # TODO: correct AOS_UPGRADE URL
         log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
         log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
         log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
-        exit ${_ERROR}
+        exit ${_error}
         ;;
     esac
   fi
 
-  if [[ ! -e ${_META_URL##*/} ]]; then
-    log "Retrieving download metadata ${_META_URL} ..."
-    Download "${_META_URL}"
+  if [[ ! -e ${_meta_url##*/} ]]; then
+    log "Retrieving download metadata ${_meta_url##*/} ..."
+    Download "${_meta_url}"
   else
-    log "Warning: using cached download ${_META_URL##*/}"
+    log "Warning: using cached download ${_meta_url##*/}"
   fi
 
-  _SOURCE_URL=$(cat ${_META_URL##*/} | jq -r .download_url_cdn)
+  _source_url=$(cat ${_meta_url##*/} | jq -r .download_url_cdn)
 
   if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
     pkill curl
   fi
   log "Retrieving Nutanix ${1} bits..."
-  Download "${_SOURCE_URL}"
+  Download "${_source_url}"
 
-  local _CHECKSUM=$(md5sum ${_SOURCE_URL##*/} | awk '{print $1}')
-  if [[ `cat ${_META_URL##*/} | jq -r .hex_md5` != ${_CHECKSUM} ]]; then
-    log "Error: md5sum ${_CHECKSUM} doesn't match on: ${_SOURCE_URL##*/} removing and exit!"
-    rm -f ${_SOURCE_URL##*/}
+  _checksum=$(md5sum ${_source_url##*/} | awk '{print $1}')
+  if [[ `cat ${_meta_url##*/} | jq -r .hex_md5` != "${_checksum}" ]]; then
+    log "Error: md5sum ${_checksum} doesn't match on: ${_source_url##*/} removing and exit!"
+    rm -f ${_source_url##*/}
     exit 2
   else
-    log "Success: bits downloaded and passed MD5 checksum!"
+    log "Success: ${1} bits downloaded and passed MD5 checksum!"
   fi
 
-  # Set globals for next steps
-    META_URL=${_META_URL}
-  SOURCE_URL=${_SOURCE_URL}
+  # Set globals for next step handoff
+  export   NTNX_META_URL=${_meta_url}
+  export NTNX_SOURCE_URL=${_source_url}
 }
 
 function log {
-  local CALLER=$(echo -n `caller 0 | awk '{print $2}'`)
-  echo $(date "+%Y-%m-%d %H:%M:%S")"|$$|${CALLER}|${1}"
+  local _caller
+
+  _caller=$(echo -n "`caller 0 | awk '{print $2}'`")
+  echo "`date '+%Y-%m-%d %H:%M:%S'`|$$|${_caller}|${1}"
 }
 
 function TryURLs {
   #TODO: trouble passing an array to this function
-  HTTP_CODE=$(curl ${CURL_OPTS} --write-out %{http_code} --head ${1} | tail -n1)
-  #log ${HTTP_CODE}
+  HTTP_CODE=$(curl ${CURL_OPTS} --write-out '%{http_code}' --head ${1} | tail -n1)
+  export HTTP_CODE
 }
 
 function CheckArgsExist {
-  local _ARGUMENT
-  local    _ERROR=88
-  for _ARGUMENT in ${1}; do
+  local _argument
+  local    _error=88
+
+  for _argument in ${1}; do
     if [[ ${DEBUG} ]]; then
-      log "DEBUG: Checking ${_ARGUMENT}..."
+      log "DEBUG: Checking ${_argument}..."
     fi
-    _RESULT=$(eval "echo \$${_ARGUMENT}")
+    _RESULT=$(eval "echo \$${_argument}")
     if [[ -z ${_RESULT} ]]; then
-      log "Error ${_ERROR}: ${_ARGUMENT} not provided!"
-      exit ${_ERROR}
+      log "Error ${_error}: ${_argument} not provided!"
+      exit ${_error}
     elif [[ ${DEBUG} ]]; then
-      log "Non-error: ${_ARGUMENT} for ${_RESULT}"
+      log "Non-error: ${_argument} for ${_RESULT}"
     fi
   done
+
   if [[ ${DEBUG} ]]; then
     log 'Success: required arguments provided.'
   fi
@@ -145,8 +151,10 @@ function SSH_PubKey {
 }
 
 function Determine_PE {
+  local _hold
+
   log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
-  local _HOLD=$(nuclei cluster.list format=json \
+  _hold=$(nuclei cluster.list format=json \
     | jq '.entities[] | select(.status.state == "COMPLETE")' \
     | jq '. | select(.status.resources.network.external_ip != null)')
 
@@ -154,51 +162,51 @@ function Determine_PE {
     log "Error: couldn't resolve clusters $?"
     exit 10
   else
-    export CLUSTER_NAME=$(echo ${_HOLD} | jq .status.name | tr -d \")
-    export   MY_PE_HOST=$(echo ${_HOLD} | jq .status.resources.network.external_ip | tr -d \")
+    CLUSTER_NAME=$(echo ${_hold} | jq .status.name | tr -d \")
+      MY_PE_HOST=$(echo ${_hold} | jq .status.resources.network.external_ip | tr -d \")
 
+    export CLUSTER_NAME MY_PE_HOST
     log "Success: ${CLUSTER_NAME} PE external IP=${MY_PE_HOST}"
   fi
 }
 
 function Download {
-  local           _ATTEMPTS=5
-  local              _ERROR=0
-  local _HTTP_RANGE_ENABLED='--continue-at -'
-  local               _LOOP=0
-  local             _OUTPUT=''
-  local              _SLEEP=2
+  local           _attempts=5
+  local              _error=0
+  local _http_range_enabled= # TODO disabled '--continue-at -'
+  local               _loop=0
+  local             _output
+  local              _sleep=2
 
   if [[ -z ${1} ]]; then
-    _ERROR=33
-    log "Error ${_ERROR}: no URL to download!"
-    exit ${_ERROR}
+    _error=33
+    log "Error ${_error}: no URL to download!"
+    exit ${_error}
   fi
 
   while true ; do
-    (( _LOOP++ ))
+    (( _loop++ ))
     log "${1}..."
-    _OUTPUT=''
-    # curl ${CURL_OPTS} ${_HTTP_RANGE_ENABLED} --remote-name --location ${1}
-    curl ${CURL_OPTS} --remote-name --location ${1}
-    _OUTPUT=$?
-    #DEBUG=1; if [[ ${DEBUG} ]]; then log "DEBUG: curl exited ${_OUTPUT}."; fi
+    _output=''
+    curl ${CURL_OPTS} ${_http_range_enabled} --remote-name --location ${1}
+    _output=$?
+    #DEBUG=1; if [[ ${DEBUG} ]]; then log "DEBUG: curl exited ${_output}."; fi
 
-    if (( ${_OUTPUT} == 0 )); then
+    if (( ${_output} == 0 )); then
       log "Success: ${1##*/}"
       break
     fi
 
-    if (( ${_LOOP} == ${_ATTEMPTS} )); then
-      log "Error: couldn't download from: ${1}, giving up after ${_LOOP} tries."
+    if (( ${_loop} == ${_attempts} )); then
+      log "Error: couldn't download from: ${1}, giving up after ${_loop} tries."
       exit 11
-    elif (( ${_OUTPUT} == 33 )); then
+    elif (( ${_output} == 33 )); then
       log "Web server doesn't support HTTP range command, purging and falling back."
-      _HTTP_RANGE_ENABLED=''
+      _http_range_enabled=''
       rm -f ${1##*/}
     else
-      log "${_LOOP}/${_ATTEMPTS}: curl=${_OUTPUT} ${1##*/} SLEEP ${_SLEEP}..."
-      sleep ${_SLEEP}
+      log "${_loop}/${_attempts}: curl=${_output} ${1##*/} sleep ${_sleep}..."
+      sleep ${_sleep}
     fi
   done
 }
@@ -209,99 +217,109 @@ function remote_exec {
 # Argument ${3} = REQIRED: command configuration
 # Argument ${4} = OPTIONAL: populated with anything = allowed to fail
 
-  local  _ACCOUNT='nutanix'
-  local _ATTEMPTS=3
-  local    _ERROR=99
-  local     _HOST
-  local     _LOOP=0
-  local _PASSWORD="${MY_PE_PASSWORD}"
-  local   _PW_INIT='nutanix/4u' # TODO:140 hardcoded p/w
-  local    _SLEEP=${SLEEP}
-  local     _TEST=0
+  local  _account='nutanix'
+  local _attempts=3
+  local    _error=99
+  local     _host
+  local     _loop=0
+  local _password="${MY_PE_PASSWORD}"
+  local   _pw_init='nutanix/4u' # TODO:140 hardcoded p/w
+  local    _sleep=${SLEEP}
+  local     _test=0
 
+  # shellcheck disable=SC2153
   case ${2} in
     'PE' )
-          _HOST=${MY_PE_HOST}
+          _host=${MY_PE_HOST}
       ;;
     'PC' )
-          _HOST=${MY_PC_HOST}
-      _PASSWORD=${_PW_INIT}
+          _host=${MY_PC_HOST}
+      _password=${_pw_init}
       ;;
     'LDAP_SERVER' )
-       _ACCOUNT='root'
-          _HOST=${LDAP_HOST}
-      _PASSWORD=${_PW_INIT}
-         _SLEEP=7
+       _account='root'
+          _host=${LDAP_HOST}
+      _password=${_pw_init}
+         _sleep=7
       ;;
   esac
 
   if [[ -z ${3} ]]; then
-    log 'Error ${_ERROR}: missing third argument.'
-    exit ${_ERROR}
+    log 'Error ${_error}: missing third argument.'
+    exit ${_error}
   fi
 
   if [[ ! -z ${4} ]]; then
-    _ATTEMPTS=1
-       _SLEEP=0
+    _attempts=1
+       _sleep=0
   fi
 
   while true ; do
-    (( _LOOP++ ))
+    (( _loop++ ))
     case "${1}" in
       'SSH' | 'ssh')
-       #DEBUG=1; if [[ ${DEBUG} ]]; then log "_TEST will perform ${_ACCOUNT}@${_HOST} ${3}..."; fi
-        SSHPASS="${_PASSWORD}" sshpass -e ssh -x ${SSH_OPTS} ${_ACCOUNT}@${_HOST} "${3}"
-        _TEST=$?
+       #DEBUG=1; if [[ ${DEBUG} ]]; then log "_test will perform ${_account}@${_host} ${3}..."; fi
+        SSHPASS="${_password}" sshpass -e ssh -x ${SSH_OPTS} ${_account}@${_host} "${3}"
+        _test=$?
         ;;
       'SCP' | 'scp')
-        #DEBUG=1; if [[ ${DEBUG} ]]; then log "_TEST will perform scp ${3} ${_ACCOUNT}@${_HOST}:"; fi
-        SSHPASS="${_PASSWORD}" sshpass -e scp ${SSH_OPTS} ${3} ${_ACCOUNT}@${_HOST}:
-        _TEST=$?
+        #DEBUG=1; if [[ ${DEBUG} ]]; then log "_test will perform scp ${3} ${_account}@${_host}:"; fi
+        SSHPASS="${_password}" sshpass -e scp ${SSH_OPTS} ${3} ${_account}@${_host}:
+        _test=$?
         ;;
       *)
-        log "Error ${_ERROR}: improper first argument, should be ssh or scp."
-        exit ${_ERROR}
+        log "Error ${_error}: improper first argument, should be ssh or scp."
+        exit ${_error}
         ;;
     esac
 
-    if (( ${_TEST} > 0 )) && [[ -z ${4} ]]; then
-      _ERROR=22
-      log "Error ${_ERROR}: pwd=`pwd`, _TEST=${_TEST}, _HOST=${_HOST}"
-      exit ${_ERROR}
+    if (( ${_test} > 0 )) && [[ -z ${4} ]]; then
+      _error=22
+      log "Error ${_error}: pwd=`pwd`, _test=${_test}, _host=${_host}"
+      exit ${_error}
     fi
 
-    if (( ${_TEST} == 0 )); then
+    if (( ${_test} == 0 )); then
       if [[ ${DEBUG} ]]; then log "${3} executed properly."; fi
       return 0
-    elif (( ${_LOOP} == ${_ATTEMPTS} )); then
+    elif (( ${_loop} == ${_attempts} )); then
       if [[ -z ${4} ]]; then
-        _ERROR=11
-        log "Error ${_ERROR}: giving up after ${_LOOP} tries."
-        exit ${_ERROR}
+        _error=11
+        log "Error ${_error}: giving up after ${_loop} tries."
+        exit ${_error}
       else
         log "Optional: giving up."
         break
       fi
     else
-      log "${_LOOP}/${_ATTEMPTS}: _TEST=$?|${_TEST}| ${FILENAME} SLEEP ${_SLEEP}..."
-      sleep ${_SLEEP}
+      log "${_loop}/${_attempts}: _test=$?|${_test}| ${FILENAME} SLEEP ${_sleep}..."
+      sleep ${_sleep}
     fi
   done
 }
 
 function Dependencies {
-  local _ERROR
-  local _CPE=/etc/os-release # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
-  local _LSB=/etc/lsb-release #Linux Standards Base
+  local  _argument
+  local     _error
+  local     _index
+  local       _cpe=/etc/os-release  # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
+  local       _lsb=/etc/lsb-release # Linux Standards Base
+  local  _os_found=
 
   if [[ -z ${1} ]]; then
-    _ERROR=20
-    log "Error ${_ERROR}: missing install or remove verb."
-    exit ${_ERROR}
+    _error=20
+    log "Error ${_error}: missing install or remove verb."
+    exit ${_error}
   elif [[ -z ${2} ]]; then
-    _ERROR=21
-    log "Error ${_ERROR}: missing package name."
-    exit ${_ERROR}
+    _error=21
+    log "Error ${_error}: missing package name."
+    exit ${_error}
+  fi
+
+  if [[ -e ${_lsb} ]]; then
+    _os_found="$(grep DISTRIB_ID ${_lsb} | awk -F= '{print $2}')"
+  elif [[ -e ${_cpe} ]]; then
+    _os_found="$(grep '^ID=' ${_cpe} | awk -F= '{print $2}')"
   fi
 
   case "${1}" in
@@ -311,32 +329,32 @@ function Dependencies {
       if [[ -z `which ${2}` ]]; then
         case "${2}" in
           sshpass )
-            if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
+            if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
               sudo apt-get install --yes sshpass
-            elif [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}' ` == '"centos"' ]]; then
+            elif [[ ${_os_found} == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
               if [[ ! -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
-                 _ARGUMENT=("${SSHPASS_REPOS[@]}")
-                    _INDEX=0
+                 _argument=("${SSHPASS_REPOS[@]}")
+                    _index=0
                 SOURCE_URL=
 
-                if (( ${#_ARGUMENT[@]} == 0 )); then
-                  _ERROR=29
-                  log "Error ${_ERROR}: Missing array!"
-                  exit ${_ERROR}
+                if (( ${#_argument[@]} == 0 )); then
+                  _error=29
+                  log "Error ${_error}: Missing array!"
+                  exit ${_error}
                 fi
 
-                while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+                while (( ${_index} < ${#_argument[@]} ))
                 do
-                  #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
-                  TryURLs ${_ARGUMENT[${_INDEX}]}
+                  #log "DEBUG: ${_index} ${_argument[${_index}]}"
+                  TryURLs ${_argument[${_index}]}
                   #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-                  if (( ${HTTP_CODE} == 200 )); then
-                    SOURCE_URL="${_ARGUMENT[${_INDEX}]}"
+                  if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
+                    SOURCE_URL="${_argument[${_index}]}"
                      HTTP_CODE= #reset
                     break
                   fi
-                  ((_INDEX++))
+                  ((_index++))
                 done
                 log "Found ${SOURCE_URL}"
 
@@ -344,9 +362,9 @@ function Dependencies {
               fi
               sudo rpm -ivh sshpass-1.06-2.el7.x86_64.rpm
               if (( $? > 0 )); then
-                _ERROR=31
-                log "Error ${_ERROR}: cannot install ${2}."
-                exit ${_ERROR}
+                _error=31
+                log "Error ${_error}: cannot install ${2}."
+                exit ${_error}
               fi
               # https://pkgs.org/download/sshpass
               # https://sourceforge.net/projects/sshpass/files/sshpass/
@@ -355,41 +373,42 @@ function Dependencies {
             fi
             ;;
           jq )
-            if [[ -e ${_LSB} && `grep DISTRIB_ID ${_LSB} | awk -F= '{print $2}'` == 'Ubuntu' ]]; then
+            if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
               if [[ ! -e jq-linux64 ]]; then
                 sudo apt-get install --yes jq
               fi
-            elif [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+            elif [[ ${_os_found} == '"centos"' ]]; then
               # https://stedolan.github.io/jq/download/#checksums_and_signatures
               if [[ ! -e jq-linux64 ]]; then
-                 _ARGUMENT=("${JQ_REPOS[@]}")
-                    _INDEX=0
+                 _argument=("${JQ_REPOS[@]}")
+                    _index=0
                 SOURCE_URL=
 
-                if (( ${#_ARGUMENT[@]} == 0 )); then
-                  _ERROR=29
-                  log "Error ${_ERROR}: Missing array!"
-                  exit ${_ERROR}
+                if (( ${#_argument[@]} == 0 )); then
+                  _error=29
+                  log "Error ${_error}: Missing array!"
+                  exit ${_error}
                 fi
 
-                while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+                while (( ${_index} < ${#_argument[@]} ))
                 do
-                  #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
-                  TryURLs ${_ARGUMENT[${_INDEX}]}
-                  #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-                  if (( ${HTTP_CODE} == 200 )); then
-                    SOURCE_URL="${_ARGUMENT[${_INDEX}]}"
+                  log "DEBUG: ${_index} ${_argument[${_index}]}"
+                  TryURLs ${_argument[${_index}]}
+                  log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
+                  if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
+                    SOURCE_URL="${_argument[${_index}]}"
                      HTTP_CODE= #reset
                     break
                   fi
-                  ((_INDEX++))
+                  ((_index++))
                 done
                 log "Found ${SOURCE_URL}"
 
                 Download ${SOURCE_URL}
               fi
               chmod u+x jq-linux64 && ln -s jq-linux64 jq
-              export PATH+=:`pwd`
+              PATH+=:`pwd`
+              export PATH
             elif [[ `uname -s` == "Darwin" ]]; then
               brew install jq
             fi
@@ -397,9 +416,9 @@ function Dependencies {
         esac
 
         if (( $? > 0 )); then
-          _ERROR=98
-          log "Error ${_ERROR}: can't install ${2}."
-          exit ${_ERROR}
+          _error=98
+          log "Error ${_error}: can't install ${2}."
+          exit ${_error}
         fi
       else
         log "Success: found ${2}."
@@ -407,7 +426,7 @@ function Dependencies {
       ;;
     'remove')
       log "Removing ${2}..."
-      if [[ -e ${_CPE} && `grep '^ID=' ${_CPE} | awk -F= '{print $2}'` == '"centos"' ]]; then
+      if [[ ${_os_found} == '"centos"' ]]; then
         #TODO:30 assuming we're on PC or PE VM.
         case "${2}" in
           sshpass )
@@ -418,7 +437,7 @@ function Dependencies {
             ;;
         esac
       else
-        log "Feature: don't remove Dependencies on Mac OS Darwin or Ubuntu."
+        log "Feature: don't remove Dependencies on Mac OS Darwin, Ubuntu, or LinuxMint."
       fi
       ;;
   esac
@@ -428,56 +447,56 @@ function Check_Prism_API_Up {
 # Argument ${1} = REQUIRED: PE or PC
 # Argument ${2} = OPTIONAL: number of attempts
 # Argument ${3} = OPTIONAL: number of seconds per cycle
-  local _ATTEMPTS=${ATTEMPTS}
-  local    _ERROR=77
-  local     _HOST
-  local     _LOOP=0
-  local _PASSWORD="${MY_PE_PASSWORD}"
-  local  _PW_INIT='Nutanix/4u'
-  local    _SLEEP=${SLEEP}
-  local     _TEST=0
+  local _attempts=${ATTEMPTS}
+  local    _error=77
+  local     _host
+  local     _loop=0
+  local _password="${MY_PE_PASSWORD}"
+  local  _pw_init='Nutanix/4u'
+  local    _sleep=${SLEEP}
+  local     _test=0
 
   CheckArgsExist 'ATTEMPTS MY_PE_PASSWORD SLEEP'
 
   if [[ ${1} == 'PC' ]]; then
-    _HOST=${MY_PC_HOST}
+    _host=${MY_PC_HOST}
   else
-    _HOST=${MY_PE_HOST}
+    _host=${MY_PE_HOST}
   fi
   if [[ ! -z ${2} ]]; then
-    _ATTEMPTS=${2}
+    _attempts=${2}
   fi
 
   while true ; do
-    (( _LOOP++ ))
-    _TEST=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${_PASSWORD} \
+    (( _loop++ ))
+    _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${_password} \
       -X POST --data '{ "kind": "cluster" }' \
-      https://${_HOST}:9440/api/nutanix/v3/clusters/list \
+      https://${_host}:9440/api/nutanix/v3/clusters/list \
       | tr -d \") # wonderful addition of "" around HTTP status code by cURL
 
     if [[ ! -z ${3} ]]; then
-      _SLEEP=${3}
+      _sleep=${3}
     fi
 
-    if (( ${_TEST} == 401 )); then
+    if (( ${_test} == 401 )); then
       log "Warning: unauthorized ${1} user or password."
     fi
 
-    if (( ${_TEST} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_PASSWORD} != ${_PW_INIT} ]]; then
-      _PASSWORD=${_PW_INIT}
-      log "Warning @${1}: Fallback on ${_HOST}: try initial password next cycle..."
-      _SLEEP=0 #break
+    if (( ${_test} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_password} != "${_pw_init}" ]]; then
+      _password=${_pw_init}
+      log "Warning @${1}: Fallback on ${_host}: try initial password next cycle..."
+      _sleep=0 #break
     fi
 
-    if (( ${_TEST} == 200 )); then
+    if (( ${_test} == 200 )); then
       log "@${1}: successful."
       return 0
-    elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-      log "Warning ${_ERROR} @${1}: Giving up after ${_LOOP} tries."
-      return ${_ERROR}
+    elif (( ${_loop} > ${_attempts} )); then
+      log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
+      return ${_error}
     else
-      log "@${1} ${_LOOP}/${_ATTEMPTS}=${_TEST}: sleep ${_SLEEP} seconds..."
-      sleep ${_SLEEP}
+      log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
+      sleep ${_sleep}
     fi
   done
 }

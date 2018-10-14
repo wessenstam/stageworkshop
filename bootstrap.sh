@@ -56,7 +56,7 @@ if [[ -z ${MY_PE_PASSWORD} ]]; then
   read -s -p "REQUIRED: What is this${CLUSTER_NAME} cluster's admin password? " -r _PW1 ; echo
   read -s -p " CONFIRM:             ${CLUSTER_NAME} cluster's admin password? " -r _PW2 ; echo
 
-  if [[ ${_PW1} != ${_PW2} ]]; then
+  if [[ ${_PW1} != "${_PW2}" ]]; then
     _ERROR=1
     echo "Error ${_ERROR}: passwords do not match."
     exit ${_ERROR}
@@ -110,8 +110,4 @@ or login to PE to see tasks in flight and eventual PC registration:
           https://${MY_PE_HOST}:9440/
 EOM
 
-exit
-
-TODO:
-- determine if I'm on HPOC nw variant for a local URL, etc.
-- local _HTTP_RANGE_ENABLED='--continue-at -'
+# TODO: determine if I'm on HPOC nw variant for a local URL, etc.

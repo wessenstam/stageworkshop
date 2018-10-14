@@ -19,31 +19,36 @@ function stage_clusters {
   # Send configuration scripts to remote clusters and execute Prism Element script
   Dependencies 'install' 'sshpass'
 
-  local _WORKSHOP=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
-  log "WORKSHOP #${WORKSHOP_NUM} = ${_WORKSHOP}"
+  local      _cluster
+  local    _container
+  local _dependencies
+  local       _fields
+  local       _sshkey
+  local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
+  log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop}"
 
   # Map to latest and greatest version of each point release
   # Metadata URLs are specified in stage_calmhow.sh function PC_Download
-  if (( $(echo ${_WORKSHOP} | grep -i "PC 5.9" | wc -l) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
     PC_VERSION=5.9
-  elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.8" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
     PC_VERSION=5.8.2
-  elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.7" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then
     PC_VERSION=5.7.1.1
-  elif (( $(echo ${_WORKSHOP} | grep -i "PC 5.6" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc -l) > 0 )); then
     PC_VERSION=5.6.2
   fi
 
   # Map to staging scripts
-  if (( $(echo ${_WORKSHOP} | grep -i Calm | wc -l) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
     PE_CONFIG=stage_calmhow.sh
     PC_CONFIG=stage_calmhow_pc.sh
   fi
-  if (( $(echo ${_WORKSHOP} | grep -i Citrix | wc -l) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
     PE_CONFIG=stage_citrixhow.sh
     PC_CONFIG=stage_citrixhow_pc.sh
   fi
-  if (( $(echo ${_WORKSHOP} | grep -i Summit | wc -l) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i Summit | wc -l) > 0 )); then
     PE_CONFIG=stage_ts18.sh
     PC_CONFIG=stage_ts18_pc.sh
   fi
@@ -53,13 +58,13 @@ function stage_clusters {
     get_configuration
     cd scripts && eval "${CONFIGURATION} ./${PE_CONFIG}" >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1 &
   else
-    for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
+    for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
     do
       set -f
-             _FIELDS=(${MY_LINE//|/ })
-          MY_PE_HOST=${_FIELDS[0]}
-      MY_PE_PASSWORD=${_FIELDS[1]}
-            MY_EMAIL=${_FIELDS[2]}
+             _fields=(${_cluster//|/ })
+          MY_PE_HOST=${_fields[0]}
+      MY_PE_PASSWORD=${_fields[1]}
+            MY_EMAIL=${_fields[2]}
 
       get_configuration
 
@@ -69,10 +74,10 @@ function stage_clusters {
 
       if [[ -d cache ]]; then
         #TODO:90 proper cache detection and downloads
-        local _DEPENDENCIES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
+        _dependencies='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm'
         log "Sending cached dependencies (optional)..."
         pushd cache \
-          && remote_exec 'SCP' 'PE' "${_DEPENDENCIES}" 'OPTIONAL' \
+          && remote_exec 'SCP' 'PE' "${_dependencies}" 'OPTIONAL' \
           && popd
       fi
 
@@ -92,9 +97,9 @@ function stage_clusters {
         log "Uploading PC updates in background..."
         pushd cache/pc-${PC_VERSION} \
         && pkill scp || true
-        for _CONTAINER in epsilon nucalm ; do \
-          if [[ -f ${_CONTAINER}.tar ]]; then \
-            remote_exec 'SCP' 'PE' ${_CONTAINER}.tar 'OPTIONAL' & \
+        for _container in epsilon nucalm ; do \
+          if [[ -f ${_container}.tar ]]; then \
+            remote_exec 'SCP' 'PE' ${_container}.tar 'OPTIONAL' & \
           fi
         done
         popd
@@ -102,18 +107,19 @@ function stage_clusters {
         log "No PC updates found in cache/pc-${PC_VERSION}/"
       fi
 
-      SSHKEY=${HOME}/.ssh/id_rsa.pub
-      if [[ -f ${SSHKEY} ]]; then
-        log "Sending ${SSHKEY} for additon to cluster..."
-        remote_exec 'SCP' 'PE' ${SSHKEY} 'OPTIONAL'
+      _sshkey=${HOME}/.ssh/id_rsa.pub
+      if [[ -f ${_sshkey} ]]; then
+        log "Sending ${_sshkey} for additon to cluster..."
+        remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
       log "Remote execution configuration script on PE@${MY_PE_HOST}"
       remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG%%.sh}.log 2>&1 &"
 
+      # shellcheck disable=SC2153
       cat <<EOM
 
-  Cluster automation progress for ${_WORKSHOP} can be monitored via Prism Element and Central.
+  Cluster automation progress for ${_workshop} can be monitored via Prism Element and Central.
 
   If your SSH key has been uploaded to Prism > Gear > Cluster Lockdown,
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
@@ -140,12 +146,15 @@ function get_configuration {
 }
 
 function validate_clusters {
-  for MY_LINE in `cat ${CLUSTER_LIST} | grep -v ^#`
+  local _cluster
+  local  _fields
+
+  for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
   do
     set -f
-             array=(${MY_LINE//|/ })
-        MY_PE_HOST=${array[0]}
-    MY_PE_PASSWORD=${array[1]}
+           _fields=(${_cluster//|/ })
+        MY_PE_HOST=${_fields[0]}
+    MY_PE_PASSWORD=${_fields[1]}
 
     Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then
@@ -157,6 +166,8 @@ function validate_clusters {
 }
 
 function script_usage {
+  local _offbyone
+
   cat << EOF
 
 See README.md and guidebook.md for more information.
@@ -169,21 +180,22 @@ Available Workshops:
 EOF
 
   for (( i = 0; i < ${#WORKSHOPS[@]}-${NONWORKSHOPS}; i++ )); do
-    let OFFBYONE=$i+1
-    echo "${OFFBYONE} = ${WORKSHOPS[$i]}"
+    let _offbyone=$i+1
+    echo "${_offbyone} = ${WORKSHOPS[$i]}"
   done
 
   exit
 }
 
 function get_file {
+  local _error=55
+
   if [[ "${CLUSTER_LIST}" != '-' ]]; then
     echo
     read -p "$_CLUSTER_FILE: " CLUSTER_LIST # Prompt user
 
     if [[ ! -f "${CLUSTER_LIST}" ]]; then
-      _ERROR=55
-      echo "Warning ${_ERROR}: file not found = ${CLUSTER_LIST}"
+      echo "Warning ${_error}: file not found = ${CLUSTER_LIST}"
       get_file
     fi
   fi
@@ -212,7 +224,7 @@ function select_workshop {
         ;;
       *)
         for (( i = 0; i < ${#WORKSHOPS[@]}-${NONWORKSHOPS}; i++ )); do
-          if [[ ${WORKSHOPS[$i]} == ${WORKSHOP} ]]; then
+          if [[ ${WORKSHOPS[$i]} == "${WORKSHOP}" ]]; then
             let WORKSHOP_NUM=$i+1
           fi
         done
@@ -244,6 +256,8 @@ function select_workshop {
 # Source Workshop common routines + global variables
 . scripts/common.lib.sh
 
+log "`basename $0` start._____________________"
+
     _VALIDATE='Validate Staged Clusters'
 _CLUSTER_FILE='Cluster Input File'
  CLUSTER_LIST=
@@ -271,13 +285,13 @@ while getopts "f:w:\?" opt; do
       elif [[ -f ${OPTARG} ]]; then
         CLUSTER_LIST=${OPTARG}
       else
-        echo "Error: file not found = ${OPTARG}"
+        echo "Error: file not $(($OPTARG)) < $((${#WORKSHOPS[@]}-${NONWORKSHOPS}+1)) found = ${OPTARG}"
         script_usage
       fi
       ;;
     w )
-      if [[ $(($OPTARG)) > 0 ]] \
-      && [[ $(($OPTARG)) < $((${#WORKSHOPS[@]}-${NONWORKSHOPS}+1)) ]]; then
+      if (( $(($OPTARG)) > 0 )) \
+      && (( $(($OPTARG)) < $((${#WORKSHOPS[@]}-${NONWORKSHOPS}+1)) )); then
         WORKSHOP_NUM=${OPTARG}
       else
         echo "Error: workshop not found = ${OPTARG}"
@@ -299,7 +313,7 @@ elif [[ -z ${CLUSTER_LIST} ]]; then
 elif [[ -n ${WORKSHOP_NUM} ]]; then
   log "Error: missing workshop number argument."
   script_usage
-elif [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == ${_VALIDATE} ]]; then
+elif [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == "${_VALIDATE}" ]]; then
   validate_clusters
 else
   get_file # If no command line arguments, start interactive session

@@ -3,35 +3,38 @@
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
 
-function _TestDNS {
-  CheckArgsExist 'LDAP_HOST MY_DOMAIN_FQDN'
-  local   _DNS=$(dig +retry=0 +time=2 +short @${LDAP_HOST} dc1.${MY_DOMAIN_FQDN})
-  local _ERROR=44
-  local  _TEST=$?
+function TestDNS {
+  local   _dns
+  local _error=44
+  local  _test=$?
 
-  if [[ ${_DNS} != "${LDAP_HOST}" ]]; then
-    log "Error ${_ERROR}: result was ${_TEST}: ${_DNS}"
-    return ${_ERROR}
+  CheckArgsExist 'LDAP_HOST MY_DOMAIN_FQDN'
+
+  _dns=$(dig +retry=0 +time=2 +short @${LDAP_HOST} dc1.${MY_DOMAIN_FQDN})
+
+  if [[ ${_dns} != "${LDAP_HOST}" ]]; then
+    log "Error ${_error}: result was ${_test}: ${_dns}"
+    return ${_error}
   fi
 }
 
 function acli {
-  local CMD=$@
-	/usr/local/nutanix/bin/acli ${CMD}
+  local _cmd
+
+  _cmd=$*
+	/usr/local/nutanix/bin/acli ${_cmd}
   # DEBUG=1 && if [[ ${DEBUG} ]]; then log "$@"; fi
 }
 
 function PE_Init
 {
-  CheckArgsExist 'HPOC_PREFIX octet MY_EMAIL \
+  CheckArgsExist 'DATA_SERVICE_IP MY_EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
     MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
     SLEEP ATTEMPTS'
 
-  local _DATA_SERVICE_IP=${HPOC_PREFIX}.$((${octet[3]} + 1))
-
   if [[ `ncli cluster get-params | grep 'External Data' | \
-         awk -F: '{print $2}' | tr -d '[:space:]'` == "${_DATA_SERVICE_IP}" ]]; then
+         awk -F: '{print $2}' | tr -d '[:space:]'` == "${DATA_SERVICE_IP}" ]]; then
     log "IDEMPOTENCY: Data Services IP set, skip."
   else
     log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
@@ -63,8 +66,8 @@ function PE_Init
     # Set external IP address:
     #ncli cluster edit-params external-ip-address=${MY_PE_HOST}
 
-    log "Set Data Services IP address to ${_DATA_SERVICE_IP}"
-    ncli cluster edit-params external-data-services-ip-address=${_DATA_SERVICE_IP}
+    log "Set Data Services IP address to ${DATA_SERVICE_IP}"
+    ncli cluster edit-params external-data-services-ip-address=${DATA_SERVICE_IP}
   fi
 }
 
@@ -108,6 +111,16 @@ function Network_Configure
 
 function AuthenticationServer()
 {
+  local   _argument
+  local   _attempts
+  local      _error
+  local      _index
+  local       _loop
+  local     _result
+  local      _sleep
+  local _source_url
+  local       _test
+
   CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME'
 
   if [[ -z ${LDAP_SERVER} ]]; then
@@ -120,19 +133,17 @@ function AuthenticationServer()
       log "Manual setup = https://github.com/nutanixworkshops/labs/blob/master/setup/active_directory/active_directory_setup.rst"
       ;;
     'AutoDC')
-      local _RESULT
-      _TestDNS; _RESULT=$?
+      TestDNS; _result=$?
 
-      if (( ${_RESULT} == 0 )); then
-        log "${LDAP_SERVER}.IDEMPOTENCY: dc1.${MY_DOMAIN_FQDN} set, skip. ${_RESULT}"
+      if (( ${_result} == 0 )); then
+        log "${LDAP_SERVER}.IDEMPOTENCY: dc1.${MY_DOMAIN_FQDN} set, skip. ${_result}"
       else
         log "${LDAP_SERVER}.IDEMPOTENCY failed, no DNS record dc1.${MY_DOMAIN_FQDN}"
         log "Import ${LDAP_SERVER} image..."
 
-        local _ERROR=12
-        local  _LOOP=0
-        local _SLEEP=${SLEEP}
-        local  _TEST
+       _error=12
+        _loop=0
+       _sleep=${SLEEP}
 
 # task.list operation_type_list=kVmCreate
 # Task UUID                             Parent Task UUID  Component  Sequence-id  Type       Status
@@ -189,49 +200,49 @@ function AuthenticationServer()
 #   "status": 0
 # }
 
-         _ARGUMENT=("${LDAP_IMAGES[@]}")
-            _INDEX=0
-        SOURCE_URL=
+        _argument=("${LDAP_IMAGES[@]}")
+           _index=0
 
-        if (( ${#_ARGUMENT[@]} == 0 )); then
-          _ERROR=29
-          log "Error ${_ERROR}: Missing array!"
-          exit ${_ERROR}
+        if (( ${#_argument[@]} == 0 )); then
+          _error=29
+          log "Error ${_error}: Missing array!"
+          exit ${_error}
         fi
 
-        while (( ${_INDEX} < ${#_ARGUMENT[@]} ))
+        while (( ${_index} < ${#_argument[@]} ))
         do
-          #log "DEBUG: ${_INDEX} ${_ARGUMENT[${_INDEX}]}"
-          TryURLs ${_ARGUMENT[${_INDEX}]}
+          _source_url=
+          #log "DEBUG: ${_index} ${_argument[${_index}]}"
+          TryURLs ${_argument[${_index}]}
           #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-          if (( ${HTTP_CODE} == 200 )); then
-            SOURCE_URL="${_ARGUMENT[${_INDEX}]}"
+          if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
+            _source_url="${_argument[${_index}]}"
              HTTP_CODE= #reset
             break
           fi
-          ((_INDEX++))
+          ((_index++))
         done
-        log "Found ${SOURCE_URL}"
+        log "Found ${_source_url}"
 
         # while true ; do
-        #   (( _LOOP++ ))
+        #   (( _loop++ ))
         if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
           acli image.create ${LDAP_SERVER} \
             container=${MY_IMG_CONTAINER_NAME} \
             image_type=kDiskImage \
-            source_url=${SOURCE_URL} \
+            source_url=${_source_url} \
             wait=true
         fi
 
-          # if [[ ${_TEST} =~ 'complete' ]]; then
+          # if [[ ${_test} =~ 'complete' ]]; then
           #   break
-          # elif (( ${_LOOP} > ${ATTEMPTS} )); then
+          # elif (( ${_loop} > ${ATTEMPTS} )); then
           #   acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
-          #   log "${LDAP_SERVER} failed to upload after ${_LOOP} attempts. This cluster may require manual remediation."
+          #   log "${LDAP_SERVER} failed to upload after ${_loop} attempts. This cluster may require manual remediation."
           #   exit 13
           # else
-          #   log "_TEST ${_LOOP}=${_TEST}: ${LDAP_SERVER} failed. Sleep ${_SLEEP} seconds..."
-          #   sleep ${_SLEEP}
+          #   log "_test ${_loop}=${_test}: ${LDAP_SERVER} failed. Sleep ${_sleep} seconds..."
+          #   sleep ${_sleep}
           # fi
         # done
 
@@ -245,53 +256,53 @@ function AuthenticationServer()
         log "Power on ${LDAP_SERVER} VM..."
         acli "vm.on ${LDAP_SERVER}"
 
-        local _ATTEMPTS=20
-         _LOOP=0
-        _SLEEP=7
+        _attempts=20
+            _loop=0
+           _sleep=7
 
         while true ; do
-          (( _LOOP++ ))
-          _TEST=$(remote_exec 'SSH' 'LDAP_SERVER' 'systemctl show samba-ad-dc --property=SubState')
+          (( _loop++ ))
+          _test=$(remote_exec 'SSH' 'LDAP_SERVER' 'systemctl show samba-ad-dc --property=SubState')
 
-          if [[ "${_TEST}" == "SubState=running" ]]; then
+          if [[ "${_test}" == "SubState=running" ]]; then
             log "${LDAP_SERVER} is ready."
-            sleep ${_SLEEP}
+            sleep ${_sleep}
             break
-          elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-            log "Error ${_ERROR}: ${LDAP_SERVER} VM running: giving up after ${_LOOP} tries."
+          elif (( ${_loop} > ${_attempts} )); then
+            log "Error ${_error}: ${LDAP_SERVER} VM running: giving up after ${_loop} tries."
             acli "-y vm.delete ${LDAP_SERVER}"
             log "Remediate by deleting the ${LDAP_SERVER} VM from PE (just attempted by this script) and then running $_"
-            exit ${_ERROR}
+            exit ${_error}
           else
-            log "_TEST ${_LOOP}/${_ATTEMPTS}=|${_TEST}|: sleep ${_SLEEP} seconds..."
-            sleep ${_SLEEP}
+            log "_test ${_loop}/${_attempts}=|${_test}|: sleep ${_sleep} seconds..."
+            sleep ${_sleep}
           fi
         done
 
         log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM..."
-        _ATTEMPTS=3
-            _LOOP=0
+        _attempts=3
+            _loop=0
 
         while true ; do
-          (( _LOOP++ ))
+          (( _loop++ ))
           # TODO:130 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
-            "samba-tool dns zonecreate dc1 ${octet[2]}.${octet[1]}.${octet[0]}.in-addr.arpa && service samba-ad-dc restart" \
+            "samba-tool dns zonecreate dc1 ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa && service samba-ad-dc restart" \
             'OPTIONAL'
-          sleep ${_SLEEP}
+          sleep ${_sleep}
 
-          _TestDNS; _RESULT=$?
+          TestDNS; _result=$?
 
-          if (( ${_RESULT} == 0 )); then
+          if (( ${_result} == 0 )); then
             log "Success: DNS record dc1.${MY_DOMAIN_FQDN} set."
             break
-          elif (( ${_LOOP} > ${_ATTEMPTS} )); then
-            log "Error ${_ERROR}: ${LDAP_SERVER}: giving up after ${_LOOP} tries; deleting VM..."
+          elif (( ${_loop} > ${_attempts} )); then
+            log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
             acli "-y vm.delete ${LDAP_SERVER}"
-            exit ${_ERROR}
+            exit ${_error}
           else
-            log "_TestDNS ${_LOOP}/${_ATTEMPTS}=|${_RESULT}|: sleep ${_SLEEP} seconds..."
-            sleep ${_SLEEP}
+            log "TestDNS ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
+            sleep ${_sleep}
           fi
         done
 
@@ -362,13 +373,15 @@ function PE_License
     #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
     #curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data
-    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${octet[2]}' password = '${MY_PE_PASSWORD}'"}' \
+    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET[2]}' password = '${MY_PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
   fi
 }
 
 function PC_Init
 {
+  local _version_id
+
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
   Check_Prism_API_Up 'PC' 2 0
 
@@ -384,19 +397,19 @@ function PC_Init
     NTNX_Download 'PC'
 
     log "Prism Central upload..."
-    ncli software upload file-path=`pwd`/${SOURCE_URL##*/} \
-      meta-file-path=`pwd`/${META_URL##*/} \
+    ncli software upload file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
+      meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
       software-type=PRISM_CENTRAL_DEPLOY
 
-    local _VERSION_ID=$(cat ${META_URL##*/} | jq -r .version_id)
+    _version_id=$(cat ${NTNX_META_URL##*/} | jq -r .version_id)
 
     log "Delete PC sources to free CVM space..."
-    rm -f ${SOURCE_URL##*/} ${META_URL##*/}
+    rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
 
     log "Deploy Prism Central (typically takes 17+ minutes)..."
     # TODO:150 Parameterize DNS Servers & add secondary
     # TODO:120 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
-    local _LDAP_SERVER=
+
     HTTP_BODY=$(cat <<EOF
 {
   "resources": {
@@ -416,17 +429,17 @@ function PC_Init
       "container_uuid":"${MY_CONTAINER_UUID}",
       "num_sockets":8,
       "memory_size_bytes":42949672960,
-      "vm_name":"Prism Central ${_VERSION_ID}"
+      "vm_name":"Prism Central ${_version_id}"
     }]
   }
 }
 EOF
     )
-    local _TEST
-    _TEST=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} \
+    local _test
+    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} \
       -X POST --data "${HTTP_BODY}" \
       https://localhost:9440/api/nutanix/v3/prism_central)
-    #log "_TEST=|${_TEST}|"
+    #log "_test=|${_test}|"
   fi
 }
 
@@ -458,7 +471,8 @@ function PC_Configure {
 function AOS_Upgrade {
   #this is a prototype, untried
   ncli software upload software-type=nos \
-    meta-file-path=`pwd`/${META_URL##*/} file-path=`pwd`/${SOURCE_URL##*/}
+    meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
+    file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
 }
 #__main()__________
 
@@ -467,7 +481,7 @@ function AOS_Upgrade {
 . common.lib.sh
 . global.vars.sh
 
-log `basename "$0"`": PID=$$"
+log "`basename $0` start._____________________"
 
 CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD PC_VERSION'
 
