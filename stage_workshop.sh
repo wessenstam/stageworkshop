@@ -16,6 +16,7 @@ WORKSHOPS=(\
 function stage_clusters {
   # Adjust as needed with $WORKSHOPS
   # Send configuration scripts to remote clusters and execute Prism Element script
+
   Dependencies 'install' 'sshpass'
 
   local      _cluster
@@ -255,6 +256,7 @@ function select_workshop {
 
 # Source Workshop common routines + global variables
 . scripts/common.lib.sh
+. scripts/global.vars.sh
 
 log "`basename $0` start._____________________"
 

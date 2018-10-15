@@ -7,6 +7,7 @@ function stageworkshop-cluster() {
   local    _fields
   local  _filespec
   export NTNX_USER=nutanix
+  local  _tail_arg
 
   if [[ -n ${1} || ${1} == '' ]]; then
     _filespec=~/Documents/github.com/mlavi/stageworkshop/example_pocs.txt
@@ -19,7 +20,12 @@ function stageworkshop-cluster() {
     - First cluster only of manifest: ${_filespec}
     - Authenticating as: ${NTNX_USER}\n"
 
-  _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail --lines 1)
+  _tail_arg='--lines='
+  if [[ `uname -s` == "Darwin" ]]; then
+    _tail_arg='-n '
+  fi
+
+  _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail ${_tail_arg}1)
    _fields=(${_cluster//|/ })
 
   export     PE_HOST=${_fields[0]}
