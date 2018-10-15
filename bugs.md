@@ -1,5 +1,6 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
+- Add version/release to each scipt for github archive cache? # to start with date, but eventually git hash/tags/releases?
 - refactor URLs into global.vars.sh?
   - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
   - download 403 detection

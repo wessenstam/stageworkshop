@@ -3,7 +3,7 @@
 .kitchen/
 .kitchen.local.yml
 *.log
-cache/
+cache*/
 example_pocs.txt
 Gemfile.lock
 logs/
