@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-# ./stage_workshop.sh -f example_pocs.txt -w 1
+echo "Sourced $(pwd)/stageworkshop.lib.sh, version: TBD"
 
 function stageworkshop-cluster() {
   local   _cluster
@@ -17,8 +16,8 @@ function stageworkshop-cluster() {
   fi
 
   echo -e "Assumptions:\n
-    - First cluster only of manifest: ${_filespec}
-    - Authenticating as: ${NTNX_USER}\n"
+    - Only the last uncommented cluster in manifest: ${_filespec}
+    -                    Authenticating with ssh as: ${NTNX_USER}\n"
 
   _tail_arg='--lines='
   if [[ `uname -s` == "Darwin" ]]; then
@@ -74,3 +73,7 @@ function stageworkshop-pe() {
 function stageworkshop-pc() {
   stageworkshop-ssh 'PC' "${1}"
 }
+
+# TODO: prompt for choice when more than one cluster
+# TODO: bootstrap calling 4 scripts, starting with ./stage_workshop.sh -f example_pocs.txt -w 1
+# TODO: scp?

@@ -1,6 +1,22 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- Add version/release to each scipt for github archive cache? # to start with date, but eventually git hash/tags/releases?
+- BUG: all stage_calmhow_pc.sh service timeout detect/retry
+- BUG: PC LDAP 5.9 broken
+- Add (git)version/release to each script for github archive cache? # to start with date, but eventually git hash/tags/releases?
+  - https://semver.org/
+  - https://github.com/GitTools/GitVersion
+    - https://gitversion.readthedocs.io/en/stable/usage/command-line/
+    - brew install gitversion
+  - https://github.com/markchalloner/git-semver
+- start a feature branch
+- Try again: pass/accept an array with TryURLs, consolidate calling variants * 3?
+  - common.lib.sh:Dependencies
+    - install SSHPASS_REPOS
+    - install JQ_REPOS
+  - stage_calmhow_pc Images
+  - stage_calmhow AuthenticationServer
+- Per Google shell style guide:
+  - refactor function names to lowercase,
 - refactor URLs into global.vars.sh?
   - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
   - download 403 detection
@@ -292,12 +308,13 @@ https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project
 $ git remote show
 origin
 
-$ git remote add nutanixworkshops https://github.com/nutanixworkshops/stageworkshop.git
+# https://gitversion.readthedocs.io/en/stable/reference/git-setup/
+$ git remote add upstream https://github.com/nutanixworkshops/stageworkshop.git
 
 $ git remote show
-nutanixworkshops
+upstream
 origin
 
-$ git fetch nutanixworkshops
-$ git merge nutanixworkshops/master
+$ git fetch upstream
+$ git merge upstream/master
 ````

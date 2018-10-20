@@ -300,7 +300,7 @@ function Images
   local      _index
   local _source_url
 
-  for _image in CentOS7-06252018.qcow2 Windows2012R2-04282018.qcow2 Windows10-1709-04282018.qcow2 ; do
+  for _image in CentOS7-06252018.qcow2 Windows2012R2-04282018.qcow2 Windows10-1709-04282018.qcow2 Nutanix-VirtIO-1.1.3.iso ; do
     #log "DEBUG: ${_image} image.create..."
 
     _argument=("${QCOW2_IMAGES[@]}")
