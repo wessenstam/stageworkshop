@@ -4,9 +4,11 @@
 - BUG: PC LDAP 5.9 broken
 - Add (git)version/release to each script for github archive cache? # to start with date, but eventually git hash/tags/releases?
   - https://semver.org/
+    - https://guides.github.com/introduction/flow/index.html
   - https://github.com/GitTools/GitVersion
     - https://gitversion.readthedocs.io/en/stable/usage/command-line/
     - brew install gitversion
+    - GitVersion /showConfig
   - https://github.com/markchalloner/git-semver
 - start a feature branch
 - Try again: pass/accept an array with TryURLs, consolidate calling variants * 3?
