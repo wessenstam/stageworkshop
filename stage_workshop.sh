@@ -8,9 +8,9 @@
 
 WORKSHOPS=(\
 "Calm Workshop (AOS/AHV PC 5.8.x)" \
-"Calm Workshop (AOS/AHV PC 5.7.x)" \
-"Calm Workshop (AOS/AHV PC 5.6.x)" \
-"Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
+#"Calm Workshop (AOS/AHV PC 5.7.x)" \
+#"Calm Workshop (AOS/AHV PC 5.6.x)" \
+#"Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 ) # Adjust function stage_clusters for mappings as needed
 
