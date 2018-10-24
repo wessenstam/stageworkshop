@@ -9,14 +9,13 @@
     - https://gitversion.readthedocs.io/en/stable/usage/command-line/
     - brew install gitversion
     - GitVersion /showConfig
+    - sudo apt-get install mono-complete
+    - # do not: sudo apt-get install libcurl3 # removes curl libcurl4
+    - Download dotnet4 zip archive
+    - put on mono-path?
+    - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
   - https://github.com/markchalloner/git-semver
 - start a feature branch
-- Try again: pass/accept an array with TryURLs, consolidate calling variants * 3?
-  - common.lib.sh:Dependencies
-    - install SSHPASS_REPOS
-    - install JQ_REPOS
-  - stage_calmhow_pc Images
-  - stage_calmhow AuthenticationServer
 - Per Google shell style guide:
   - refactor function names to lowercase,
 - refactor URLs into global.vars.sh?

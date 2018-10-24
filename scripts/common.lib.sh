@@ -111,10 +111,31 @@ function log {
   echo "`date '+%Y-%m-%d %H:%M:%S'`|$$|${_caller}|${1}"
 }
 
-function TryURLs {
-  #TODO: trouble passing an array to this function
-  HTTP_CODE=$(curl ${CURL_OPTS} --write-out '%{http_code}' --head ${1} | tail -n1)
-  export HTTP_CODE
+function testURLs {
+  # https://stackoverflow.com/questions/1063347/passing-arrays-as-parameters-in-bash#4017175
+  local      _error=29
+  local      _index=0
+  local _candidates=("${!1}")
+  local  _http_code=
+
+  if (( ${#_candidates[@]} == 0 )); then
+   log "Error ${_error}: Missing array!"
+   exit ${_error}
+  fi
+
+  while (( ${_index} < ${#_candidates[@]} ))
+  do
+   #log "DEBUG: ${_index} ${_candidates[${_index}]}"
+   _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_candidates[${_index}]} | tail -n1)
+
+   #log "DEBUG: _http_code=|${_http_code}|"
+   if (( ${_http_code} == 200 || ${_http_code} == 302 )); then
+     SOURCE_URL="${_candidates[${_index}]}"
+     log "HTTP:${_http_code} = ${SOURCE_URL}"
+     break
+   fi
+   ((_index++))
+  done
 }
 
 function CheckArgsExist {
@@ -151,7 +172,8 @@ function SSH_PubKey {
 }
 
 function Determine_PE {
-  local _hold
+  local _error=10
+  local  _hold
 
   log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
   _hold=$(nuclei cluster.list format=json \
@@ -159,8 +181,8 @@ function Determine_PE {
     | jq '. | select(.status.resources.network.external_ip != null)')
 
   if (( $? > 0 )); then
-    log "Error: couldn't resolve clusters $?"
-    exit 10
+    log "Error ${_error}: couldn't resolve clusters $?"
+    exit ${_error}
   else
     CLUSTER_NAME=$(echo ${_hold} | jq .status.name | tr -d \")
       MY_PE_HOST=$(echo ${_hold} | jq .status.resources.network.external_ip | tr -d \")
@@ -334,30 +356,15 @@ function Dependencies {
             elif [[ ${_os_found} == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
               if [[ ! -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
-                 _argument=("${SSHPASS_REPOS[@]}")
-                    _index=0
                 SOURCE_URL=
+                testURLs SSHPASS_REPOS[@]
 
-                if (( ${#_argument[@]} == 0 )); then
-                  _error=29
-                  log "Error ${_error}: Missing array!"
-                  exit ${_error}
+                if [[ -z ${SOURCE_URL} ]]; then
+                  _error=36
+                  log "Error ${_error}: didn't find any sources for ${2}"
+                  exit $_error
                 fi
-
-                while (( ${_index} < ${#_argument[@]} ))
-                do
-                  #log "DEBUG: ${_index} ${_argument[${_index}]}"
-                  TryURLs ${_argument[${_index}]}
-                  #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-                  if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
-                    SOURCE_URL="${_argument[${_index}]}"
-                     HTTP_CODE= #reset
-                    break
-                  fi
-                  ((_index++))
-                done
                 log "Found ${SOURCE_URL}"
-
                 Download ${SOURCE_URL}
               fi
               sudo rpm -ivh sshpass-1.06-2.el7.x86_64.rpm
@@ -380,31 +387,16 @@ function Dependencies {
             elif [[ ${_os_found} == '"centos"' ]]; then
               # https://stedolan.github.io/jq/download/#checksums_and_signatures
               if [[ ! -e jq-linux64 ]]; then
-                 _argument=("${JQ_REPOS[@]}")
-                    _index=0
-                SOURCE_URL=
+                 SOURCE_URL=
+                 testURLs JQ_REPOS[@]
 
-                if (( ${#_argument[@]} == 0 )); then
-                  _error=29
-                  log "Error ${_error}: Missing array!"
-                  exit ${_error}
-                fi
-
-                while (( ${_index} < ${#_argument[@]} ))
-                do
-                  log "DEBUG: ${_index} ${_argument[${_index}]}"
-                  TryURLs ${_argument[${_index}]}
-                  log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-                  if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
-                    SOURCE_URL="${_argument[${_index}]}"
-                     HTTP_CODE= #reset
-                    break
-                  fi
-                  ((_index++))
-                done
-                log "Found ${SOURCE_URL}"
-
-                Download ${SOURCE_URL}
+                 if [[ -z ${SOURCE_URL} ]]; then
+                   _error=36
+                   log "Error ${_error}: didn't find any sources for ${2}"
+                   exit $_error
+                 fi
+                 log "Found ${SOURCE_URL}"
+                 Download ${SOURCE_URL}
               fi
               chmod u+x jq-linux64 && ln -s jq-linux64 jq
               PATH+=:`pwd`

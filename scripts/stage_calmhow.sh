@@ -111,10 +111,8 @@ function Network_Configure
 
 function AuthenticationServer()
 {
-  local   _argument
   local   _attempts
-  local      _error
-  local      _index
+  local      _error=13
   local       _loop
   local     _result
   local      _sleep
@@ -124,8 +122,8 @@ function AuthenticationServer()
   CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME'
 
   if [[ -z ${LDAP_SERVER} ]]; then
-    log "Error: please provide a choice for authentication server."
-    exit 13
+    log "Error ${_error}: please provide a choice for authentication server."
+    exit ${_error}
   fi
 
   case "${LDAP_SERVER}" in
@@ -200,29 +198,15 @@ function AuthenticationServer()
 #   "status": 0
 # }
 
-        _argument=("${LDAP_IMAGES[@]}")
-           _index=0
+        SOURCE_URL=
+        testURLs LDAP_IMAGES[@]
 
-        if (( ${#_argument[@]} == 0 )); then
-          _error=29
-          log "Error ${_error}: Missing array!"
+        if [[ -z ${SOURCE_URL} ]]; then
+          log "Error ${_error}: didn't find any sources for LDAP_IMAGES."
           exit ${_error}
+        else
+          log "Finish: SOURCE_URL = ${SOURCE_URL}"
         fi
-
-        while (( ${_index} < ${#_argument[@]} ))
-        do
-          _source_url=
-          #log "DEBUG: ${_index} ${_argument[${_index}]}"
-          TryURLs ${_argument[${_index}]}
-          #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-          if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
-            _source_url="${_argument[${_index}]}"
-             HTTP_CODE= #reset
-            break
-          fi
-          ((_index++))
-        done
-        log "Found ${_source_url}"
 
         # while true ; do
         #   (( _loop++ ))

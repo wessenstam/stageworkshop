@@ -295,35 +295,26 @@ function PC_Init
 
 function Images
 { # depends on nuclei
-  local   _argument
+  local      _error=10
   local      _image
-  local      _index
   local _source_url
+
+  SOURCE_URL=
+  testURLs QCOW2_IMAGES[@]
+
+  if [[ -z ${SOURCE_URL} ]]; then
+    log "Error ${_error}: didn't find any sources for QCOW2_IMAGES."
+    exit ${_error}
+  fi
 
   for _image in CentOS7-06252018.qcow2 Windows2012R2-04282018.qcow2 Windows10-1709-04282018.qcow2 Nutanix-VirtIO-1.1.3.iso ; do
     #log "DEBUG: ${_image} image.create..."
+    _source_url="${SOURCE_URL}/${_image}"
 
-    _argument=("${QCOW2_IMAGES[@]}")
-       _index=0
-
-    if (( ${#_argument[@]} == 0 )); then
-      _error=29
-      log "Error ${_error}: Missing array!"
-      exit ${_error}
+    testURLs ${_source_url}
+    if [[ -z ${_source_url} ]]; then
+      log "Error: didn't find image ${_image}."
     fi
-
-    while (( ${_index} < ${#_argument[@]} ))
-    do
-      #log "DEBUG: ${_index} ${_argument[${_index}]}"
-      TryURLs ${_argument[${_index}]}/${_image}
-      #log "DEBUG: HTTP_CODE=|${HTTP_CODE}|"
-      if (( ${HTTP_CODE} == 200 || ${HTTP_CODE} == 302 )); then
-        _source_url="${_argument[${_index}]}/${_image}"
-          HTTP_CODE= #reset
-        break
-      fi
-      ((_index++))
-    done
     log "Found ${_source_url}"
 
     nuclei image.create name=${_image} \
