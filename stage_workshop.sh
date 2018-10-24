@@ -23,6 +23,9 @@ function stage_clusters {
   local    _container
   local _dependencies
   local       _fields
+  local    _pe_config
+  local    _pc_config
+  local      _release
   local       _sshkey
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
@@ -42,22 +45,22 @@ function stage_clusters {
 
   # Map to staging scripts
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-    PE_CONFIG=stage_calmhow.sh
-    PC_CONFIG=stage_calmhow_pc.sh
+    _pe_config=stage_calmhow.sh
+    _pc_config=stage_calmhow_pc.sh
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
-    PE_CONFIG=stage_citrixhow.sh
-    PC_CONFIG=stage_citrixhow_pc.sh
+    _pe_config=stage_citrixhow.sh
+    _pc_config=stage_citrixhow_pc.sh
   fi
   if (( $(echo ${_workshop} | grep -i Summit | wc -l) > 0 )); then
-    PE_CONFIG=stage_ts18.sh
-    PC_CONFIG=stage_ts18_pc.sh
+    _pe_config=stage_ts18.sh
+    _pc_config=stage_ts18_pc.sh
   fi
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440"
     get_configuration
-    cd scripts && eval "${CONFIGURATION} ./${PE_CONFIG}" >> ${HOME}/${PE_CONFIG%%.sh}.log 2>&1 &
+    cd scripts && eval "${CONFIGURATION} ./${_pe_config}" >> ${HOME}/${_pe_config%%.sh}.log 2>&1 &
   else
     for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
     do
@@ -89,8 +92,12 @@ function stage_clusters {
         exit 15
       fi
 
+      if [[ -e ${RELEASE} ]]; then
+        _release=${RELEASE}
+      fi
+      
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${PE_CONFIG} ${PC_CONFIG}" \
+        && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
         && popd
 
       # For Calm container updates...
@@ -115,7 +122,7 @@ function stage_clusters {
       fi
 
       log "Remote execution configuration script on PE@${MY_PE_HOST}"
-      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${PE_CONFIG} >> ${PE_CONFIG%%.sh}.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_config} >> ${_pe_config%%.sh}.log 2>&1 &"
 
       # shellcheck disable=SC2153
       cat <<EOM
@@ -126,12 +133,12 @@ function stage_clusters {
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
   $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PE_HOST} 'date; tail -f ${PE_CONFIG%%.sh}.log'
+      nutanix@${MY_PE_HOST} 'date; tail -f ${_pe_config%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
 
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PC_HOST} 'date; tail -f ${PC_CONFIG%%.sh}.log'
+      nutanix@${MY_PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
     https://${PRISM_ADMIN}@${MY_PC_HOST}:9440/
 
 EOM
@@ -257,8 +264,7 @@ function select_workshop {
 # Source Workshop common routines + global variables
 . scripts/common.lib.sh
 . scripts/global.vars.sh
-
-log "`basename $0` start._____________________"
+begin
 
     _VALIDATE='Validate Staged Clusters'
 _CLUSTER_FILE='Cluster Input File'

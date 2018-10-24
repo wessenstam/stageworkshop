@@ -53,3 +53,5 @@ CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
       SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
      SSH_OPTS+=' -q' # -v'
+
+RELEASE=release.json

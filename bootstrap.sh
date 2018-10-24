@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+if [[ -e release.json ]]; then
+  echo $(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')
+fi
+
 # Example use from a Nutanix CVM:
 # curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
@@ -34,7 +38,7 @@ _ERROR=0
 . /etc/profile.d/nutanix_env.sh || _ERROR=1
 
 if (( ${_ERROR} == 1 )); then
-  echo "Error: This script should be run on a Nutanix CVM!"
+  echo "Error ${_ERROR}: This script should be run on a Nutanix CVM!"
   #echo RESTORE:
   exit ${_ERROR}
 fi

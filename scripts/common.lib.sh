@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+function begin {
+  local _release
+
+  if [[ -e ${RELEASE} ]]; then
+    _release=" release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
+  fi
+
+  log "$(basename ${0})${_release} start._____________________"
+
+}
+
 function NTNX_Download
 {
   local   _checksum

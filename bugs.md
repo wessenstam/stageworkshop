@@ -10,7 +10,7 @@
       - brew install gitversion
       - GitVersion /showConfig
     - sudo apt-get install mono-complete
-      - # do not: sudo apt-get install libcurl3 # removes curl libcurl4
+      - do not: sudo apt-get install libcurl3 # removes curl libcurl4
     - Download dotnet4 zip archive
     - put on mono-path?
     - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
