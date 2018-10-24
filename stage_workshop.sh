@@ -88,14 +88,16 @@ function stage_clusters {
       if (( $? == 0 )) ; then
         log "Sending configuration script(s) to PE@${MY_PE_HOST}"
       else
-        log "Error: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
-        exit 15
+        _error=15
+        log "Error ${_error}: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
+        exit ${_error}
       fi
 
       if [[ -e ${RELEASE} ]]; then
-        _release=${RELEASE}
+        log "Adding release version file to manifest."
+        _release="../${RELEASE}"
       fi
-      
+
       pushd scripts \
         && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
         && popd
@@ -145,7 +147,7 @@ EOM
     done
 
   fi
-  log "${0} has run for ${SECONDS} seconds..."
+  finish
   exit
 }
 

@@ -1,5 +1,6 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
+- BUG: AutoDC boot image lost?
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
 - BUG: PC LDAP 5.9 broken
 - Add (git)version/release to each script (assembly?) for github archive cache
@@ -20,6 +21,8 @@
     && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
   - versus https://github.com/markchalloner/git-semver
 - start a feature branch
+- syslog format: INFO|DEBUG|etc.
+  - https://en.wikipedia.org/wiki/Syslog#Severity_level
 - Per Google shell style guide:
   - refactor function names to lowercase,
 - refactor URLs into global.vars.sh?

@@ -8,7 +8,11 @@ function begin {
   fi
 
   log "$(basename ${0})${_release} start._____________________"
+}
 
+function finish {
+  log "${0} ran for ${SECONDS} seconds._____________________"
+  echo
 }
 
 function NTNX_Download

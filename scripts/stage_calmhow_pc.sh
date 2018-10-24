@@ -465,8 +465,7 @@ function Calm_Update {
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
 . global.vars.sh
-
-log "`basename $0` start._____________________"
+begin
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 
@@ -505,10 +504,10 @@ PC_Project # TODO:50 PC_Project is a new function, non-blocking at end.
 if (( $? == 0 )); then
   #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
   #&&
-   log "PC = https://${MY_PC_HOST}:9440" \
-  && log "${0} ran for ${SECONDS} seconds." \
-  && log "$0: done!_____________________" && echo
+  log "PC = https://${MY_PC_HOST}:9440"
+  finish
 else
-  log "Error: failed to reach PC!"
-  exit 19
+  _error=19
+  log "Error ${_error}: failed to reach PC!"
+  exit ${_error}
 fi

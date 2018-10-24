@@ -116,8 +116,8 @@ function AuthenticationServer()
   local       _loop
   local     _result
   local      _sleep
-  local _source_url
   local       _test
+  local         _vm
 
   CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME'
 
@@ -137,7 +137,6 @@ function AuthenticationServer()
         log "${LDAP_SERVER}.IDEMPOTENCY: dc1.${MY_DOMAIN_FQDN} set, skip. ${_result}"
       else
         log "${LDAP_SERVER}.IDEMPOTENCY failed, no DNS record dc1.${MY_DOMAIN_FQDN}"
-        log "Import ${LDAP_SERVER} image..."
 
        _error=12
         _loop=0
@@ -198,6 +197,7 @@ function AuthenticationServer()
 #   "status": 0
 # }
 
+        # TODO: detect image ready, else...
         SOURCE_URL=
         testURLs LDAP_IMAGES[@]
 
@@ -205,17 +205,17 @@ function AuthenticationServer()
           log "Error ${_error}: didn't find any sources for LDAP_IMAGES."
           exit ${_error}
         else
-          log "Finish: SOURCE_URL = ${SOURCE_URL}"
+          log "Found SOURCE_URL: ${SOURCE_URL}"
         fi
 
         # while true ; do
         #   (( _loop++ ))
         if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
-          acli image.create ${LDAP_SERVER} \
-            container=${MY_IMG_CONTAINER_NAME} \
-            image_type=kDiskImage \
-            source_url=${_source_url} \
-            wait=true
+          log "Import ${LDAP_SERVER} image..."
+          acli image.create ${LDAP_SERVER} image_type=kDiskImage wait=true \
+            container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
+        else
+          log "Image already found, skipping ${LDAP_SERVER} import."
         fi
 
           # if [[ ${_test} =~ 'complete' ]]; then
@@ -254,8 +254,9 @@ function AuthenticationServer()
             break
           elif (( ${_loop} > ${_attempts} )); then
             log "Error ${_error}: ${LDAP_SERVER} VM running: giving up after ${_loop} tries."
-            acli "-y vm.delete ${LDAP_SERVER}"
-            log "Remediate by deleting the ${LDAP_SERVER} VM from PE (just attempted by this script) and then running $_"
+            _result=$(source /etc/profile.d/nutanix_env.sh \
+              && for _vm in $(source /etc/profile.d/nutanix_env.sh && acli vm.list | grep ${LDAP_SERVER}) ; do acli -y vm.delete $_vm; done)
+            log "Remediate by deleting the ${LDAP_SERVER} VM from PE (just attempted by this script: ${_result}) and then running acli $_"
             exit ${_error}
           else
             log "_test ${_loop}/${_attempts}=|${_test}|: sleep ${_sleep} seconds..."
@@ -428,19 +429,23 @@ EOF
 }
 
 function PC_Configure {
-  local _CONTAINER
-  local _PC_FILES='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
-  log "Send configuration scripts to PC and remove: ${_PC_FILES}"
-  remote_exec 'scp' 'PC' "${_PC_FILES}" && rm -f ${_PC_FILES}
+  local _container
+  local _pc_files='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
 
-  _PC_FILES='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm id_rsa.pub'
-  log "OPTIONAL: Send binary dependencies to PC: ${_PC_FILES}"
-  remote_exec 'scp' 'PC' "${_PC_FILES}" 'OPTIONAL'
+  if [[ -e ${RELEASE} ]]; then
+    _pc_files+=" ${RELEASE}"
+  fi
+  log "Send configuration scripts to PC and remove: ${_pc_files}"
+  remote_exec 'scp' 'PC' "${_pc_files}" && rm -f ${_pc_files}
 
-  for _CONTAINER in epsilon nucalm ; do
-    if [[ -e ${_CONTAINER}.tar ]]; then
+  _pc_files='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm id_rsa.pub'
+  log "OPTIONAL: Send binary dependencies to PC: ${_pc_files}"
+  remote_exec 'scp' 'PC' "${_pc_files}" 'OPTIONAL'
+
+  for _container in epsilon nucalm ; do
+    if [[ -e ${_container}.tar ]]; then
       log "Uploading Calm container updates in background..."
-      remote_exec 'SCP' 'PC' ${_CONTAINER}.tar 'OPTIONAL' &
+      remote_exec 'SCP' 'PC' ${_container}.tar 'OPTIONAL' &
     fi
   done
 
@@ -464,8 +469,7 @@ function AOS_Upgrade {
 . /etc/profile.d/nutanix_env.sh
 . common.lib.sh
 . global.vars.sh
-
-log "`basename $0` start._____________________"
+begin
 
 CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD PC_VERSION'
 
@@ -488,10 +492,7 @@ if (( $? == 0 )) ; then
   log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
   log "PE = https://${MY_PE_HOST}:9440"
   log "PC = https://${MY_PC_HOST}:9440"
-  log "${0} ran for ${SECONDS} seconds."
-  log "$0: done!_____________________"
-
-  echo
+  finish
 else
   log "Error 18: in main functional chain, exit!"
   exit 18

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-echo "Sourced $(pwd)/stageworkshop.lib.sh, version: TBD"
+
+RELEASE=release.json
+if [[ -e ${RELEASE} ]]; then
+  echo "Sourced stageworkshop.lib.sh, release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
+fi
+
+alias stageworkshop-w1='./stage_workshop.sh -f example_pocs.txt -w 1'
 
 function stageworkshop-cluster() {
   local   _cluster
@@ -50,6 +56,12 @@ function stageworkshop-ssh() {
   case "${2}" in
     log | logs)
       _cmd='date; tail -f stage_*.log'
+      ;;
+    calm | inflight)
+      _cmd='ps -efww | grep calm'
+      ;;
+    kill | stop)
+      _cmd='ps -efww | grep calm ; pkill calm; pkill tail; ps -efww | grep calm'
       ;;
     *)
       _cmd="${2}"
