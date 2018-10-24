@@ -2,19 +2,23 @@
 
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
 - BUG: PC LDAP 5.9 broken
-- Add (git)version/release to each script for github archive cache? # to start with date, but eventually git hash/tags/releases?
+- Add (git)version/release to each script (assembly?) for github archive cache
   - https://semver.org/
     - https://guides.github.com/introduction/flow/index.html
-  - https://github.com/GitTools/GitVersion
-    - https://gitversion.readthedocs.io/en/stable/usage/command-line/
-    - brew install gitversion
-    - GitVersion /showConfig
+    - https://github.com/GitTools/GitVersion
+      - https://gitversion.readthedocs.io/en/stable/usage/command-line/
+      - brew install gitversion
+      - GitVersion /showConfig
     - sudo apt-get install mono-complete
-    - # do not: sudo apt-get install libcurl3 # removes curl libcurl4
+      - # do not: sudo apt-get install libcurl3 # removes curl libcurl4
     - Download dotnet4 zip archive
     - put on mono-path?
     - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
-  - https://github.com/markchalloner/git-semver
+    - gitversion | tee gitversion.json | jq -r .FullSemVer
+    - ````ls -l *json && echo _GV=${_GV}````
+    - ````_GV=gitversion.json ; rm -f ${_GV} \
+    && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
+  - versus https://github.com/markchalloner/git-semver
 - start a feature branch
 - Per Google shell style guide:
   - refactor function names to lowercase,
@@ -22,13 +26,9 @@
   - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
   - download 403 detection
   - detect HPOC networks and favor local URLs
-- bug report from mike.bujara@, james
-- document public cloud account/credentials
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
-- Lab 9 Monitoring App
 - Calm videos/spreadsheet
-- Calm workshop updates for 5.9
 - Multi product demo
 - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
 
@@ -318,4 +318,8 @@ origin
 
 $ git fetch upstream
 $ git merge upstream/master
+
+$ git tags
+$ git tag -a 2.0.1 [hash]
+$ git push origin --tags
 ````
