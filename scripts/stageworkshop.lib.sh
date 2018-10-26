@@ -22,8 +22,8 @@ function stageworkshop-cluster() {
   fi
 
   echo -e "Assumptions:\n
-    - Only the last uncommented cluster in manifest: ${_filespec}
-    -                    Authenticating with ssh as: ${NTNX_USER}\n"
+    - Last uncommented cluster in: ${_filespec}
+    -     ssh user authentication: ${NTNX_USER}\n"
 
   _tail_arg='--lines='
   if [[ `uname -s` == "Darwin" ]]; then

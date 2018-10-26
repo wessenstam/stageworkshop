@@ -1,8 +1,8 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- BUG: AutoDC boot image lost?
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
 - BUG: PC LDAP 5.9 broken
+- BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS?
 - Add (git)version/release to each script (assembly?) for github archive cache
   - https://semver.org/
     - https://guides.github.com/introduction/flow/index.html
@@ -19,6 +19,7 @@
     - ````ls -l *json && echo _GV=${_GV}````
     - ````_GV=gitversion.json ; rm -f ${_GV} \
     && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
+    - https://blog.ngeor.com/2017/12/19/semantic-versioning-with-gitversion.html
   - versus https://github.com/markchalloner/git-semver
 - start a feature branch
 - syslog format: INFO|DEBUG|etc.
@@ -28,7 +29,7 @@
 - refactor URLs into global.vars.sh?
   - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
   - download 403 detection
-  - detect HPOC networks and favor local URLs
+  - detect HPOC networks to favor local URLs?
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
 - Calm videos/spreadsheet
@@ -44,6 +45,8 @@
 - TOFO: fix role mappings, logins on PE, PC
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
   - improve/run poc_samba_users.sh
+- http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
+  - https://github.com/GitTools/GitReleaseNotes
 - TODO: Add link: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
 - TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
 - nuclei (run local from container?)
