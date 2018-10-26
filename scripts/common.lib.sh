@@ -40,7 +40,7 @@ function NTNX_Download
       5.9 )
         _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
         ;;
-      5.6.1 | 5.6.2 )
+      5.6.1 | 5.6.2 | 5.9.0.1 )
         _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
         ;;
       5.7.0.1 | 5.7.1 | 5.7.1.1 )
@@ -144,7 +144,7 @@ function testURLs {
    _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_candidates[${_index}]} | tail -n1)
 
    #log "DEBUG: _http_code=|${_http_code}|"
-   if (( ${_http_code} == 200 || ${_http_code} == 302 )); then
+   if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
      SOURCE_URL="${_candidates[${_index}]}"
      log "HTTP:${_http_code} = ${SOURCE_URL}"
      break
@@ -187,8 +187,30 @@ function SSH_PubKey {
 }
 
 function Determine_PE {
-  local _error=10
-  local  _hold
+  local _attempts=5
+  local    _error=10
+  local     _hold
+  local     _loop=0
+  local    _sleep=2
+
+  while [[ true ]]; do
+    (( _loop++ ))
+    _hold=$(nuceli cluster.list 2>&1)
+
+    if (( $(echo "${_hold}" | grep websocket | wc --lines) > 0 )); then
+      log "Warning: Zookeeper isn't up yet."
+    else
+      break
+    fi
+
+    if (( ${_loop} == ${_attempts} )); then
+      log "Error ${_error}: couldn't determine cluster information, giving up after ${_loop} tries."
+      exit ${_error}
+    else
+      log "${_loop}/${_attempts}: hold=${_hold} sleep ${_sleep}..."
+      sleep ${_sleep}
+    fi
+  done
 
   log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
   _hold=$(nuclei cluster.list format=json \
@@ -196,6 +218,7 @@ function Determine_PE {
     | jq '. | select(.status.resources.network.external_ip != null)')
 
   if (( $? > 0 )); then
+    _error=12
     log "Error ${_error}: couldn't resolve clusters $?"
     exit ${_error}
   else
@@ -235,8 +258,9 @@ function Download {
     fi
 
     if (( ${_loop} == ${_attempts} )); then
-      log "Error: couldn't download from: ${1}, giving up after ${_loop} tries."
-      exit 11
+      _error=11
+      log "Error ${_error}: couldn't download from: ${1}, giving up after ${_loop} tries."
+      exit ${_error}
     elif (( ${_output} == 33 )); then
       log "Web server doesn't support HTTP range command, purging and falling back."
       _http_range_enabled=''

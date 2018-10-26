@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# stageworkshop-pe kill && stageworkshop-w1 && stageworkshop-pe
 
 RELEASE=release.json
 if [[ -e ${RELEASE} ]]; then

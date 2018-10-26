@@ -32,9 +32,9 @@ function stage_clusters {
   log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop}"
 
   # Map to latest and greatest version of each point release
-  # Metadata URLs are specified in stage_calmhow.sh function PC_Download
+  # Metadata URLs are specified in common.lib.sh function: NTNX_Download
   if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
-    PC_VERSION=5.9
+    PC_VERSION=5.9.0.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
     PC_VERSION=5.8.2
   elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then

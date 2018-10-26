@@ -1,6 +1,15 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
+  - nuclei cluster.list format=json
+  - ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
+
+  2018-10-24 21:54:23|14165|main|MY_PE_HOST unset, determining...
+  2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
+  E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
+  2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
+  2018-10-24 21:54:24|14165|Determine_PE|Success:  PE external IP=
+
 - BUG: PC LDAP 5.9 broken
 - BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS?
 - Add (git)version/release to each script (assembly?) for github archive cache

@@ -2,7 +2,7 @@
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 
-function PC_LDAP
+function PC_Auth
 { # TODO:170 configure case for each authentication server type?
   local     _group
   local _http_body
@@ -490,7 +490,7 @@ log "Adding key to PC VMs..." && SSH_PubKey || true & # non-blocking, parallel s
 
 PC_Init \
 && PC_UI \
-&& PC_LDAP \
+&& PC_Auth \
 && PC_SMTP \
 && SSP_Auth \
 && Enable_Calm \
