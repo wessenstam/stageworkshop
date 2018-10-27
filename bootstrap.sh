@@ -50,8 +50,8 @@ EMAIL_DOMAIN=nutanix.com
 
 if [[ -z ${MY_PE_PASSWORD} ]]; then
   _PRISM_ADMIN=admin
-  echo
-  read -p "Optional: What is this cluster's admin username? [Default: ${_PRISM_ADMIN}] " PRISM_ADMIN
+  echo -e "\n    Note: Hit [Return] to use the default answer inside brackets.\n"
+  read -p "Optional: What is this cluster's admin username? [${_PRISM_ADMIN}] " PRISM_ADMIN
   if [[ -z ${PRISM_ADMIN} ]]; then
     PRISM_ADMIN=${_PRISM_ADMIN}
   fi

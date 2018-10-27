@@ -15,6 +15,38 @@ function finish {
   echo
 }
 
+function NTNX_cmd {
+  local _attempts=5
+  local    _error=10
+  local     _hold
+  local     _loop=0
+  local    _sleep=2
+  local   _status
+
+  while [[ true ]]; do
+    (( _loop++ ))
+      _hold=$(nuclei cluster.list 2>&1)
+    _status=$?
+
+    if (( $(echo "${_hold}" | grep websocket | wc --lines) > 0 )); then
+      log "Warning: Zookeeper isn't up yet."
+    elif (( ${_status} > 0 )); then
+       log "${_status} = ${_hold}, uh oh!"
+    else
+      log "Cluster info via nuceli seems good: ${_status}, moving on!"
+      break
+    fi
+
+    if (( ${_loop} == ${_attempts} )); then
+      log "Error ${_error}: couldn't determine cluster information, giving up after ${_loop} tries."
+      exit ${_error}
+    else
+      log "${_loop}/${_attempts}: hold=${_hold} sleep ${_sleep}..."
+      sleep ${_sleep}
+    fi
+  done
+}
+
 function NTNX_Download
 {
   local   _checksum
@@ -176,13 +208,14 @@ function CheckArgsExist {
 }
 
 function SSH_PubKey {
-  local   _NAME=${MY_EMAIL//\./_DOT_}
-  local _SSHKEY=${HOME}/id_rsa.pub
-  _NAME=${_NAME/@/_AT_}
-  if [[ -e ${_SSHKEY} ]]; then
+  local   _name=${MY_EMAIL//\./_DOT_}
+  local _sshkey=${HOME}/id_rsa.pub
+
+  _name=${_name/@/_AT_}
+  if [[ -e ${_sshkey} ]]; then
     log "Note that a period and other symbols aren't allowed to be a key name."
-    log "Locally adding ${_SSHKEY} under ${_NAME} label..."
-    ncli cluster add-public-key name=${_NAME} file-path=${_SSHKEY}
+    log "Locally adding ${_sshkey} under ${_name} label..."
+    ncli cluster add-public-key name=${_name} file-path=${_sshkey}
   fi
 }
 
@@ -192,25 +225,6 @@ function Determine_PE {
   local     _hold
   local     _loop=0
   local    _sleep=2
-
-  while [[ true ]]; do
-    (( _loop++ ))
-    _hold=$(nuceli cluster.list 2>&1)
-
-    if (( $(echo "${_hold}" | grep websocket | wc --lines) > 0 )); then
-      log "Warning: Zookeeper isn't up yet."
-    else
-      break
-    fi
-
-    if (( ${_loop} == ${_attempts} )); then
-      log "Error ${_error}: couldn't determine cluster information, giving up after ${_loop} tries."
-      exit ${_error}
-    else
-      log "${_loop}/${_attempts}: hold=${_hold} sleep ${_sleep}..."
-      sleep ${_sleep}
-    fi
-  done
 
   log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
   _hold=$(nuclei cluster.list format=json \

@@ -469,6 +469,8 @@ begin
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 
+NTNX_cmd # takes care of services coming up.
+
 if [[ -z "${MY_PE_HOST}" ]]; then
   log "MY_PE_HOST unset, determining..."
   Determine_PE

@@ -22,7 +22,7 @@ function stageworkshop-cluster() {
     echo "INFO: Using cluster file: |${1}| ${_filespec}"
   fi
 
-  echo -e "Assumptions:\n
+  echo -e "\nAssumptions:
     - Last uncommented cluster in: ${_filespec}
     -     ssh user authentication: ${NTNX_USER}\n"
 
