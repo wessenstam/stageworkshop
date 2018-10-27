@@ -15,9 +15,15 @@ MY_IMG_CONTAINER_NAME='Images'
      JQ_REPOS=(\
  'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
 )
- QCOW2_IMAGES=(\
+  QCOW2_REPOS=(\
  'http://10.21.250.221/images/ahv/techsummit' \
     'https://s3.amazonaws.com/get-ahv-images' \
+)
+ QCOW2_IMAGES=(\
+  CentOS7-06252018.qcow2 \
+  Windows2012R2-04282018.qcow2 \
+  Windows10-1709-04282018.qcow2 \
+  Nutanix-VirtIO-1.1.3.iso \
 )
 SSHPASS_REPOS=(\
  'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \

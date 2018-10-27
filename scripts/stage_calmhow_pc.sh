@@ -294,21 +294,26 @@ function PC_Init
 }
 
 function Images
-{ # depends on nuclei
+{
   local      _error=10
   local      _image
   local _source_url
+         SOURCE_URL=
 
-  SOURCE_URL=
-  testURLs QCOW2_IMAGES[@]
-
-  if [[ -z ${SOURCE_URL} ]]; then
-    log "Error ${_error}: didn't find any sources for QCOW2_IMAGES."
-    exit ${_error}
-  fi
-
-  for _image in CentOS7-06252018.qcow2 Windows2012R2-04282018.qcow2 Windows10-1709-04282018.qcow2 Nutanix-VirtIO-1.1.3.iso ; do
+  for _image in ${QCOW2_IMAGES} ; do
     #log "DEBUG: ${_image} image.create..."
+
+    if [[ -n $(nuclei image.list 2>&1 | grep -i complete | grep "${_image}") ]]; then
+      log "Skip: ${_image} already complete on cluster."
+      break
+    fi
+
+    testURLs QCOW2_REPOS[@]
+    if [[ -z ${SOURCE_URL} ]]; then
+      log "Error ${_error}: didn't find any sources for QCOW2_REPOS."
+      exit ${_error}
+    fi
+
     _source_url="${SOURCE_URL}/${_image}"
 
     testURLs ${_source_url}
@@ -319,7 +324,7 @@ function Images
 
     nuclei image.create name=${_image} \
        description="${0} via stage_calmhow_pc for ${_image}" \
-       source_uri=${_source_url}
+       source_uri=${_source_url} 2>&1
      log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
      log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
     if (( $? != 0 )); then
@@ -347,17 +352,14 @@ function PC_SMTP {
 }
 
 function Enable_Flow {
-  local _microseg_status
-
   ## (API; Didn't work. Used nuclei instead)
   ## https://localhost:9440/api/nutanix/v3/services/microseg
   ## {"state":"ENABLE"}
   # To disable flow run the following on PC: nuclei microseg.disable
 
   log "Enable Nutanix Flow..."
-  nuclei microseg.enable
-  _microseg_status=$(nuclei microseg.get_status)
-  log "Result: $_microseg_status"
+  nuclei microseg.enable 2>/dev/null
+  nuclei microseg.get_status 2>/dev/null
 }
 
 function PC_Project {
@@ -367,17 +369,17 @@ function PC_Project {
 
    _name=${MY_EMAIL%%@nutanix.com}.test
   _count=$(. /etc/profile.d/nutanix_env.sh \
-    && nuclei project.list | grep ${_name} | wc --lines)
+    && nuclei project.list 2>/dev/null | grep ${_name} | wc --lines)
   if (( ${_count} > 0 )); then
-    nuclei project.delete ${_name} confirm=false
+    nuclei project.delete ${_name} confirm=false 2>/dev/null
   else
     log "Warning: _count=${_count}"
   fi
 
   log "Creating ${_name}..."
-  nuclei project.create name=${_name} description='test from NuCLeI!'
+  nuclei project.create name=${_name} description='test from NuCLeI!' 2>/dev/null
   _uuid=$(. /etc/profile.d/nutanix_env.sh \
-    && nuclei project.get ${_name} format=json \
+    && nuclei project.get ${_name} format=json 2>/dev/null \
     | ${HOME}/jq .metadata.project_reference.uuid | tr -d '"')
   log "${_name}.uuid = ${_uuid}"
 
@@ -486,15 +488,16 @@ fi
 CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD PC_VERSION'
 
 export ATTEMPTS=2
-export   SLEEP=10
+export    SLEEP=10
 
 log "Adding key to PC VMs..." && SSH_PubKey || true & # non-blocking, parallel suitable
 
 PC_Init \
 && PC_UI \
 && PC_Auth \
-&& PC_SMTP \
-&& SSP_Auth \
+&& PC_SMTP
+
+SSP_Auth \
 && Enable_Calm \
 && Images \
 && Enable_Flow \

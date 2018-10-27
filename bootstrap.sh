@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-if [[ -e release.json ]]; then
-  echo $(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')
-fi
-
 # Example use from a Nutanix CVM:
-# curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
+# curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && sh ${_##*/}
+#
+# For testing:
+# curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
 if [[ -z ${SOURCE} ]]; then
   ORGANIZATION=nutanixworkshops
@@ -20,6 +19,10 @@ fi
 
 BASE_URL=https://github.com/${ORGANIZATION}/${REPOSITORY}
  ARCHIVE=${BASE_URL}/archive/${BRANCH}.zip
+
+if [[ -e release.json ]]; then
+ echo ${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')
+fi
 
 if [[ ${1} == 'clean' ]]; then
  echo "Cleaning up..."

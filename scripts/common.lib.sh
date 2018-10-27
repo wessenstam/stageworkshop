@@ -16,11 +16,11 @@ function finish {
 }
 
 function NTNX_cmd {
-  local _attempts=5
+  local _attempts=25
   local    _error=10
   local     _hold
   local     _loop=0
-  local    _sleep=2
+  local    _sleep=10
   local   _status
 
   while [[ true ]]; do
@@ -227,7 +227,7 @@ function Determine_PE {
   local    _sleep=2
 
   log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
-  _hold=$(nuclei cluster.list format=json \
+  _hold=$(nuclei cluster.list format=json 2>/dev/null \
     | jq '.entities[] | select(.status.state == "COMPLETE")' \
     | jq '. | select(.status.resources.network.external_ip != null)')
 

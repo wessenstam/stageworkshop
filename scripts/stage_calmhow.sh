@@ -382,9 +382,10 @@ function PC_Init
     NTNX_Download 'PC'
 
     log "Prism Central upload..."
-    ncli software upload file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
-      meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
-      software-type=PRISM_CENTRAL_DEPLOY
+    # TODO: Error: Software prism_central_deploy.5.9.0.1 already exists on the cluster
+    ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
+           file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
+      meta-file-path="`pwd`/${NTNX_META_URL##*/}"
 
     _version_id=$(cat ${NTNX_META_URL##*/} | jq -r .version_id)
 
