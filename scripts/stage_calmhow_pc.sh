@@ -2,8 +2,8 @@
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 
-function PC_Auth
-{ # TODO:170 configure case for each authentication server type?
+function pc_auth() {
+  # TODO:170 configure case for each authentication server type?
   local     _group
   local _http_body
   local      _test
@@ -53,7 +53,7 @@ EOF
   done
 }
 
-function SSP_Auth {
+function ssp_auth() {
   CheckArgsExist 'LDAP_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
 
   local   _http_body
@@ -191,8 +191,7 @@ EOF
 
 }
 
-function Enable_Calm
-{
+function calm_enable() {
   local _http_body
   local _test
 
@@ -211,8 +210,8 @@ EOF
   log "_test=|${_test}|"
 }
 
-function PC_UI
-{ # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
+function pc_ui() {
+  # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
   local _http_body
   local      _json
   local      _test
@@ -246,10 +245,8 @@ EOF
   log "autoLogoutTime _test=|${_test}|"
 }
 
-function PC_Init
-{ # depends on ncli
-  # TODO:70 PC_Init: NCLI, type 'cluster get-smtp-server' config for idempotency?
-
+function pc_init() {
+  # TODO:70 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
   local _test
 
   log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
@@ -293,8 +290,7 @@ function PC_Init
   log "PULSE _test=|${_test}|"
 }
 
-function Images
-{
+function images() {
   local      _error=10
   local      _image
   local _source_url
@@ -334,7 +330,7 @@ function Images
   done
 }
 
-function PC_SMTP {
+function pc_smtp() {
   log "Configure SMTP@PC"
   local _sleep=5
 
@@ -344,14 +340,14 @@ function PC_SMTP {
   #log "sleep ${_sleep}..."; sleep ${_sleep}
   #log $(ncli cluster get-smtp-server | grep Status | grep success)
   ncli cluster send-test-email recipient="${MY_EMAIL}" \
-    subject="PC_SMTP https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PC_HOST}:9440 Testing."
+    subject="pc_smtp https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PC_HOST}:9440 Testing."
   # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST -d '{
   #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
   #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
   # log "_test=|${_test}|"
 }
 
-function Enable_Flow {
+function flow_enable() {
   ## (API; Didn't work. Used nuclei instead)
   ## https://localhost:9440/api/nutanix/v3/services/microseg
   ## {"state":"ENABLE"}
@@ -362,7 +358,7 @@ function Enable_Flow {
   nuclei microseg.get_status 2>/dev/null
 }
 
-function PC_Project {
+function pc_project() {
   local  _name
   local _count
   local  _uuid
@@ -395,14 +391,14 @@ function PC_Project {
     # {"spec":{"access_control_policy_list":[],"project_detail":{"name":"mark.lavi.test1","resources":{"external_user_group_reference_list":[],"user_reference_list":[],"environment_reference_list":[],"account_reference_list":[],"subnet_reference_list":[{"kind":"subnet","name":"Primary","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"},{"kind":"subnet","name":"Secondary","uuid":"4689bc7f-61dd-4527-bc7a-9d737ae61322"}],"default_subnet_reference":{"kind":"subnet","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"}},"description":"test from NuCLeI!"},"user_list":[],"user_group_list":[]},"api_version":"3.1","metadata":{"creation_time":"2018-06-22T03:54:59Z","spec_version":0,"kind":"project","last_update_time":"2018-06-22T03:55:00Z","uuid":"1be7f66a-5006-4061-b9d2-76caefedd298","categories":{},"owner_reference":{"kind":"user","name":"admin","uuid":"00000000-0000-0000-0000-000000000000"}}}
 }
 
-function PC_Update {
+function pc_update() {
   log "This function not implemented yet."
   log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
   cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
 }
 
 # shellcheck disable=SC2120
-function Calm_Update {
+function calm_update() {
   local  _attempts=12
   local  _calm_bin=/usr/local/nutanix/epsilon
   local _container
@@ -482,7 +478,7 @@ fi
 if [[ ! -z "${1}" ]]; then
   # hidden bonus
   log "Don't forget: $0 first.last@nutanixdc.local%password"
-  Calm_Update && exit 0
+  calm_update && exit 0
 fi
 
 CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD PC_VERSION'
@@ -492,18 +488,18 @@ export    SLEEP=10
 
 log "Adding key to PC VMs..." && SSH_PubKey || true & # non-blocking, parallel suitable
 
-PC_Init \
-&& PC_UI \
-&& PC_Auth \
-&& PC_SMTP
+pc_init \
+&& pc_ui \
+&& pc_auth \
+&& pc_smtp
 
-SSP_Auth \
-&& Enable_Calm \
-&& Images \
-&& Enable_Flow \
+ssp_auth \
+&& calm_enable \
+&& images \
+&& flow_enable \
 && Check_Prism_API_Up 'PC'
 
-PC_Project # TODO:50 PC_Project is a new function, non-blocking at end.
+pc_project # TODO:50 pc_project is a new function, non-blocking at end.
 # NTNX_Upload 'AOS' # function in common.lib.sh
 
 if (( $? == 0 )); then

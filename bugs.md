@@ -34,7 +34,7 @@
 - syslog format: INFO|DEBUG|etc.
   - https://en.wikipedia.org/wiki/Syslog#Severity_level
 - Per Google shell style guide:
-  - refactor function names to lowercase,
+  - refactor function names to lowercase: https://google.github.io/styleguide/shell.xml?showone=Function_Names#Function_Names
 - refactor URLs into global.vars.sh?
   - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
   - download 403 detection

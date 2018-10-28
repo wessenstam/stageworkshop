@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# stageworkshop-pe kill && stageworkshop-w1 && stageworkshop-pe
+# stageworkshop_pe kill && stageworkshop_w1 && stageworkshop_pe
 
 RELEASE=release.json
 if [[ -e ${RELEASE} ]]; then
   echo "Sourced stageworkshop.lib.sh, release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
 fi
 
-alias stageworkshop-w1='./stage_workshop.sh -f example_pocs.txt -w 1'
+alias stageworkshop_w1='./stage_workshop.sh -f example_pocs.txt -w 1'
 
-function stageworkshop-cluster() {
+function stageworkshop_cluster() {
   local   _cluster
   local    _fields
   local  _filespec
@@ -39,12 +39,12 @@ function stageworkshop-cluster() {
   echo "INFO: PE_HOST=${PE_HOST}."
 }
 
-function stageworkshop-ssh() {
+function stageworkshop_ssh() {
   local   _cmd
   local  _host
   local _octet
 
-  stageworkshop-cluster ''
+  stageworkshop_cluster ''
 
   if [[ $1 == 'PC' ]]; then
     PE_PASSWORD='nutanix/4u'
@@ -79,12 +79,12 @@ function stageworkshop-ssh() {
   unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
 }
 
-function stageworkshop-pe() {
-  stageworkshop-ssh 'PE' "${1}"
+function stageworkshop_pe() {
+  stageworkshop_ssh 'PE' "${1}"
 }
 
-function stageworkshop-pc() {
-  stageworkshop-ssh 'PC' "${1}"
+function stageworkshop_pc() {
+  stageworkshop_ssh 'PC' "${1}"
 }
 
 # TODO: prompt for choice when more than one cluster

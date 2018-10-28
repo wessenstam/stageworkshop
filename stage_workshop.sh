@@ -13,7 +13,7 @@ WORKSHOPS=(\
 #"Tech Summit 2018" \
 ) # Adjust function stage_clusters for mappings as needed
 
-function stage_clusters {
+function stage_clusters() {
   # Adjust as needed with $WORKSHOPS
   # Send configuration scripts to remote clusters and execute Prism Element script
 
@@ -151,11 +151,11 @@ EOM
   exit
 }
 
-function get_configuration {
+function get_configuration() {
   CONFIGURATION="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION}"
 }
 
-function validate_clusters {
+function validate_clusters() {
   local _cluster
   local  _fields
 
@@ -175,7 +175,7 @@ function validate_clusters {
   done
 }
 
-function script_usage {
+function script_usage() {
   local _offbyone
 
   cat << EOF
@@ -197,7 +197,7 @@ EOF
   exit
 }
 
-function get_file {
+function get_file() {
   local _error=55
 
   if [[ "${CLUSTER_LIST}" != '-' ]]; then
@@ -214,7 +214,7 @@ function get_file {
   select_workshop
 }
 
-function select_workshop {
+function select_workshop() {
   # Get workshop selection from user, set script files to send to remote clusters
   PS3='Select an option: '
   select WORKSHOP in "${WORKSHOPS[@]}"

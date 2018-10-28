@@ -3,7 +3,7 @@
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
 
-function TestDNS {
+function test_dns() {
   local   _dns
   local _error=44
   local  _test=$?
@@ -18,7 +18,7 @@ function TestDNS {
   fi
 }
 
-function acli {
+function acli() {
   local _cmd
 
   _cmd=$*
@@ -26,8 +26,7 @@ function acli {
   # DEBUG=1 && if [[ ${DEBUG} ]]; then log "$@"; fi
 }
 
-function PE_Init
-{
+function pe_init() {
   CheckArgsExist 'DATA_SERVICE_IP MY_EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
     MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
@@ -41,7 +40,7 @@ function PE_Init
     ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
       from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
     ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
-      --subject="[PE_Init:Config SMTP:alert test] `ncli cluster get-params`" \
+      --subject="[pe_init:Config SMTP:alert test] `ncli cluster get-params`" \
       && ${HOME}/serviceability/bin/send-email
 
     log "Configure NTP"
@@ -71,8 +70,7 @@ function PE_Init
   fi
 }
 
-function Network_Configure
-{
+function network_configure() {
   # From this point, we assume according to SEWiki:
   # IP Range: ${HPOC_PREFIX}.0/25
   # Gateway: ${HPOC_PREFIX}.1
@@ -109,8 +107,7 @@ function Network_Configure
   fi
 }
 
-function AuthenticationServer()
-{
+function authentication_source() {
   local   _attempts
   local      _error=13
   local       _loop
@@ -131,7 +128,7 @@ function AuthenticationServer()
       log "Manual setup = https://github.com/nutanixworkshops/labs/blob/master/setup/active_directory/active_directory_setup.rst"
       ;;
     'AutoDC')
-      TestDNS; _result=$?
+      test_dns; _result=$?
 
       if (( ${_result} == 0 )); then
         log "${LDAP_SERVER}.IDEMPOTENCY: dc1.${MY_DOMAIN_FQDN} set, skip. ${_result}"
@@ -276,7 +273,7 @@ function AuthenticationServer()
             'OPTIONAL'
           sleep ${_sleep}
 
-          TestDNS; _result=$?
+          test_dns; _result=$?
 
           if (( ${_result} == 0 )); then
             log "Success: DNS record dc1.${MY_DOMAIN_FQDN} set."
@@ -286,7 +283,7 @@ function AuthenticationServer()
             acli "-y vm.delete ${LDAP_SERVER}"
             exit ${_error}
           else
-            log "TestDNS ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
+            log "test_dns ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
             sleep ${_sleep}
           fi
         done
@@ -299,8 +296,7 @@ function AuthenticationServer()
   esac
 }
 
-function PE_Auth
-{
+function pe_auth() {
   CheckArgsExist 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
 
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
@@ -323,8 +319,7 @@ function PE_Auth
   fi
 }
 
-function PE_License
-{
+function pe_license() {
   CheckArgsExist 'CURL_POST_OPTS MY_PE_PASSWORD'
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
@@ -363,8 +358,7 @@ function PE_License
   fi
 }
 
-function PC_Init
-{
+function pc_init() {
   local _version_id
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
@@ -373,7 +367,7 @@ function PC_Init
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else
-    log "Get NET_UUID,MY_CONTAINER_UUID from cluster: PC_Init dependency."
+    log "Get NET_UUID,MY_CONTAINER_UUID from cluster: pc_init dependency."
     MY_NET_UUID=$(acli "net.get ${MY_PRIMARY_NET_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
     log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
@@ -429,7 +423,7 @@ EOF
   fi
 }
 
-function PC_Configure {
+function pc_configure() {
   local _container
   local _pc_files='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
 
@@ -458,8 +452,10 @@ function PC_Configure {
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
-function AOS_Upgrade {
+function nos_upgrade() {
   #this is a prototype, untried
+  NTNX_Download
+  
   ncli software upload software-type=nos \
     meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
     file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
@@ -480,16 +476,16 @@ log "Adding key to PE/CVMs..." && SSH_PubKey || true & # non-blocking, parallel 
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
-&& PE_License \
-&& PE_Init \
-&& Network_Configure \
-&& AuthenticationServer \
-&& PE_Auth \
-&& PC_Init \
+&& pe_license \
+&& pe_init \
+&& network_configure \
+&& authentication_source \
+&& pe_auth \
+&& pc_init \
 && Check_Prism_API_Up 'PC'
 
 if (( $? == 0 )) ; then
-  PC_Configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
+  pc_configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
   log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
   log "PE = https://${MY_PE_HOST}:9440"
   log "PC = https://${MY_PC_HOST}:9440"
