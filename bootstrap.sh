@@ -20,10 +20,6 @@ fi
 BASE_URL=https://github.com/${ORGANIZATION}/${REPOSITORY}
  ARCHIVE=${BASE_URL}/archive/${BRANCH}.zip
 
-if [[ -e release.json ]]; then
- echo ${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')
-fi
-
 if [[ ${1} == 'clean' ]]; then
  echo "Cleaning up..."
  rm -rf ${ARCHIVE##*/} ${0} ${REPOSITORY}-${BRANCH}/
@@ -34,7 +30,7 @@ if [[ -f ${BRANCH}.zip ]]; then
   sh ${HOME}/${0} clean
 fi
 
-echo -e "\nFor details, please see: ${BASE_URL}\n"
+echo -e "\nFor details, please see: ${BASE_URL}"
 
 _ERROR=0
 
@@ -86,11 +82,22 @@ if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
   MY_EMAIL+=@${EMAIL_DOMAIN}
 fi
 
-if [[ ! -d ${REPOSITORY}-${BRANCH} ]]; then
+if [[ -d ../${REPOSITORY}-${BRANCH} ]]; then
+  echo "Reusing downloaded archive, consider using $0 clean instead."
+  pushd ..
+elif [[ ! -d ${REPOSITORY}-${BRANCH} ]]; then
   echo -e "\nNo cache: retrieving ${ARCHIVE} ..."
   curl --remote-name --location ${ARCHIVE} \
   && echo "Success: ${ARCHIVE##*/}" \
   && unzip ${ARCHIVE##*/}
+fi
+
+pushd ${REPOSITORY}-${BRANCH}/ \
+  && chmod -R u+x *sh
+
+if [[ -e release.json ]]; then
+ echo
+ echo ${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')
 fi
 
 MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
@@ -98,9 +105,7 @@ MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
 
 echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST} ...\n"
 
-pushd ${REPOSITORY}-${BRANCH}/ \
-  && chmod -R u+x *sh \
-  &&  MY_EMAIL=${MY_EMAIL} \
+      MY_EMAIL=${MY_EMAIL} \
     MY_PE_HOST=${MY_PE_HOST} \
    PRISM_ADMIN=${PRISM_ADMIN} \
 MY_PE_PASSWORD=${MY_PE_PASSWORD} \
