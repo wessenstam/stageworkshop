@@ -1,6 +1,7 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - BUG: PC LDAP 5.9 broken, add port and recursion?
+  - AutoDC source: curl: (7) Failed connect to 10.21.250.221:80; Connection refused
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
   2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
@@ -56,6 +57,9 @@
 - TOFO: fix role mappings, logins on PE, PC
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
   - improve/run poc_samba_users.sh
+  - adminuser01@ntnxlab.local (password = nutanix/4u) can’t login to PE.
+    “You are not authorized to access Prism. Please contact the Nutanix administrator.”
+    add user01@ntnxlab.local to role mapping, same error as above.
 - http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
   - https://github.com/GitTools/GitReleaseNotes
 - TODO: Add link: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
@@ -88,27 +92,7 @@
 - TODO: Default project environment set, enable marketplace item, launch!
 - TODO: Enable multiple cloud account settings, then environments, then marketplace launch
 - TODO: PE, PC: clear our warnings: resolve/ack issues for cleanliness?
-- TODO: PC 5.6 revalidate it works, add AOS 5.5 dependency note
-- SRE Clusters of HPOC (10.63.x.x)
-  - Cluster IP: https://10.63.30.150:9440/console/#login
-    Prism UI Credentials: admin/nx2Tech975!
-    CVM Credentials: nutanix/nx2Tech975!
-    AHV Host Credentials: root / nx2Tech975!
 
-    AOS Version: 5.6
-    Hypervisor Version: AHV 20170830.115 (AOS5.6+)
-
-    NETWORK INFORMATION
-    Subnet Mask: 255.255.252.0
-    Gateway: 10.63.28.1
-    Nameserver IP: 10.63.25.10
-
-    SECONDARY NETWORK INFORMATION
-    Secondary VLAN: 0
-    Secondary Subnet: 255.255.252.0
-    Secondary Gateway: 10.63.28.1
-    Secondary IP Range: 10.63.31.146-149
-  - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 - TODO: Calm 5.8 bootcamp labs and 5.5-6 bugs
   - https://github.com/nutanixworkshops/introcalm
   vs. https://github.com/mlavi/calm_workshop

@@ -4,6 +4,7 @@
 .kitchen.local.yml
 *.log
 cache*/
+certs/autodc.*
 example_pocs.txt
 Gemfile.lock
 logs/

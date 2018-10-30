@@ -53,7 +53,7 @@ function stageworkshop_ssh() {
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
   else
     _host=${PE_HOST}
-    echo "curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}"
+    echo 'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}'
   fi
 
   case "${2}" in
