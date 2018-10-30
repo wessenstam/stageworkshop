@@ -30,6 +30,7 @@ SSHPASS_REPOS=(\
 )
    LDAP_SERVER='AutoDC'  # TODO:160 refactor LDAP_SERVER choice to input file, set default here.
      LDAP_HOST=${HPOC_PREFIX}.$((${OCTET[3]} + 3))
+     LDAP_PORT=389
  MY_DOMAIN_URL="ldaps://${LDAP_HOST}/"
 MY_DOMAIN_FQDN='ntnxlab.local'
 MY_DOMAIN_NAME='NTNXLAB'

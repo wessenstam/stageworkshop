@@ -2,25 +2,51 @@
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 
+function pc_passwd() {
+  CheckArgsExist 'MY_PE_PASSWORD'
+
+  log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
+  ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
+  if (( $? > 0 )); then
+   log "Warning: password not reset: $?."# exit 10
+  fi
+  # TOFIX: nutanix@PC Linux account password change as well?
+
+  # local _old_pw='nutanix/4u'
+  # local _http_body=$(cat <<EOF
+  # {"oldPassword": "${_old_pw}","newPassword": "${MY_PE_PASSWORD}"}
+  # EOF
+  # )
+  # local _test
+  # _test=$(curl ${CURL_HTTP_OPTS} --user "${PRISM_ADMIN}:${_old_pw}" -X POST --data "${_http_body}" \
+  #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
+  # log "cURL reset password _test=${_test}"
+}
+
 function pc_auth() {
   # TODO:170 configure case for each authentication server type?
-  local     _group
-  local _http_body
-  local      _test
+  local      _group
+  local  _http_body
+  local _pc_version
+  local       _test
 
   log "Add Directory ${LDAP_SERVER}"
   _http_body=$(cat <<EOF
   {
     "name":"${LDAP_SERVER}",
     "domain":"${MY_DOMAIN_FQDN}",
-    "directoryUrl":"ldaps://${LDAP_HOST}/",
     "directoryType":"ACTIVE_DIRECTORY",
     "connectionType":"LDAP",
 EOF
   )
 
-  if (( $(echo "${PC_VERSION} >= 5.9" | bc -l) )); then
+  _pc_version=$(echo ${PC_VERSION} | awk -F. '{ print $1 "." $2$3$4}')
+  log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
+  if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
     _http_body+=' "groupSearchType":"RECURSIVE", '
+    _http_body+=" \"directoryUrl\":\"ldaps://${LDAP_HOST}:${LDAP_PORT}/\", "
+  else
+    _http_body+=" \"directoryUrl\":\"ldaps://${LDAP_HOST}/\", "
   fi
 
   _http_body+=$(cat <<EOF
@@ -249,21 +275,6 @@ function pc_init() {
   # TODO:70 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
   local _test
 
-  log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
-  ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
-  if (( $? != 0 )); then
-   log "Warning: password not reset: $?."# exit 10
-   # TOFIX: nutanix@PC Linux account password change as well?
-  fi
-#  local _old_pw='nutanix/4u'
-#   _http_body=$(cat <<EOF
-# {"oldPassword": "${_old_pw}","newPassword": "${MY_PE_PASSWORD}"}
-# EOF
-#   )
-#   PC_test=$(curl ${CURL_HTTP_OPTS} --user "${PRISM_ADMIN}:${_old_pw}" -X POST --data "${_http_body}" \
-#     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
-#   log "cURL reset password PC_test=${PC_test}"
-
   log "Configure NTP@PC"
   ncli cluster add-to-ntp-servers \
     servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
@@ -467,7 +478,8 @@ begin
 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 
-NTNX_cmd # takes care of services coming up.
+pc_passwd
+NTNX_cmd # check cli services available?
 
 if [[ -z "${MY_PE_HOST}" ]]; then
   log "MY_PE_HOST unset, determining..."

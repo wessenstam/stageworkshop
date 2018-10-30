@@ -13,7 +13,11 @@ function stageworkshop_cluster() {
   local    _fields
   local  _filespec
   export NTNX_USER=nutanix
-  local  _tail_arg
+  local  _tail_arg='--lines='
+
+  if [[ `uname -s` == "Darwin" ]]; then
+    _tail_arg='-n '
+  fi
 
   if [[ -n ${1} || ${1} == '' ]]; then
     _filespec=~/Documents/github.com/mlavi/stageworkshop/example_pocs.txt
@@ -26,16 +30,12 @@ function stageworkshop_cluster() {
     - Last uncommented cluster in: ${_filespec}
     -     ssh user authentication: ${NTNX_USER}\n"
 
-  _tail_arg='--lines='
-  if [[ `uname -s` == "Darwin" ]]; then
-    _tail_arg='-n '
-  fi
-
   _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail ${_tail_arg}1)
    _fields=(${_cluster//|/ })
 
   export     PE_HOST=${_fields[0]}
   export PE_PASSWORD=${_fields[1]}
+  export    MY_EMAIL=${_fields[2]}
   echo "INFO: PE_HOST=${PE_HOST}."
 }
 
@@ -47,11 +47,13 @@ function stageworkshop_ssh() {
   stageworkshop_cluster ''
 
   if [[ $1 == 'PC' ]]; then
+    echo "PC_VERSION=5.9.0.1 MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${PE_PASSWORD} ./stage_calmhow_pc.sh"
     PE_PASSWORD='nutanix/4u'
          _octet=(${PE_HOST//./ }) # zero index
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
   else
     _host=${PE_HOST}
+    echo "curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}"
   fi
 
   case "${2}" in

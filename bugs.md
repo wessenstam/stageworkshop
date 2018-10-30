@@ -1,17 +1,17 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
+- BUG: PC LDAP 5.9 broken, add port and recursion?
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
-  - nuclei cluster.list format=json
-  - ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
-
-  2018-10-24 21:54:23|14165|main|MY_PE_HOST unset, determining...
   2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
-  2018-10-24 21:54:24|14165|Determine_PE|Success:  PE external IP=
 
-- BUG: PC LDAP 5.9 broken
-- BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS?
+- Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
+  - BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
+- https://githooks.com/
+  - https://pre-commit.com/
+  - https://github.com/nkantar/Autohook
+  - https://github.com/rycus86/githooks
 - Add (git)version/release to each script (assembly?) for github archive cache
   - https://semver.org/
     - https://guides.github.com/introduction/flow/index.html
@@ -30,6 +30,8 @@
     && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
     - https://blog.ngeor.com/2017/12/19/semantic-versioning-with-gitversion.html
   - versus https://github.com/markchalloner/git-semver
+- ~/Documents/github.com/ideadevice/calm/src/calm/tests/qa/docs
+  = https://github.com/ideadevice/calm/tree/master/src/calm/tests/qa/docs
 - start a feature branch
 - syslog format: INFO|DEBUG|etc.
   - https://en.wikipedia.org/wiki/Syslog#Severity_level
