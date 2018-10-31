@@ -33,20 +33,21 @@ function stageworkshop_cluster() {
   _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail ${_tail_arg}1)
    _fields=(${_cluster//|/ })
 
-  export     PE_HOST=${_fields[0]}
-  export PE_PASSWORD=${_fields[1]}
-  export    MY_EMAIL=${_fields[2]}
-  echo "INFO: PE_HOST=${PE_HOST}."
+  export        PE_HOST=${_fields[0]}
+  export MY_PE_PASSWORD=${_fields[1]}
+  export       MY_EMAIL=${_fields[2]}
+  #echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} NTNX_USER=${NTNX_USER}."
 }
 
 function stageworkshop_ssh() {
+  stageworkshop_cluster ''
+
   local      _cmd
   local     _host
   local    _octet
-  local _password=${PE_PASSWORD}
+  local _password=${MY_PE_PASSWORD}
   local     _user=${NTNX_USER}
 
-  stageworkshop_cluster ''
   _octet=(${PE_HOST//./ }) # zero index
 
   case "${1}" in
@@ -64,6 +65,7 @@ function stageworkshop_ssh() {
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 3))
           _user=root
   esac
+  #echo "INFO|stageworkshop_ssh|PE_HOST=${PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} NTNX_USER=${NTNX_USER}."
 
   case "${2}" in
     log | logs)

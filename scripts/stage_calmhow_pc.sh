@@ -34,9 +34,9 @@ function pc_auth() {
   if [[ ${LDAP_SERVER} == 'AutoDC' ]]; then
     local  _autodc_conf=/etc/samba/smb.conf
     local _autodc_patch='ldap server require strong auth = no'
-    remote_exec 'LDAP_SERVER' "curl --remote-name --location \
-    https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh \
-      && bash ${_##*/}"
+    remote_exec 'ssh' 'LDAP_SERVER' \
+    'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh && bash ${_##*/}' \
+    'OPTIONAL'
   fi
 
   log "Add Directory ${LDAP_SERVER}"

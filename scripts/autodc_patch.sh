@@ -5,10 +5,12 @@ if [[ ${USER} != 'root' ]]; then
   exit 1
 fi
 
-if [[ -n ${_autodc_conf} || -n ${_autodc_patch} ]]; then
+if [[ -z ${_autodc_conf} || -z ${_autodc_patch} ]]; then
   echo "Warning: _autodc_* environment variables not populated."
    _autodc_conf=/etc/samba/smb.conf
   _autodc_patch='ldap server require strong auth = no'
+else
+  echo "_autodc_conf=${_autodc_conf} _autodc_patch=${_autodc_patch}"
 fi
 
 if (( $(grep "${_autodc_patch}" ${_autodc_conf} | wc --lines) == 0 )); then
@@ -21,6 +23,8 @@ if (( $(grep "${_autodc_patch}" ${_autodc_conf} | wc --lines) == 0 )); then
 else
   echo "No AutoDC patch needed."
 fi
+
+service smbd status
 
 exit
 

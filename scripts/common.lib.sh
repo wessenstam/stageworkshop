@@ -287,9 +287,9 @@ function Download {
 }
 
 function remote_exec {
-# Argument ${1} = REQIRED: ssh or scp
-# Argument ${2} = REQIRED: PE, PC, or LDAP_SERVER
-# Argument ${3} = REQIRED: command configuration
+# Argument ${1} = REQUIRED: ssh or scp
+# Argument ${2} = REQUIRED: PE, PC, or LDAP_SERVER
+# Argument ${3} = REQUIRED: command configuration
 # Argument ${4} = OPTIONAL: populated with anything = allowed to fail
 
   local  _account='nutanix'
