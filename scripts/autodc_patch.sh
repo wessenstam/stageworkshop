@@ -12,9 +12,14 @@ if [[ -n ${_autodc_conf} || -n ${_autodc_patch} ]]; then
 fi
 
 if (( $(grep "${_autodc_patch}" ${_autodc_conf} | wc --lines) == 0 )); then
+  echo "Patching ${_autodc_conf}"
   cat ${_autodc_conf} | sed "s/\\[global\\]/\\[global\\]\n\t${_autodc_patch}/" \
     > ${_autodc_conf}.patched && mv ${_autodc_conf}.patched ${_autodc_conf}
+
+  echo "Restarting Samba..."
   service smbd restart && sleep 2
+else
+  echo "No AutoDC patch needed."
 fi
 
 exit
@@ -23,4 +28,4 @@ curl --remote-name --location \
 https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh \
   && export _autodc_conf=${_autodc_conf} \
   && export _autodc_patch=\"${_autodc_patch}\" \
-  && sh ${_##*/}
+  && bash ${_##*/}
