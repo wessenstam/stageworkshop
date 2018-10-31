@@ -164,6 +164,14 @@
   - restore http_resume check/attempt
   - create cache, use cache, propagate cache to PC, fall back to global
 
+# Darksite:
+  - Push button Calm: https://github.com/mlavi/stageworkshop/archive/master.zip
+  - AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
+  - CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
+    http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+  - PC 5.9.1 metadata:http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
+  - PC 5.9.1 bits: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+
 # Notes #
 
 ## Citations for other Calm automation ##

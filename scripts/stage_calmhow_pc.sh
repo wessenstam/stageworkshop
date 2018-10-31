@@ -30,8 +30,8 @@ function pc_auth() {
   local _pc_version
   local       _test
 
-  # TODO: hadcoded URL, not passing arguments yet.
-  if [[ ${LDAP_SERVER} == 'AutoDC' ]]; then
+  # TODO: hadcoded URL, not passing arguments yet. Disabling by appending v1
+  if [[ ${LDAP_SERVER} == 'AutoDCv1' ]]; then
     local  _autodc_conf=/etc/samba/smb.conf
     local _autodc_patch='ldap server require strong auth = no'
     remote_exec 'ssh' 'LDAP_SERVER' \

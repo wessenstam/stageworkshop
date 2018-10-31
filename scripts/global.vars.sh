@@ -38,6 +38,7 @@ MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
    LDAP_IMAGES=(\
+   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
    'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
    'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
 )
