@@ -40,21 +40,30 @@ function stageworkshop_cluster() {
 }
 
 function stageworkshop_ssh() {
-  local   _cmd
-  local  _host
-  local _octet
+  local      _cmd
+  local     _host
+  local    _octet
+  local _password=${PE_PASSWORD}
+  local     _user=${NTNX_USER}
 
   stageworkshop_cluster ''
+  _octet=(${PE_HOST//./ }) # zero index
 
-  if [[ $1 == 'PC' ]]; then
-    echo "PC_VERSION=5.9.0.1 MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${PE_PASSWORD} ./stage_calmhow_pc.sh"
-    PE_PASSWORD='nutanix/4u'
-         _octet=(${PE_HOST//./ }) # zero index
+  case "${1}" in
+    PC )
+      echo "PC_VERSION=5.9.0.1 MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./stage_calmhow_pc.sh"
+      _password='nutanix/4u'
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
-  else
-    _host=${PE_HOST}
-    echo 'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}'
-  fi
+      ;;
+    PE )
+      _host=${PE_HOST}
+      echo 'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}'
+      ;;
+    AUTH )
+      _password='nutanix/4u'
+          _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 3))
+          _user=root
+  esac
 
   case "${2}" in
     log | logs)
@@ -72,11 +81,11 @@ function stageworkshop_ssh() {
   esac
 
   echo "INFO: ${_host} $ ${_cmd}"
-  SSHPASS="${PE_PASSWORD}" sshpass -e ssh -q \
+  SSHPASS="${_password}" sshpass -e ssh -q \
     -o StrictHostKeyChecking=no \
     -o GlobalKnownHostsFile=/dev/null \
     -o UserKnownHostsFile=/dev/null \
-    ${NTNX_USER}@"${_host}" "${_cmd}"
+    ${_user}@"${_host}" "${_cmd}"
 
   unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
 }
@@ -87,6 +96,10 @@ function stageworkshop_pe() {
 
 function stageworkshop_pc() {
   stageworkshop_ssh 'PC' "${1}"
+}
+
+function stageworkshop_auth() {
+  stageworkshop_ssh 'AUTH' "${1}"
 }
 
 # TODO: prompt for choice when more than one cluster

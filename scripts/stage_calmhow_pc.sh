@@ -30,6 +30,15 @@ function pc_auth() {
   local _pc_version
   local       _test
 
+  # TODO: hadcoded URL, not passing arguments yet. 
+  if [[ ${LDAP_SERVER} == 'AutoDC' ]]; then
+    local  _autodc_conf=/etc/samba/smb.conf
+    local _autodc_patch='ldap server require strong auth = no'
+    remote_exec 'LDAP_SERVER' "curl --remote-name --location \
+    https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh \
+      && sh ${_##*/}"
+  fi
+
   log "Add Directory ${LDAP_SERVER}"
   _http_body=$(cat <<EOF
   {
