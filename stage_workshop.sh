@@ -29,8 +29,6 @@ function stage_clusters() {
   local       _sshkey
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
-  log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop}"
-
   # Map to latest and greatest version of each point release
   # Metadata URLs are specified in common.lib.sh function: NTNX_Download
   if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
@@ -56,6 +54,8 @@ function stage_clusters() {
     _pe_config=stage_ts18.sh
     _pc_config=stage_ts18_pc.sh
   fi
+
+  log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440"

@@ -6,6 +6,33 @@
 # For testing:
 # curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
+function cache() {
+  local _bits=( \
+    http://10.59.103.143:8000/autodc-2.0.qcow2 \
+    http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
+    http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
+  )
+  #https://github.com/mlavi/stageworkshop/archive/master.zip
+  #http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+  local _file
+
+  if [[ ! -d cache ]]; then
+    mkdir cache
+  fi
+  pushd cache
+
+  for _file in "${_bits[@]}"; do
+    if [[ -e ${_file} ]]; then
+      echo "Cached: ${_file}"
+    else
+      curl --remote-name --location  ${_file}
+    fi
+  done
+
+  popd
+  exit 0
+}
+
 if [[ -z ${SOURCE} ]]; then
   ORGANIZATION=nutanixworkshops
     REPOSITORY=stageworkshop
@@ -20,11 +47,16 @@ fi
 BASE_URL=https://github.com/${ORGANIZATION}/${REPOSITORY}
  ARCHIVE=${BASE_URL}/archive/${BRANCH}.zip
 
-if [[ ${1} == 'clean' ]]; then
- echo "Cleaning up..."
- rm -rf ${ARCHIVE##*/} ${0} ${REPOSITORY}-${BRANCH}/
- exit 0
-fi
+case "${1}" in
+  clean )
+    echo "Cleaning up..."
+    rm -rf ${ARCHIVE##*/} ${0} ${REPOSITORY}-${BRANCH}/
+    exit 0
+    ;;
+  cache )
+    cache
+    ;;
+esac
 
 if [[ -f ${BRANCH}.zip ]]; then
   sh ${HOME}/${0} clean
@@ -97,7 +129,7 @@ pushd ${REPOSITORY}-${BRANCH}/ \
 
 if [[ -e release.json ]]; then
  echo
- echo ${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')
+ echo "${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')"
 fi
 
 MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
