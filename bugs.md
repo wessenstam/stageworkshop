@@ -165,12 +165,21 @@
   - create cache, use cache, propagate cache to PC, fall back to global
 
 # Darksite:
-  - Push button Calm: https://github.com/mlavi/stageworkshop/archive/master.zip
-  - AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
-  - CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
-    http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-  - PC 5.9.1 metadata:http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
-  - PC 5.9.1 bits: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+#   http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+
+0) Ideal to do this on a CVM, but you can prepare by downloading all of the bits in advance.
+
+1) Download the push button Calm archive, unarchive, create a cache directory inside:
+wget https://github.com/mlavi/stageworkshop/archive/master.zip && \
+unzip master.zip && pushd stageworkshop-master && mkdir cache && cd ${_}
+
+2) Put everything else below in this cache directory and contact me.
+- AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
+- CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
+- PC-5.9.1 metadata: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
+- PC-5.9.1 bits: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+- jq-1.5: https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+- sshpass: http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
 
 # Notes #
 
