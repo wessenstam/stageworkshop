@@ -1,5 +1,41 @@
 #!/usr/bin/env bash
 
+function fileserver() {
+  local    _action=${1} # REQUIRED
+  local      _host=${2} # REQUIRED, TODO: default to PE?
+  local      _port=${3} # OPTIONAL
+  local _directory=${4} # OPTIONAL
+
+  if [[ -z ${1} ]]; then
+    _error=38
+    log "Error ${_error}: start or stop action required!"
+    exit ${_error}
+  fi
+  if [[ -z ${2} ]]; then
+    _error=39
+    log "Error ${_error}: host required!"
+    exit ${_error}
+  fi
+  if [[ -z ${3} ]]; then
+    _port=8181
+  fi
+  if [[ -z ${4} ]]; then
+    _directory=cache
+  fi
+
+  # Determine if on PE or PC with _host PE or PC, then _host=localhost
+
+  remote_exec 'ssh' ${_host} \
+    "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
+
+# acli image.create AutoDC2 image_type=kDiskImage wait=true container=Images \
+# source_url=http://10.4.150.64:8181/autodc-2.0.qcow2
+#AutoDC2: pending
+#AutoDC2: UploadFailure: Could not access the URL, please check the URL and make sure the hostname is resolvable
+  remote_exec 'ssh' ${_host} \
+    "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
+}
+
 function begin {
   local _release
 

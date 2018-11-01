@@ -20,6 +20,7 @@ function stage_clusters() {
   Dependencies 'install' 'sshpass'
 
   local      _cluster
+  local       _autodc=autodc-2.0.qcow2
   local    _container
   local _dependencies
   local       _fields
@@ -102,6 +103,12 @@ function stage_clusters() {
         && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
         && popd
 
+      if [[ -e cache/${_autodc} ]]; then
+        log "Uploading autodc-2.0.qcow2 in background..."
+        pushd cache
+        remote_exec 'SCP' 'PE' ${_autodc} 'OPTIONAL' &
+        popd
+      fi
       # For Calm container updates...
       if [[ -d cache/pc-${PC_VERSION}/ ]]; then
         log "Uploading PC updates in background..."

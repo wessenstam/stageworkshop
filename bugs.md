@@ -15,6 +15,25 @@
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
 
+- Darksite/cache:
+
+  0) Ideal to do this on a CVM, but you can prepare by downloading all of the bits in advance.
+   The goal is to get everything onto the CVM if there’s room.
+   If not, get it onto a fileserver that the CVM can access, even via SCP/SSH.
+
+  1) Download the push button Calm archive, unarchive, create a cache directory inside:
+  wget https://github.com/mlavi/stageworkshop/archive/master.zip && \
+  unzip master.zip && pushd stageworkshop-master && mkdir cache && cd ${_}
+
+  2) Put everything else below in this cache directory and contact me.
+  - AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
+  - CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
+  - PC-5.9.1 metadata: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
+  - PC-5.9.1 bits: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+  - jq-1.5: https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+  - sshpass: http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
+  #   http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+
 - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
   - BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
 - https://githooks.com/
@@ -164,6 +183,7 @@
   - restore http_resume check/attempt
   - create cache, use cache, propagate cache to PC, fall back to global
 
+<<<<<<< HEAD
 # Darksite:
 #   http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 
@@ -181,6 +201,8 @@ unzip master.zip && pushd stageworkshop-master && mkdir cache && cd ${_}
 - jq-1.5: https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
 - sshpass: http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
 
+=======
+>>>>>>> Darksite beginnings, AutoDC2+PC5.9 ldap auth
 # Notes #
 
 ## Citations for other Calm automation ##

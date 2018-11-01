@@ -53,9 +53,9 @@ EOF
   log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
   if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
     _http_body+=' "groupSearchType":"RECURSIVE", '
-    _http_body+=" \"directoryUrl\":\"ldaps://${LDAP_HOST}:${LDAP_PORT}/\", "
+    _http_body+=" \"directoryUrl\":\"ldap://${LDAP_HOST}:${LDAP_PORT}/\", "
   else
-    _http_body+=" \"directoryUrl\":\"ldaps://${LDAP_HOST}/\", "
+    _http_body+=" \"directoryUrl\":\"${MY_DOMAIN_URL}\", "
   fi
 
   _http_body+=$(cat <<EOF
@@ -447,15 +447,12 @@ function calm_update() {
         return ${_error}
       else
         log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
-        log "SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} ${LDAP_HOST} "\
-          'python -m SimpleHTTPServer 8080 || python -m http.server 8080'
         sleep ${_sleep}
       fi
     done
 
     Download ${_url}/epsilon.tar
     Download ${_url}/nucalm.tar
-    # remote_exec 'ssh' 'LDAP_SERVER' 'pkill python' 'OPTIONAL'
   fi
 
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
