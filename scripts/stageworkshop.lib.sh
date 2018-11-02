@@ -3,7 +3,17 @@
 
 RELEASE=release.json
 if [[ -e ${RELEASE} ]]; then
-  echo "Sourced stageworkshop.lib.sh, release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
+  echo "Sourced stageworkshop.lib.sh, release: \
+    $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
+
+  if [[ -z ${PC_VERSION} ]]; then
+    PC_VERSION="$(grep PrismCentral ${RELEASE} | awk -F\" '{print $4}')"
+  fi
+
+  if [[ -z ${PC_VERSION} ]]; then
+    PC_VERSION="Check stage_workshop.sh::stage_clusters() for the best known \
+    choice since $(grep CommitDate ${RELEASE} | awk -F\" '{print $4}')."
+  fi
 fi
 
 alias stageworkshop_w1='./stage_workshop.sh -f example_pocs.txt -w 1'
@@ -52,7 +62,7 @@ function stageworkshop_ssh() {
 
   case "${1}" in
     PC )
-      echo "PC_VERSION=5.9.0.1 MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./stage_calmhow_pc.sh"
+      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./stage_calmhow_pc.sh"
       _password='nutanix/4u'
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
       ;;

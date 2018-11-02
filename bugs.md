@@ -317,16 +317,11 @@ or nuclei, only on PCVM or in container
 ## File servers for container updates ##
 
 - https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#What_you_get_with_each_reservation
-- https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#Lab_Resources
-- https://sewiki.nutanix.com/index.php/HPOC_Access_Instructions#FTP
-  - \\lab-ftp\ftp
-  - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
-  - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
-  - smb://pocfs/    = \\pocfs\iso\ and \images\
   - smb://pocfs.nutanixdc.local use: auth
     - WIN> nslookup pocfs.nutanixdc.local
     - smbclient -I 10.21.249.12 \\\\pocfs\\images \
       --user mark.lavi@nutanixdc.local --command "prompt ; cd /Calm-EA/pc-5.7.1/ ; mget *tar"
+    - smb://pocfs/    = \\pocfs\iso\ and \images\
   - smb://hpoc-afs/ = \\hpoc-afs\se\
     - smbclient \\\\hpoc-afs\\se\\ --user mark.lavi@nutanixdc.local --debuglevel=10
     - WIN> nslookup hpoc-afs.nutanixdc.local
@@ -335,6 +330,11 @@ or nuclei, only on PCVM or in container
   - smb://NTNX-HPOC-AFS-3.NUTANIXDC.LOCAL
   default password = welcome123
   - https://ubuntuswitch.wordpress.com/2010/02/05/nautilus-slow-network-or-network-does-not-work/
+- https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#Lab_Resources
+  - internal = smb://hpoc-ftp/ = \\hpoc-ftp\ftp
+  - external = ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
+  - https://sewiki.nutanix.com/index.php/HPOC_Access_Instructions#FTP
+    - \\lab-ftp\ftp
 - smb-client vs cifs?
   - https://www.tldp.org/HOWTO/SMB-HOWTO-8.html
   - https://www.samba.org/samba/docs/current/man-html/smbclient.1.html

@@ -24,7 +24,8 @@ function fileserver() {
   fi
 
   # Determine if on PE or PC with _host PE or PC, then _host=localhost
-
+  # ssh -R 8181:localhost:8181 nutanix@10.21.31.31
+  
   remote_exec 'ssh' ${_host} \
     "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
 

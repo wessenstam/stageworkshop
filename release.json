@@ -22,5 +22,7 @@
   "NuGetVersion":"2.0.3-ci0024",
   "CommitsSinceVersionSource":24,
   "CommitsSinceVersionSourcePadded":"0024",
-  "CommitDate":"2018-11-01"
+  "CommitDate":"2018-11-01",
+  "TestPrismCentral":"5.9.1",
+  "PrismCentral":"5.8.2"
 }

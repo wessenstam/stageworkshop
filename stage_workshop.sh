@@ -33,13 +33,13 @@ function stage_clusters() {
   # Map to latest and greatest version of each point release
   # Metadata URLs are specified in common.lib.sh function: NTNX_Download
   if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
-    PC_VERSION=5.9.1
+    export PC_VERSION=5.9.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
-    PC_VERSION=5.8.2
+    export PC_VERSION=5.8.2
   elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then
-    PC_VERSION=5.7.1.1
+    export PC_VERSION=5.7.1.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc -l) > 0 )); then
-    PC_VERSION=5.6.2
+    export PC_VERSION=5.6.2
   fi
 
   # Map to staging scripts
