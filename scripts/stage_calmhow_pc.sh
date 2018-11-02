@@ -311,32 +311,32 @@ function pc_init() {
 }
 
 function images() {
-  local      _error=10
-  local      _image
-  local _source_url
+  local _image
 
-  for _image in ${QCOW2_IMAGES} ; do
-    #log "DEBUG: ${_image} image.create..."
-
+  for _image in "${QCOW2_IMAGES[@]}" ; do
+    # log "DEBUG: ${_image} image.create..."
     if [[ -n $(nuclei image.list 2>&1 | grep -i complete | grep "${_image}") ]]; then
       log "Skip: ${_image} already complete on cluster."
-      break
+    else
+      repo_test QCOW2_REPOS[@] "${_image}" # IMPORTANT: don't ${dereference}[array]!
+
+      # if [[ -z "${SOURCE_URL}" ]]; then
+      #   _error=30
+      #   log "Error ${_error}: didn't find any sources for ${_image}"
+      #   exit ${_error}
+      # fi
+
+      nuclei image.create name=${_image} \
+         description="${0} via stage_calmhow_pc for ${_image}" \
+         source_uri=${SOURCE_URL} 2>&1
+       log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
+       log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
+      if (( $? != 0 )); then
+        log "Warning: Image submission: $?."
+        #exit 10
+      fi
     fi
 
-    repo_test QCOW2_REPOS[@]
-    _source_url="${SOURCE_URL}/${_image}"
-
-    repo_test ${_source_url}
-
-    nuclei image.create name=${_image} \
-       description="${0} via stage_calmhow_pc for ${_image}" \
-       source_uri=${_source_url} 2>&1
-     log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
-     log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
-    if (( $? != 0 )); then
-      log "Warning: Image submission: $?."
-      #exit 10
-    fi
   done
 }
 

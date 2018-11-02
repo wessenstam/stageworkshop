@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # stageworkshop_pe kill && stageworkshop_w1 && stageworkshop_pe
+. scripts/global.vars.sh
 
 RELEASE=release.json
 if [[ -e ${RELEASE} ]]; then
   echo -e "Sourced stageworkshop.lib.sh, release: $(jq -r '.FullSemVer' ${RELEASE})\n \
     \tPrismCentralStable=${PC_VERSION_STABLE}\n \
-    \t   PrismCentralDev=${PC_VERSION_DEV}\n"
+    \t   PrismCentralDev=${PC_VERSION_DEV}"
 
   if [[ -z ${PC_VERSION} ]]; then
     PC_VERSION="Check stage_workshop.sh::stage_clusters() for the best known \

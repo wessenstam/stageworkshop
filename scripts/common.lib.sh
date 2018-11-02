@@ -37,7 +37,7 @@ function fileserver() {
     "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
 }
 
-function begin {
+function begin() {
   local _release
 
   if [[ -e ${RELEASE} ]]; then
@@ -47,12 +47,12 @@ function begin {
   log "$(basename ${0})${_release} start._____________________"
 }
 
-function finish {
+function finish() {
   log "${0} ran for ${SECONDS} seconds._____________________"
   echo
 }
 
-function NTNX_cmd {
+function NTNX_cmd() {
   local _attempts=25
   local    _error=10
   local     _hold
@@ -84,8 +84,7 @@ function NTNX_cmd {
   done
 }
 
-function NTNX_Download
-{
+function NTNX_Download() {
   local   _checksum
   local   _meta_url='http://download.nutanix.com/'
   local _source_url
@@ -188,14 +187,14 @@ function NTNX_Download
   export NTNX_SOURCE_URL=${_source_url}
 }
 
-function log {
+function log() {
   local _caller
 
   _caller=$(echo -n "`caller 0 | awk '{print $2}'`")
   echo "`date '+%Y-%m-%d %H:%M:%S'`|$$|${_caller}|${1}"
 }
 
-function repo_test {
+function repo_test() {
   # https://stackoverflow.com/questions/1063347/passing-arrays-as-parameters-in-bash#4017175
   local _candidates=("${!1}") # REQUIRED
   local    _package="${2}"    # OPTIONAL
@@ -206,8 +205,10 @@ function repo_test {
   unset SOURCE_URL
 
   if (( ${#_candidates[@]} == 0 )); then
-   log "Error ${_error}: Missing array!"
-   exit ${_error}
+    log "Error ${_error}: Missing array!"
+    exit ${_error}
+  # else
+  #   log "DEBUG: _candidates count is ${#_candidates[@]}"
   fi
 
   # Prepend your local HTTP cache...
@@ -215,7 +216,7 @@ function repo_test {
 
   while (( ${_index} < ${#_candidates[@]} ))
   do
-    #log "DEBUG: ${_index} ${_candidates[${_index}]}"
+    # log "DEBUG: ${_index} ${_candidates[${_index}]}, OPTIONAL: _package=${_package}"
     _url=${_candidates[${_index}]}
 
     if [[ ! -z ${_package} ]]; then
@@ -223,23 +224,25 @@ function repo_test {
     fi
 
     _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_url} | tail -n1)
-    #log "DEBUG: _http_code=|${_http_code}|"
+    # log "DEBUG: _http_code=|${_http_code}|"
 
     if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
       export SOURCE_URL="${_url}"
       log "Found SOURCE_URL with HTTP:${_http_code} = ${SOURCE_URL}"
       break
     fi
+    log "DEBUG: SOURCE_URL miss, HTTP:${_http_code} = ${SOURCE_URL}"
     ((_index++))
   done
 
-  if [[ -z ${SOURCE_URL} ]]; then
-    log "Error ${_error}: didn't find any sources."
+  if [[ -z "${SOURCE_URL}" ]]; then
+    _error=30
+    log "Error ${_error}: didn't find any sources, last try was ${_url} with HTTP ${_http_code}."
     exit ${_error}
   fi
 }
 
-function CheckArgsExist {
+function CheckArgsExist() {
   local _argument
   local    _error=88
 
@@ -261,7 +264,7 @@ function CheckArgsExist {
   fi
 }
 
-function SSH_PubKey {
+function SSH_PubKey() {
   local   _name=${MY_EMAIL//\./_DOT_}
   local _sshkey=${HOME}/id_rsa.pub
 
@@ -273,7 +276,7 @@ function SSH_PubKey {
   fi
 }
 
-function Determine_PE {
+function Determine_PE() {
   local _attempts=5
   local    _error=10
   local     _hold
@@ -298,10 +301,10 @@ function Determine_PE {
   fi
 }
 
-function Download {
+function Download() {
   local           _attempts=5
   local              _error=0
-  local _http_range_enabled= # TODO disabled '--continue-at -'
+  local _http_range_enabled   # TODO disabled '--continue-at -'
   local               _loop=0
   local             _output
   local              _sleep=2
@@ -340,7 +343,7 @@ function Download {
   done
 }
 
-function remote_exec {
+function remote_exec() {
 # Argument ${1} = REQUIRED: ssh or scp
 # Argument ${2} = REQUIRED: PE, PC, or LDAP_SERVER
 # Argument ${3} = REQUIRED: command configuration
