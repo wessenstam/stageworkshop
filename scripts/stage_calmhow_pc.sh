@@ -314,7 +314,6 @@ function images() {
   local      _error=10
   local      _image
   local _source_url
-         SOURCE_URL=
 
   for _image in ${QCOW2_IMAGES} ; do
     #log "DEBUG: ${_image} image.create..."
@@ -324,19 +323,10 @@ function images() {
       break
     fi
 
-    testURLs QCOW2_REPOS[@]
-    if [[ -z ${SOURCE_URL} ]]; then
-      log "Error ${_error}: didn't find any sources for QCOW2_REPOS."
-      exit ${_error}
-    fi
-
+    repo_test QCOW2_REPOS[@]
     _source_url="${SOURCE_URL}/${_image}"
 
-    testURLs ${_source_url}
-    if [[ -z ${_source_url} ]]; then
-      log "Error: didn't find image ${_image}."
-    fi
-    log "Found ${_source_url}"
+    repo_test ${_source_url}
 
     nuclei image.create name=${_image} \
        description="${0} via stage_calmhow_pc for ${_image}" \

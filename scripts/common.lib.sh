@@ -195,16 +195,15 @@ function log {
   echo "`date '+%Y-%m-%d %H:%M:%S'`|$$|${_caller}|${1}"
 }
 
-function testURLs {
+function repo_test {
   # https://stackoverflow.com/questions/1063347/passing-arrays-as-parameters-in-bash#4017175
-  local declare -a \
-        _candidates=("${!1}") # REQUIRED
+  local _candidates=("${!1}") # REQUIRED
   local    _package="${2}"    # OPTIONAL
-
   local      _error=29
   local  _http_code
   local      _index=0
   local        _url
+  unset SOURCE_URL
 
   if (( ${#_candidates[@]} == 0 )); then
    log "Error ${_error}: Missing array!"
@@ -213,7 +212,7 @@ function testURLs {
 
   # Prepend your local HTTP cache...
   _candidates=( "http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT}" "${_candidates[@]}" )
-  
+
   while (( ${_index} < ${#_candidates[@]} ))
   do
     #log "DEBUG: ${_index} ${_candidates[${_index}]}"
@@ -227,12 +226,17 @@ function testURLs {
     #log "DEBUG: _http_code=|${_http_code}|"
 
     if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
-      SOURCE_URL="${_url}"
-      log "HTTP:${_http_code} = ${SOURCE_URL}"
+      export SOURCE_URL="${_url}"
+      log "Found SOURCE_URL with HTTP:${_http_code} = ${SOURCE_URL}"
       break
     fi
     ((_index++))
   done
+
+  if [[ -z ${SOURCE_URL} ]]; then
+    log "Error ${_error}: didn't find any sources."
+    exit ${_error}
+  fi
 }
 
 function CheckArgsExist {
@@ -429,7 +433,7 @@ function Dependencies {
   local     _index
   local       _cpe=/etc/os-release  # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
   local       _lsb=/etc/lsb-release # Linux Standards Base
-  local  _os_found=
+  local  _os_found
 
   if [[ -z ${1} ]]; then
     _error=20
@@ -459,15 +463,7 @@ function Dependencies {
             elif [[ ${_os_found} == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
               if [[ ! -e ${SSHPASS_PACKAGE} ]]; then
-                SOURCE_URL=
-                testURLs SSHPASS_REPOS[@] ${SSHPASS_PACKAGE}
-
-                if [[ -z ${SOURCE_URL} ]]; then
-                  _error=36
-                  log "Error ${_error}: didn't find any sources for ${2}"
-                  exit $_error
-                fi
-                log "Found ${SOURCE_URL}"
+                repo_test SSHPASS_REPOS[@] ${SSHPASS_PACKAGE}
                 Download ${SOURCE_URL}
               fi
               sudo rpm -ivh ${SSHPASS_PACKAGE}
@@ -487,15 +483,7 @@ function Dependencies {
               fi
             elif [[ ${_os_found} == '"centos"' ]]; then
               if [[ ! -e ${JQ_PACKAGE} ]]; then
-                 SOURCE_URL=
-                 testURLs JQ_REPOS[@] ${JQ_PACKAGE}
-
-                 if [[ -z ${SOURCE_URL} ]]; then
-                   _error=36
-                   log "Error ${_error}: didn't find any sources for ${2}"
-                   exit $_error
-                 fi
-                 log "Found ${SOURCE_URL}"
+                 repo_test JQ_REPOS[@] ${JQ_PACKAGE}
                  Download ${SOURCE_URL}
               fi
               chmod u+x ${JQ_PACKAGE} && ln -s ${JQ_PACKAGE} jq

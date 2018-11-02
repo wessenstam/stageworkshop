@@ -139,71 +139,8 @@ function authentication_source() {
         _loop=0
        _sleep=${SLEEP}
 
-# task.list operation_type_list=kVmCreate
-# Task UUID                             Parent Task UUID  Component  Sequence-id  Type       Status
-# b21efb77-5447-45f9-9d6e-fc3ef6b22e36                    Acropolis  54           kVmCreate  kSucceeded
-#
-# acli -o json-pretty task.get b21efb77-5447-45f9-9d6e-fc3ef6b22e36
-# {
-#   "data": {
-#     "canceled": false,
-#     "cluster_uuid": "00056e27-2f51-7a31-1a72-0cc47ac3b4a0",
-#     "complete_time_usecs": "2018-06-09T00:52:11.527367",
-#     "component": "Acropolis",
-#     "create_time_usecs": "2018-06-09T00:52:11.380946",
-#     "deleted": false,
-#     "disable_auto_progress_update": true,
-#     "entity_list": [
-#       {
-#         "entity_id": "1dbcb887-c368-4142-97be-ff53417355ad",
-#         "entity_type": "kVM"
-#       }
-#     ],
-#     "internal_opaque": "ChIKEB28uIfDaEFCl77/U0FzVa0=",
-#     "internal_task": false,
-#     "last_updated_time_usecs": "2018-06-09T00:52:11.527367",
-#     "local_root_task_uuid": "b21efb77-5447-45f9-9d6e-fc3ef6b22e36",
-#     "logical_timestamp": 1,
-#     "message": "",
-#     "operation_type": "kVmCreate",
-#     "percentage_complete": 100,
-#     "request": {
-#       "arg": {
-#         "spec": {
-#           "memory_mb": 2048,
-#           "name": "STAGING-FAILED-AutoDC",
-#           "num_vcpus": 1
-#         }
-#       },
-#       "method_name": "VmCreate"
-#     },
-#     "requested_state_transition": 20,
-#     "response": {
-#       "error_code": 0,
-#       "ret": {
-#         "embedded": "ChAdvLiHw2hBQpe+/1NBc1Wt"
-#       }
-#     },
-#     "sequence_id": 54,
-#     "start_time_usecs": "2018-06-09T00:52:11.433001",
-#     "status": "kSucceeded",
-#     "uuid": "b21efb77-5447-45f9-9d6e-fc3ef6b22e36",
-#     "weight": 1000
-#   },
-#   "error": null,
-#   "status": 0
-# }
-
         # TODO: detect image ready, else...
-        SOURCE_URL=
-        testURLs LDAP_IMAGES[@]
-
-        if [[ -z ${SOURCE_URL} ]]; then
-          log "Error ${_error}: didn't find any sources for LDAP_IMAGES."
-          exit ${_error}
-        else
-          log "Found SOURCE_URL: ${SOURCE_URL}"
-        fi
+        repo_test LDAP_IMAGES[@]
 
         # while true ; do
         #   (( _loop++ ))

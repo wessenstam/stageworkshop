@@ -13,12 +13,7 @@ WORKSHOPS=(\
 #"Tech Summit 2018" \
 ) # Adjust function stage_clusters for mappings as needed
 
-function cache-stop() {
-  local _port=8181
-  kill -9 $(pgrep -f ${_port})
-}
 function cache() {
-
   echo "Note: run from your laptop/desktop, ** not on the CVM. **"
 
   local _bits=( \
@@ -29,7 +24,13 @@ function cache() {
   #https://github.com/mlavi/stageworkshop/archive/master.zip
   #http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
   local _file
-  local _port=8181
+  local _port=${HTTP_CACHE_PORT}
+
+  if [[ ${1} == 'stop' ]]; then
+    log "Killing service/tunnel:${_port}"
+    kill -9 $(pgrep -f ${_port})
+    exit 0
+  fi
 
   if [[ ! -d cache ]]; then
     mkdir cache
@@ -364,7 +365,7 @@ done
 shift $((OPTIND -1))
 
 if [[ $1 == 'cache' ]]; then
-  cache
+  cache $2
   exit 0
 fi
 
