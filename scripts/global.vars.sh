@@ -12,8 +12,13 @@ DATA_SERVICE_IP=${HPOC_PREFIX}.$((${OCTET[3]} + 1))
     MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
 
+HTTP_CACHE_HOST=localhost
+HTTP_CACHE_PORT=8181
+
+# https://stedolan.github.io/jq/download/#checksums_and_signatures
+   JQ_PACKAGE=jq-linux64
      JQ_REPOS=(\
- 'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
+ 'https://github.com/stedolan/jq/releases/download/jq-1.5' \
 )
   QCOW2_REPOS=(\
  'http://10.21.250.221/images/ahv/techsummit' \
@@ -25,9 +30,13 @@ MY_IMG_CONTAINER_NAME='Images'
   Windows10-1709-04282018.qcow2 \
   Nutanix-VirtIO-1.1.3.iso \
 )
-SSHPASS_REPOS=(\
- 'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+# https://pkgs.org/download/sshpass
+# https://sourceforge.net/projects/sshpass/files/sshpass/
+SSHPASS_PACKAGE=sshpass-1.06-2.el7.x86_64.rpm
+  SSHPASS_REPOS=(\
+ 'http://mirror.centos.org/centos/7/extras/x86_64/Packages' \
 )
+
    LDAP_SERVER='AutoDC'  # TODO:160 refactor LDAP_SERVER choice to input file, set default here.
      LDAP_HOST=${HPOC_PREFIX}.$((${OCTET[3]} + 3))
      LDAP_PORT=389
@@ -38,6 +47,7 @@ MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
    LDAP_IMAGES=(\
+   'http://localhost:8181/autodc-2.0.qcow2' \
    'http://10.59.103.143:8000/autodc-2.0.qcow2' \
    'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
    'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \

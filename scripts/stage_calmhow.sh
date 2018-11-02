@@ -424,18 +424,19 @@ EOF
 }
 
 function pc_configure() {
-  local _container
-  local _pc_files='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
+  local    _container
+  local _dependencies='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
 
   if [[ -e ${RELEASE} ]]; then
-    _pc_files+=" ${RELEASE}"
+    _dependencies+=" ${RELEASE}"
   fi
-  log "Send configuration scripts to PC and remove: ${_pc_files}"
-  remote_exec 'scp' 'PC' "${_pc_files}" && rm -f ${_pc_files}
+  log "Send configuration scripts to PC and remove: ${_dependencies}"
+  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies}
 
-  _pc_files='jq-linux64 sshpass-1.06-2.el7.x86_64.rpm id_rsa.pub'
-  log "OPTIONAL: Send binary dependencies to PC: ${_pc_files}"
-  remote_exec 'scp' 'PC' "${_pc_files}" 'OPTIONAL'
+  _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE} id_rsa.pub"
+
+  log "OPTIONAL: Send binary dependencies to PC: ${_dependencies}"
+  remote_exec 'scp' 'PC' "${_dependencies}" 'OPTIONAL'
 
   for _container in epsilon nucalm ; do
     if [[ -e ${_container}.tar ]]; then
@@ -455,7 +456,7 @@ function pc_configure() {
 function nos_upgrade() {
   #this is a prototype, untried
   NTNX_Download
-  
+
   ncli software upload software-type=nos \
     meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
     file-path="`pwd`/${NTNX_SOURCE_URL##*/}"

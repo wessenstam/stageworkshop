@@ -6,33 +6,6 @@
 # For testing:
 # curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
-function cache() {
-  local _bits=( \
-    http://10.59.103.143:8000/autodc-2.0.qcow2 \
-    http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
-    http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
-  )
-  #https://github.com/mlavi/stageworkshop/archive/master.zip
-  #http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
-  local _file
-
-  if [[ ! -d cache ]]; then
-    mkdir cache
-  fi
-  pushd cache
-
-  for _file in "${_bits[@]}"; do
-    if [[ -e ${_file} ]]; then
-      echo "Cached: ${_file}"
-    else
-      curl --remote-name --location  ${_file}
-    fi
-  done
-
-  popd
-  exit 0
-}
-
 if [[ -z ${SOURCE} ]]; then
   ORGANIZATION=nutanixworkshops
     REPOSITORY=stageworkshop

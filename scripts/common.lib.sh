@@ -24,8 +24,8 @@ function fileserver() {
   fi
 
   # Determine if on PE or PC with _host PE or PC, then _host=localhost
-  # ssh -R 8181:localhost:8181 nutanix@10.21.31.31
-  
+  # ssh -nNT -R 8181:localhost:8181 nutanix@10.21.31.31
+
   remote_exec 'ssh' ${_host} \
     "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
 
@@ -197,28 +197,41 @@ function log {
 
 function testURLs {
   # https://stackoverflow.com/questions/1063347/passing-arrays-as-parameters-in-bash#4017175
+  local declare -a \
+        _candidates=("${!1}") # REQUIRED
+  local    _package="${2}"    # OPTIONAL
+
   local      _error=29
+  local  _http_code
   local      _index=0
-  local _candidates=("${!1}")
-  local  _http_code=
+  local        _url
 
   if (( ${#_candidates[@]} == 0 )); then
    log "Error ${_error}: Missing array!"
    exit ${_error}
   fi
 
+  # Prepend your local HTTP cache...
+  _candidates=( "http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT}" "${_candidates[@]}" )
+  
   while (( ${_index} < ${#_candidates[@]} ))
   do
-   #log "DEBUG: ${_index} ${_candidates[${_index}]}"
-   _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_candidates[${_index}]} | tail -n1)
+    #log "DEBUG: ${_index} ${_candidates[${_index}]}"
+    _url=${_candidates[${_index}]}
 
-   #log "DEBUG: _http_code=|${_http_code}|"
-   if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
-     SOURCE_URL="${_candidates[${_index}]}"
-     log "HTTP:${_http_code} = ${SOURCE_URL}"
-     break
-   fi
-   ((_index++))
+    if [[ ! -z ${_package} ]]; then
+      _url+="/${_package}"
+    fi
+
+    _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_url} | tail -n1)
+    #log "DEBUG: _http_code=|${_http_code}|"
+
+    if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
+      SOURCE_URL="${_url}"
+      log "HTTP:${_http_code} = ${SOURCE_URL}"
+      break
+    fi
+    ((_index++))
   done
 }
 
@@ -440,14 +453,14 @@ function Dependencies {
       export PATH=${PATH}:${HOME}
       if [[ -z `which ${2}` ]]; then
         case "${2}" in
-          sshpass )
+          sshpass | ${SSHPASS_PACKAGE})
             if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
               sudo apt-get install --yes sshpass
             elif [[ ${_os_found} == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
-              if [[ ! -e sshpass-1.06-2.el7.x86_64.rpm ]]; then
+              if [[ ! -e ${SSHPASS_PACKAGE} ]]; then
                 SOURCE_URL=
-                testURLs SSHPASS_REPOS[@]
+                testURLs SSHPASS_REPOS[@] ${SSHPASS_PACKAGE}
 
                 if [[ -z ${SOURCE_URL} ]]; then
                   _error=36
@@ -457,28 +470,25 @@ function Dependencies {
                 log "Found ${SOURCE_URL}"
                 Download ${SOURCE_URL}
               fi
-              sudo rpm -ivh sshpass-1.06-2.el7.x86_64.rpm
+              sudo rpm -ivh ${SSHPASS_PACKAGE}
               if (( $? > 0 )); then
                 _error=31
                 log "Error ${_error}: cannot install ${2}."
                 exit ${_error}
               fi
-              # https://pkgs.org/download/sshpass
-              # https://sourceforge.net/projects/sshpass/files/sshpass/
             elif [[ `uname -s` == "Darwin" ]]; then
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
             fi
             ;;
-          jq )
+          jq | ${JQ_PACKAGE} )
             if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
-              if [[ ! -e jq-linux64 ]]; then
+              if [[ ! -e ${JQ_PACKAGE} ]]; then
                 sudo apt-get install --yes jq
               fi
             elif [[ ${_os_found} == '"centos"' ]]; then
-              # https://stedolan.github.io/jq/download/#checksums_and_signatures
-              if [[ ! -e jq-linux64 ]]; then
+              if [[ ! -e ${JQ_PACKAGE} ]]; then
                  SOURCE_URL=
-                 testURLs JQ_REPOS[@]
+                 testURLs JQ_REPOS[@] ${JQ_PACKAGE}
 
                  if [[ -z ${SOURCE_URL} ]]; then
                    _error=36
@@ -488,7 +498,7 @@ function Dependencies {
                  log "Found ${SOURCE_URL}"
                  Download ${SOURCE_URL}
               fi
-              chmod u+x jq-linux64 && ln -s jq-linux64 jq
+              chmod u+x ${JQ_PACKAGE} && ln -s ${JQ_PACKAGE} jq
               PATH+=:`pwd`
               export PATH
             elif [[ `uname -s` == "Darwin" ]]; then
@@ -511,11 +521,11 @@ function Dependencies {
       if [[ ${_os_found} == '"centos"' ]]; then
         #TODO:30 assuming we're on PC or PE VM.
         case "${2}" in
-          sshpass )
+          sshpass | ${SSHPASS_PACKAGE})
             sudo rpm -e sshpass
             ;;
-          jq )
-            rm -f jq jq-linux64
+          jq | ${JQ_PACKAGE} )
+            rm -f jq ${JQ_PACKAGE}
             ;;
         esac
       else
