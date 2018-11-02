@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-
-PRISM_ADMIN=admin
+          RELEASE=release.json
+   PC_VERSION_DEV=5.9.1
+PC_VERSION_STABLE=5.8.2
+      PRISM_ADMIN=admin
 
           OCTET=(${MY_PE_HOST//./ }) # zero index
     HPOC_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
@@ -71,5 +73,3 @@ CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json
 CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
       SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
      SSH_OPTS+=' -q' # -v'
-
-RELEASE=release.json

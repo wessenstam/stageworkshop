@@ -3,12 +3,9 @@
 
 RELEASE=release.json
 if [[ -e ${RELEASE} ]]; then
-  echo "Sourced stageworkshop.lib.sh, release: \
-    $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
-
-  if [[ -z ${PC_VERSION} ]]; then
-    PC_VERSION="$(grep PrismCentral ${RELEASE} | awk -F\" '{print $4}')"
-  fi
+  echo -e "Sourced stageworkshop.lib.sh, release: $(jq -r '.FullSemVer' ${RELEASE})\n \
+    \tPrismCentralStable=${PC_VERSION_STABLE}\n \
+    \t   PrismCentralDev=${PC_VERSION_DEV}\n"
 
   if [[ -z ${PC_VERSION} ]]; then
     PC_VERSION="Check stage_workshop.sh::stage_clusters() for the best known \
