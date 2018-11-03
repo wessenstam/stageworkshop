@@ -1,16 +1,9 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- BUG: PC LDAP 5.9 broken, add port and recursion?
+- BUG: PC LDAP 5.9 regression
   - https://jira.nutanix.com/browse/ENG-180716
-  - John Walker [14:13]
-  I figured it out. The default certs are fine
-  Need to add the following to the [global] section in /etc/samba/smb.conf
-    ldap server require strong auth = no
-  The connection from Prism wasn't strong enough so Samba was rejecting it.
-  I added that, restarted samba and was able to connect.
-  Using ldap://ip:389 and the DOMAIN\username format for the user
-  - Resolved by autodc-2.0.qcow2 release.
-    - AutoDC2 source: curl: (7) Failed connect to 10.21.250.221:80; Connection refused
+  - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
+  - TODO: Validate
 - BUG: all stage_calmhow_pc.sh service timeout detect/retry
   2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
