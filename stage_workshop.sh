@@ -13,48 +13,6 @@ WORKSHOPS=(\
 #"Tech Summit 2018" \
 ) # Adjust function stage_clusters for mappings as needed
 
-function cache() {
-  echo "Note: run from your laptop/desktop, ** not on the CVM. **"
-
-  local _bits=( \
-    http://10.59.103.143:8000/autodc-2.0.qcow2 \
-    http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
-    http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
-  )
-  #https://github.com/mlavi/stageworkshop/archive/master.zip
-  #http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
-  local _file
-  local _port=${HTTP_CACHE_PORT}
-
-  if [[ ${1} == 'stop' ]]; then
-    log "Killing service/tunnel:${_port}"
-    kill -9 $(pgrep -f ${_port})
-    exit 0
-  fi
-
-  if [[ ! -d cache ]]; then
-    mkdir cache
-  fi
-  pushd cache
-
-  for _file in "${_bits[@]}"; do
-    if [[ -e ${_file##*/} ]]; then
-      echo "Cached: ${_file##*/}"
-    else
-      curl --remote-name --location --continue-at - ${_file}
-    fi
-  done
-
-  echo "Setting up http://localhost:${_port}/ on cache directory..."
-  python -m SimpleHTTPServer ${_port} || python -m http.server ${_port} &
-  echo "Setting up remote SSH tunnel on local and remote port ${_port}..."
-  #ServerAliveInterval 120
-  ssh -nNT -R ${_port}:localhost:${_port} nutanix@10.21.31.31 &
-
-  popd
-  exit 0
-}
-
 function stage_clusters() {
   # Adjust as needed with $WORKSHOPS
   # Send configuration scripts to remote clusters and execute Prism Element script
@@ -363,11 +321,6 @@ while getopts "f:w:\?" opt; do
   esac
 done
 shift $((OPTIND -1))
-
-if [[ $1 == 'cache' ]]; then
-  cache $2
-  exit 0
-fi
 
 if [[ -n ${CLUSTER_LIST} && -n ${WORKSHOP_NUM} ]]; then
   stage_clusters

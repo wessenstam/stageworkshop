@@ -29,6 +29,9 @@ case "${1}" in
   cache )
     cache
     ;;
+  *)
+    WORKSHOP="${1}"
+    ;;
 esac
 
 if [[ -f ${BRANCH}.zip ]]; then
@@ -101,20 +104,25 @@ pushd ${REPOSITORY}-${BRANCH}/ \
   && chmod -R u+x *sh
 
 if [[ -e release.json ]]; then
- echo
- echo "${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')"
+ echo -e "\n${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')"
 fi
 
-MY_PE_HOST=$(ncli cluster get-params | grep 'External IP' \
-  | awk -F: '{print $2}' | tr -d '[:space:]')
+MY_PE_HOST=$(ncli cluster get-params \
+  | grep 'External IP' \
+  | awk -F: '{print $2}' \
+  | tr -d '[:space:]')
 
 echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST} ...\n"
 
+if [[ ! -z ${WORKSHOP} ]]; then
+  echo -e "\tAdding workshop: ${WORKSHOP}"
+  MY_WORKSHOP=" -w ${WORKSHOP}"
+fi
       MY_EMAIL=${MY_EMAIL} \
     MY_PE_HOST=${MY_PE_HOST} \
    PRISM_ADMIN=${PRISM_ADMIN} \
 MY_PE_PASSWORD=${MY_PE_PASSWORD} \
-./stage_workshop.sh -f - \
+./stage_workshop.sh -f - ${MY_WORKSHOP} \
   && popd
 
 echo -e "\n    DONE: ${0} ran for ${SECONDS} seconds."
