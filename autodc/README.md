@@ -54,7 +54,7 @@ I’m going to have a couple of ways. 1 would be to edit the users.csv and group
 
 PC 5.9.x Authentication was changed to add optional search recursion and strengthen security. This regressed the behavior of authentication configuration that worked in PC 5.8.x and works in PE 5.9.x.
 
-- https://jira.nutanix.com/browse/ENG-180716
+- https://jira.nutanix.com/browse/ENG-180716 "Invalid service account details" error message is incorrect
 
 Workaround: autodc-2.0.qcow2 release.
 

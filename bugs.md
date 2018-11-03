@@ -1,91 +1,65 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- BUG: PC LDAP 5.9 regression
-  - https://jira.nutanix.com/browse/ENG-180716
+- BUG = PC 5.9 authentication regression
+  - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
+    - Fix scheduled for PC 5.10.1
   - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
-  - TODO: Validate
-- BUG: all stage_calmhow_pc.sh service timeout detect/retry
-  2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
+    - TODO: Validate
+
+- BUG = all stage_calmhow_pc.sh service timeout detect/retry
+  - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
 
-- FEATURE: Darksite/cache:
-
-  0) Ideal to do this on a CVM, but you can prepare by downloading all of the bits in advance.
+- FEATURE = Darksite/cache:
+  - Ideal to do this on a CVM, but you can prepare by downloading all of the bits in advance.
    The goal is to get everything onto the CVM if there’s room.
    If not, get it onto a fileserver that the CVM can access, even via SCP/SSH.
-
-  1) Download the push button Calm archive, unarchive, create a cache directory inside:
+  - Download the push button Calm archive, unarchive, create a cache directory inside:
   wget https://github.com/mlavi/stageworkshop/archive/master.zip && \
   unzip master.zip && pushd stageworkshop-master && mkdir cache && cd ${_}
+  -  Put everything else below in this cache directory and contact me.
+    - AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
+    - CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
+    - PC-5.9.1 metadata and bits:
+      - http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
+      - http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+    - jq-1.5: https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
+    - sshpass: http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
+    # OPTIONAL rolling: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
 
-  2) Put everything else below in this cache directory and contact me.
-  - AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
-  - CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
-  - PC-5.9.1 metadata: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
-  - PC-5.9.1 bits: http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
-  - jq-1.5: https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
-  - sshpass: http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
-  # rolling:  http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-
-- Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
-  - BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
-- https://githooks.com/
-  - https://github.com/nkantar/Autohook
-  - https://pre-commit.com/
-    - brew install pre-commit
-  - https://github.com/rycus86/githooks
-- Add (git)version/release to each script (assembly?) for github archive cache
-  - https://semver.org/
-    - https://guides.github.com/introduction/flow/index.html
-    - https://github.com/GitTools/GitVersion
-      - https://gitversion.readthedocs.io/en/stable/usage/command-line/
-      - brew install gitversion
-      - GitVersion /showConfig
-    - sudo apt-get install mono-complete
-      - do not: sudo apt-get install libcurl3 # removes curl libcurl4
-    - Download dotnet4 zip archive
-    - put on mono-path?
-    - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
-      - docker pull gittools/gitversion-fullfx:linux
-      - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
-    - gitversion | tee gitversion.json | jq -r .FullSemVer
-    - ````ls -l *json && echo _GV=${_GV}````
-    - ````_GV=gitversion.json ; rm -f ${_GV} \
-    && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
-    - https://blog.ngeor.com/2017/12/19/semantic-versioning-with-gitversion.html
-  - versus https://github.com/markchalloner/git-semver
-- ~/Documents/github.com/ideadevice/calm/src/calm/tests/qa/docs
-  = https://github.com/ideadevice/calm/tree/master/src/calm/tests/qa/docs
-- start a feature branch
-- syslog format: INFO|DEBUG|etc.
-  - https://en.wikipedia.org/wiki/Syslog#Severity_level
-- Per Google shell style guide:
-  - refactor function names to lowercase: https://google.github.io/styleguide/shell.xml?showone=Function_Names#Function_Names
-- refactor URLs into global.vars.sh?
-  - ````grep --recursive http */*sh | fgrep -v localhost | fgrep -v _HOST > http.txt````
-  - download 403 detection
+- Feature = improve MKTG+SRE cluster automation
+  - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
   - detect HPOC networks to favor local URLs?
+  - Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
+
+- Ongoing = refactor URLs into global.vars.sh?
+  - ````egrep http *sh */*sh \
+    --exclude autodc*sh --exclude hooks*sh --exclude stage_citrixhow* \
+    --exclude vmdisk2image-pc.sh --exclude global.vars.sh \
+  | grep -v -i -e localhost -e 127.0.0.1 -e _HOST -e _http_ \
+    -e download.nutanix.com -e portal.nutanix.com -e python -e github -e '#' \
+  > http.txt````
+  - download 403 detection: authentication unauthorized
+
+# Backlog #
+
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
 - Calm videos/spreadsheet
 - Multi product demo
-- OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
-
-# Backlog #
-
-- TODO: update default or create new project
-- TODO: PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
+- Projects: update default or create new project
+- PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
   Error: Password requirements: Should be at least 8 characters long. Should have at least 1 lowercase character(s). Should have at least 1 uppercase character(s). Should have at least 1 digit(s). Should have at least 1 special character(s). Should differ by at least 4 characters from previous password. Should not be from last 5 passwords. Should not have more than 2 same consecutive character(s). Should not be a dictionary word or too simplistic/systematic. Should should have at least one character belonging to 4 out of the 4 supported classes (lowercase, uppercase, digits, special characters).
   2018-10-02 10:56:27|92834|PC_Init|Warning: password not reset: 0.#
-- TOFO: fix role mappings, logins on PE, PC
+- Fix role mappings, logins on PE, PC
   - PE, PC: use RBAC user for APIs, etc.: cluster Admin
-  - improve/run poc_samba_users.sh
+  - improve/run autodc/add_group_and_users.sh
   - adminuser01@ntnxlab.local (password = nutanix/4u) can’t login to PE.
     “You are not authorized to access Prism. Please contact the Nutanix administrator.”
     add user01@ntnxlab.local to role mapping, same error as above.
-- http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
-  - https://github.com/GitTools/GitReleaseNotes
+- OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
+
 - TODO: Add link: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
 - TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
 - nuclei (run local from container?)
@@ -137,6 +111,41 @@
 - ncli rsyslog
 - Add widget Deployed Applications to (default) dashboard
 
+- FEATURE: improved software engineering
+  - https://githooks.com/
+    - https://github.com/nkantar/Autohook
+    - https://pre-commit.com/
+      - brew install pre-commit
+    - https://github.com/rycus86/githooks
+  - Add (git)version/release to each script (assembly?) for github archive cache
+    - https://semver.org/
+      - https://guides.github.com/introduction/flow/index.html
+      - https://github.com/GitTools/GitVersion
+        - https://gitversion.readthedocs.io/en/stable/usage/command-line/
+        - brew install gitversion
+        - GitVersion /showConfig
+      - sudo apt-get install mono-complete
+        - do not: sudo apt-get install libcurl3 # removes curl libcurl4
+      - Download dotnet4 zip archive
+      - put on mono-path?
+      - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
+        - docker pull gittools/gitversion-fullfx:linux
+        - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
+      - gitversion | tee gitversion.json | jq -r .FullSemVer
+      - ````ls -l *json && echo _GV=${_GV}````
+      - ````_GV=gitversion.json ; rm -f ${_GV} \
+      && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
+      - https://blog.ngeor.com/2017/12/19/semantic-versioning-with-gitversion.html
+    - versus https://github.com/markchalloner/git-semver
+  - ~/Documents/github.com/ideadevice/calm/src/calm/tests/qa/docs
+    = https://github.com/ideadevice/calm/tree/master/src/calm/tests/qa/docs
+  - start a feature branch
+  - syslog format: INFO|DEBUG|etc.
+    - https://en.wikipedia.org/wiki/Syslog#Severity_level
+  - Per Google shell style guide:
+    - refactor function names to lowercase: https://google.github.io/styleguide/shell.xml?showone=Function_Names#Function_Names
+  - http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
+    - https://github.com/GitTools/GitReleaseNotes
 # Bash test framework for unit tests and on blueprints?
   - https://kitchen.ci/ which can do spec, BATS, etc. = https://github.com/test-kitchen/test-kitchen
     - https://kitchen.ci/docs/getting-started/writing-test

@@ -29,7 +29,7 @@ service smbd status
 exit
 
 curl --remote-name --location \
-https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh \
+https://raw.githubusercontent.com/mlavi/stageworkshop/master/autodc/autodc-v1-patch.sh \
   && export _autodc_conf=${_autodc_conf} \
   && export _autodc_patch=\"${_autodc_patch}\" \
   && bash ${_##*/}

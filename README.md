@@ -10,7 +10,7 @@ After HPoC Foundation, you can have push-button Calm in about half an hour!
     1. [Interactive Usage](#interactive-usage)
     2. [Non-interactive Usage](#non-interactive-usage)
 4. [Validate Staged Clusters](#validate-staged-clusters)
-5. [Authentication: Domain Controller](#authentication-domain-controller)
+5. [Authentication](#authentication)
 
 ## Available Workshops ##
 
@@ -98,9 +98,10 @@ Select an option: 4
 10.21.44.37 - Review logs at 10.21.44.37:/home/nutanix/config.log and 10.21.44.39:/home/nutanix/pcconfig.log
 ````
 
-## Authentication: Domain Controller ##
+## Authentication ##
 
 OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.
-- https://jira.nutanix.com/browse/ENG-126217 will be fixed with PC 5.6.1
+- https://jira.nutanix.com/browse/ENG-126217 openldap authentication difference in PC vs PE
+  - fixed with PC 5.7.1
 
-In the meantime, use a Windows Active Directory or for much simpler and faster results, Push Button Calm leverages [AutoDC](autodc/README.md).
+In the meantime, one can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages [AutoDC](autodc/README.md).
