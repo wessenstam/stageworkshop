@@ -38,9 +38,9 @@
 - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
   - BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
 - https://githooks.com/
+  - https://github.com/nkantar/Autohook
   - https://pre-commit.com/
     - brew install pre-commit
-  - https://github.com/nkantar/Autohook
   - https://github.com/rycus86/githooks
 - Add (git)version/release to each script (assembly?) for github archive cache
   - https://semver.org/
