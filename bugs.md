@@ -39,6 +39,7 @@
   - BUG: Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
 - https://githooks.com/
   - https://pre-commit.com/
+    - brew install pre-commit
   - https://github.com/nkantar/Autohook
   - https://github.com/rycus86/githooks
 - Add (git)version/release to each script (assembly?) for github archive cache
@@ -53,6 +54,8 @@
     - Download dotnet4 zip archive
     - put on mono-path?
     - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
+      - docker pull gittools/gitversion-fullfx:linux
+      - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
     - gitversion | tee gitversion.json | jq -r .FullSemVer
     - ````ls -l *json && echo _GV=${_GV}````
     - ````_GV=gitversion.json ; rm -f ${_GV} \
