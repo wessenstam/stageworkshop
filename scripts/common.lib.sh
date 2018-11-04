@@ -203,7 +203,6 @@ function repo_source() {
   local      _index=0
   local     _suffix
   local        _url
-  unset SOURCE_URL
 
   if (( ${#_candidates[@]} == 0 )); then
     log "Error ${_error}: Missing array!"
@@ -225,10 +224,12 @@ function repo_source() {
 
   while (( ${_index} < ${#_candidates[@]} ))
   do
+    unset SOURCE_URL
+
     # log "DEBUG: ${_index} ${_candidates[${_index}]}, OPTIONAL: _package=${_package}"
     _url=${_candidates[${_index}]}
 
-    if (( $(echo "${_url}" | grep '/$' | wc --lines) == 0 )); then
+    if [[ -z ${_package} ]] && (( $(echo "${_url}" | grep '/$' | wc --lines) == 0 )); then
       log "error ${_error}: ${_url} doesn't end in trailing slash, please correct."
       exit ${_error}
     fi
@@ -237,15 +238,20 @@ function repo_source() {
       _url+="${_package}"
     fi
 
+    if (( $(echo "${_url}" | grep '^nfs' | wc --lines) == 1 )); then
+      log "warning: TODO: cURL can't test nfs URLs...assuming a pass!"
+      export SOURCE_URL="${_url}"
+      break
+    fi
+
     _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_url} | tail -n1)
-    # log "DEBUG: _http_code=|${_http_code}|"
 
     if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
       export SOURCE_URL="${_url}"
       log "Found SOURCE_URL with HTTP:${_http_code} = ${SOURCE_URL}"
       break
     fi
-    log "DEBUG: SOURCE_URL miss, HTTP:${_http_code} = ${SOURCE_URL}"
+    log "DEBUG: SOURCE_URL miss, HTTP:${_http_code} = ${_url}"
     ((_index++))
   done
 
