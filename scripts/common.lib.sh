@@ -212,11 +212,10 @@ function repo_source() {
   fi
 
   if [[ -z ${_package} ]]; then
-    log "Convenience: checking for omitted package argument."
     _suffix=${_candidates[0]##*/}
     if (( $(echo "${_suffix}" | grep . | wc --lines) > 0)); then
+      log "Convenience: omitted package argument, added package=${_package}"
       _package="${_suffix}"
-      log "Debug: added ${_package}"
     fi
   fi
   # Prepend your local HTTP cache...
@@ -229,12 +228,12 @@ function repo_source() {
     # log "DEBUG: ${_index} ${_candidates[${_index}]}, OPTIONAL: _package=${_package}"
     _url=${_candidates[${_index}]}
 
-    if [[ -z ${_package} ]] && (( $(echo "${_url}" | grep '/$' | wc --lines) == 0 )); then
-      log "error ${_error}: ${_url} doesn't end in trailing slash, please correct."
-      exit ${_error}
-    fi
-
-    if [[ ! -z ${_package} ]]; then
+    if [[ -z ${_package} ]]; then
+      if (( $(echo "${_url}" | grep '/$' | wc --lines) == 0 )); then
+        log "error ${_error}: ${_url} doesn't end in trailing slash, please correct."
+        exit ${_error}
+      fi
+    elif (( $(echo "${_url}" | grep '/$' | wc --lines) == 1 )); then
       _url+="${_package}"
     fi
 
