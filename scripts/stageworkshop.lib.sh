@@ -134,13 +134,17 @@ function stageworkshop_ssh() {
       ;;
     PE | pe)
       _host=${PE_HOST}
-      echo 'OPTIONAL: ./stage_workshop.sh cache-start'
-      echo '   CHECK: wget http://localhost:8181 -q -O-'
-      echo 'pkill -f calm ; tail -f stage_calmhow*log'
-      echo 'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}'
+
+      cat << EOF
+OPTIONAL: cd stageworkshop-master
+   CHECK: wget http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT} -q -O-
+
+pkill -f calm ; tail -f stage_calmhow*log
+EOF
+
       echo 'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password}' sh ${_##*/}'
-
+      echo -e "cd stageworkshop-master/scripts/ && \ \n MY_PE_HOST=${PE_HOST} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./stage_calmhow.sh 1"
       ;;
     AUTH | auth | ldap)
       _password='nutanix/4u'

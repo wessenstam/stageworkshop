@@ -139,31 +139,17 @@ function authentication_source() {
         _loop=0
        _sleep=${SLEEP}
 
-        # TODO: detect image ready, else...
-        repo_test LDAP_IMAGES[@]
+        repo_test AUTODC_IMAGES[@]
 
-        # while true ; do
-        #   (( _loop++ ))
         if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
-          log "Import ${LDAP_SERVER} image..."
+          log "Import ${LDAP_SERVER} image from ${SOURCE_URL}..."
           acli image.create ${LDAP_SERVER} image_type=kDiskImage wait=true \
             container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
         else
           log "Image already found, skipping ${LDAP_SERVER} import."
         fi
 
-          # if [[ ${_test} =~ 'complete' ]]; then
-          #   break
-          # elif (( ${_loop} > ${ATTEMPTS} )); then
-          #   acli "vm.create STAGING-FAILED-${LDAP_SERVER}"
-          #   log "${LDAP_SERVER} failed to upload after ${_loop} attempts. This cluster may require manual remediation."
-          #   exit 13
-          # else
-          #   log "_test ${_loop}=${_test}: ${LDAP_SERVER} failed. Sleep ${_sleep} seconds..."
-          #   sleep ${_sleep}
-          # fi
-        # done
-
+        # TODO: detect AUTH image ready, else...
         log "Create ${LDAP_SERVER} VM based on ${LDAP_SERVER} image"
         acli "vm.create ${LDAP_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
         # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
