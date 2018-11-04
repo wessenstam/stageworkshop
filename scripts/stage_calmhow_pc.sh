@@ -318,7 +318,7 @@ function images() {
     if [[ -n $(nuclei image.list 2>&1 | grep -i complete | grep "${_image}") ]]; then
       log "Skip: ${_image} already complete on cluster."
     else
-      repo_test QCOW2_REPOS[@] "${_image}" # IMPORTANT: don't ${dereference}[array]!
+      repo_source QCOW2_REPOS[@] "${_image}" # IMPORTANT: don't ${dereference}[array]!
 
       # if [[ -z "${SOURCE_URL}" ]]; then
       #   _error=30

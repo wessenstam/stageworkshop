@@ -17,14 +17,17 @@ MY_IMG_CONTAINER_NAME='Images'
 HTTP_CACHE_HOST=localhost
 HTTP_CACHE_PORT=8181
 
+# Conventions for *_REPOS arrays, the URL must end with:
+# - trailing slash (which imples _IMAGES argument to repo_source)
+# - or full package filename.
+
 # https://stedolan.github.io/jq/download/#checksums_and_signatures
-   JQ_PACKAGE=jq-linux64
      JQ_REPOS=(\
- 'https://github.com/stedolan/jq/releases/download/jq-1.5' \
+      'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
 )
   QCOW2_REPOS=(\
- 'http://10.21.250.221/images/ahv/techsummit' \
-    'https://s3.amazonaws.com/get-ahv-images' \
+   'http://10.21.250.221/images/ahv/techsummit/' \
+      'https://s3.amazonaws.com/get-ahv-images/' \
 )
  QCOW2_IMAGES=(\
   CentOS7-06252018.qcow2 \
@@ -34,9 +37,8 @@ HTTP_CACHE_PORT=8181
 )
 # https://pkgs.org/download/sshpass
 # https://sourceforge.net/projects/sshpass/files/sshpass/
-SSHPASS_PACKAGE=sshpass-1.06-2.el7.x86_64.rpm
   SSHPASS_REPOS=(\
- 'http://mirror.centos.org/centos/7/extras/x86_64/Packages' \
+   'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
 )
 
    LDAP_SERVER='AutoDC'  # TODO:160 refactor LDAP_SERVER choice to input file, set default here.
@@ -48,7 +50,7 @@ MY_DOMAIN_NAME='NTNXLAB'
 MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
- AUTODC_IMAGES=(\
+  AUTODC_REPOS=(\
    'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 #   'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \

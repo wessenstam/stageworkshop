@@ -139,7 +139,7 @@ function authentication_source() {
         _loop=0
        _sleep=${SLEEP}
 
-        repo_test AUTODC_IMAGES[@]
+        repo_source AUTODC_REPOS[@]
 
         if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
           log "Import ${LDAP_SERVER} image from ${SOURCE_URL}..."

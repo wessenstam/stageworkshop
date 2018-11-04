@@ -249,7 +249,7 @@ function select_workshop() {
         if [[ ${WORKSHOP_NUM} == "" ]]; then
           echo -e "\nInvalid entry = ${WORKSHOP}, please try again."
         else
-          echo "Matched!"
+          #log "Matched: workshop ${WORKSHOP}!"
           break
         fi
         ;;
@@ -324,14 +324,12 @@ shift $((OPTIND -1))
 
 if [[ -n ${CLUSTER_LIST} && -n ${WORKSHOP_NUM} ]]; then
   stage_clusters
-elif [[ -z ${CLUSTER_LIST} ]]; then
-  log "Error:|${CLUSTER_LIST}| missing ${_CLUSTER_FILE} argument."
-  script_usage
 elif [[ -n ${WORKSHOP_NUM} ]]; then
   log "Error: missing workshop number argument."
   script_usage
 elif [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == "${_VALIDATE}" ]]; then
   validate_clusters
 else
+  log "Warning: missing ${_CLUSTER_FILE} argument."
   get_file # If no command line arguments, start interactive session
 fi

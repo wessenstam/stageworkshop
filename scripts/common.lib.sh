@@ -194,13 +194,14 @@ function log() {
   echo "`date '+%Y-%m-%d %H:%M:%S'`|$$|${_caller}|${1}"
 }
 
-function repo_test() {
+function repo_source() {
   # https://stackoverflow.com/questions/1063347/passing-arrays-as-parameters-in-bash#4017175
   local _candidates=("${!1}") # REQUIRED
   local    _package="${2}"    # OPTIONAL
   local      _error=29
   local  _http_code
   local      _index=0
+  local     _suffix
   local        _url
   unset SOURCE_URL
 
@@ -211,16 +212,29 @@ function repo_test() {
   #   log "DEBUG: _candidates count is ${#_candidates[@]}"
   fi
 
+  if [[ -z ${_package} ]]; then
+    log "Convenience: checking for omitted package argument."
+    _suffix=${_candidates[0]##*/}
+    if (( $(echo "${_suffix}" | grep . | wc --lines) > 0)); then
+      _package="${_suffix}"
+      log "Debug: added ${_package}"
+    fi
+  fi
   # Prepend your local HTTP cache...
-  _candidates=( "http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT}" "${_candidates[@]}" )
+  _candidates=( "http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT}/" "${_candidates[@]}" )
 
   while (( ${_index} < ${#_candidates[@]} ))
   do
     # log "DEBUG: ${_index} ${_candidates[${_index}]}, OPTIONAL: _package=${_package}"
     _url=${_candidates[${_index}]}
 
+    if (( $(echo "${_url}" | grep '/$' | wc --lines) == 0 )); then
+      log "error ${_error}: ${_url} doesn't end in trailing slash, please correct."
+      exit ${_error}
+    fi
+
     if [[ ! -z ${_package} ]]; then
-      _url+="/${_package}"
+      _url+="${_package}"
     fi
 
     _http_code=$(curl ${CURL_OPTS} --max-time 5 --write-out '%{http_code}' --head ${_url} | tail -n1)
@@ -431,12 +445,14 @@ function remote_exec() {
 }
 
 function Dependencies {
-  local  _argument
-  local     _error
-  local     _index
-  local       _cpe=/etc/os-release  # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
-  local       _lsb=/etc/lsb-release # Linux Standards Base
-  local  _os_found
+  local    _argument
+  local       _error
+  local       _index
+  local         _cpe=/etc/os-release  # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
+  local         _lsb=/etc/lsb-release # Linux Standards Base
+  local    _os_found
+  local      _jq_pkg=${JQ_REPOS[0]##*/}
+  local _sshpass_pkg=${SSHPASS_REPOS[0]##*/}
 
   if [[ -z ${1} ]]; then
     _error=20
@@ -460,16 +476,16 @@ function Dependencies {
       export PATH=${PATH}:${HOME}
       if [[ -z `which ${2}` ]]; then
         case "${2}" in
-          sshpass | ${SSHPASS_PACKAGE})
+          sshpass | ${_sshpass_pkg})
             if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
               sudo apt-get install --yes sshpass
             elif [[ ${_os_found} == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
-              if [[ ! -e ${SSHPASS_PACKAGE} ]]; then
-                repo_test SSHPASS_REPOS[@] ${SSHPASS_PACKAGE}
+              if [[ ! -e ${_sshpass_pkg} ]]; then
+                repo_source SSHPASS_REPOS[@] ${_sshpass_pkg}
                 Download ${SOURCE_URL}
               fi
-              sudo rpm -ivh ${SSHPASS_PACKAGE}
+              sudo rpm -ivh ${_sshpass_pkg}
               if (( $? > 0 )); then
                 _error=31
                 log "Error ${_error}: cannot install ${2}."
@@ -479,17 +495,17 @@ function Dependencies {
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
             fi
             ;;
-          jq | ${JQ_PACKAGE} )
+          jq | ${_jq_pkg} )
             if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
-              if [[ ! -e ${JQ_PACKAGE} ]]; then
+              if [[ ! -e ${_jq_pkg} ]]; then
                 sudo apt-get install --yes jq
               fi
             elif [[ ${_os_found} == '"centos"' ]]; then
-              if [[ ! -e ${JQ_PACKAGE} ]]; then
-                 repo_test JQ_REPOS[@] ${JQ_PACKAGE}
+              if [[ ! -e ${_jq_pkg} ]]; then
+                 repo_source JQ_REPOS[@] ${_jq_pkg}
                  Download ${SOURCE_URL}
               fi
-              chmod u+x ${JQ_PACKAGE} && ln -s ${JQ_PACKAGE} jq
+              chmod u+x ${_jq_pkg} && ln -s ${_jq_pkg} jq
               PATH+=:`pwd`
               export PATH
             elif [[ `uname -s` == "Darwin" ]]; then
@@ -512,11 +528,11 @@ function Dependencies {
       if [[ ${_os_found} == '"centos"' ]]; then
         #TODO:30 assuming we're on PC or PE VM.
         case "${2}" in
-          sshpass | ${SSHPASS_PACKAGE})
+          sshpass | ${_sshpass_pkg})
             sudo rpm -e sshpass
             ;;
-          jq | ${JQ_PACKAGE} )
-            rm -f jq ${JQ_PACKAGE}
+          jq | ${_jq_pkg} )
+            rm -f jq ${_jq_pkg}
             ;;
         esac
       else
