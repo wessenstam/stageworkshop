@@ -31,18 +31,18 @@ function pc_auth() {
   local       _test
 
   # TODO: hadcoded URL, not passing arguments yet. Disabling by appending v1
-  if [[ ${LDAP_SERVER} == 'AutoDCv1' ]]; then
+  if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
     local  _autodc_conf=/etc/samba/smb.conf
     local _autodc_patch='ldap server require strong auth = no'
-    remote_exec 'ssh' 'LDAP_SERVER' \
+    remote_exec 'ssh' 'AUTH_SERVER' \
     'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh && bash ${_##*/}' \
     'OPTIONAL'
   fi
 
-  log "Add Directory ${LDAP_SERVER}"
+  log "Add Directory ${AUTH_SERVER}"
   _http_body=$(cat <<EOF
   {
-    "name":"${LDAP_SERVER}",
+    "name":"${AUTH_SERVER}",
     "domain":"${MY_DOMAIN_FQDN}",
     "directoryType":"ACTIVE_DIRECTORY",
     "connectionType":"LDAP",
@@ -74,7 +74,7 @@ EOF
   for _group in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
     _http_body=$(cat <<EOF
     {
-      "directoryName":"${LDAP_SERVER}",
+      "directoryName":"${AUTH_SERVER}",
       "role":"ROLE_CLUSTER_ADMIN",
       "entityType":"GROUP",
       "entityValues":["${_group}"]
@@ -83,20 +83,20 @@ EOF
     )
     _test=$(curl ${CURL_POST_OPTS} \
       --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_http_body}" \
-      https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${LDAP_SERVER}/role_mappings)
+      https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${AUTH_SERVER}/role_mappings)
     log "Cluster Admin=${_group}, _test=|${_test}|"
   done
 }
 
 function ssp_auth() {
-  CheckArgsExist 'LDAP_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+  CheckArgsExist 'AUTH_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
 
   local   _http_body
   local   _ldap_name
   local   _ldap_uuid
   local _ssp_connect
 
-  log "Find ${LDAP_SERVER} uuid"
+  log "Find ${AUTH_SERVER} uuid"
   _ldap_uuid=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
     --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} --data '{ "kind": "directory_service" }' \
     https://localhost:9440/api/nutanix/v3/directory_services/list \
@@ -104,14 +104,14 @@ function ssp_auth() {
   log "_ldap_uuid=|${_ldap_uuid}|"
 
   # TODO:20 get directory service name _ldap_name
-  _ldap_name=${LDAP_SERVER}
+  _ldap_name=${AUTH_SERVER}
   # TODO:80 bats? test ldap connection
 
   log "Connect SSP Authentication (spec-ssp-authrole.json)..."
   _http_body=$(cat <<EOF
   {
     "spec": {
-      "name": "${LDAP_SERVER}",
+      "name": "${AUTH_SERVER}",
       "resources": {
         "admin_group_reference_list": [
           {
@@ -420,7 +420,7 @@ function calm_update() {
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
     log "Bypassing download of updated containers."
   else
-    remote_exec 'ssh' 'LDAP_SERVER' \
+    remote_exec 'ssh' 'AUTH_SERVER' \
       'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
       'OPTIONAL'
 

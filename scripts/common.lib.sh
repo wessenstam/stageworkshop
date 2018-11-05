@@ -364,7 +364,7 @@ function Download() {
 
 function remote_exec() {
 # Argument ${1} = REQUIRED: ssh or scp
-# Argument ${2} = REQUIRED: PE, PC, or LDAP_SERVER
+# Argument ${2} = REQUIRED: PE, PC, or AUTH_SERVER
 # Argument ${3} = REQUIRED: command configuration
 # Argument ${4} = OPTIONAL: populated with anything = allowed to fail
 
@@ -387,7 +387,7 @@ function remote_exec() {
           _host=${MY_PC_HOST}
       _password=${_pw_init}
       ;;
-    'LDAP_SERVER' )
+    'AUTH_SERVER' )
        _account='root'
           _host=${LDAP_HOST}
       _password=${_pw_init}

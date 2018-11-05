@@ -116,14 +116,14 @@ function authentication_source() {
   local       _test=0
   local         _vm
 
-  CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
+  CheckArgsExist 'AUTH_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
 
-  if [[ -z ${LDAP_SERVER} ]]; then
+  if [[ -z ${AUTH_SERVER} ]]; then
     log "Error ${_error}: please provide a choice for authentication server."
     exit ${_error}
   fi
 
-  case "${LDAP_SERVER}" in
+  case "${AUTH_SERVER}" in
     'ActiveDirectory')
       log "Manual setup = https://github.com/nutanixworkshops/labs/blob/master/setup/active_directory/active_directory_setup.rst"
       ;;
@@ -146,40 +146,46 @@ function authentication_source() {
         _autodc_restart="sleep 2 && service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
+
+        export AUTODC_REPOS=(\ # override global.vars.
+         'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+        # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+         'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+        )
       fi
 
       dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
       _result=$?
 
       if (( ${_result} == 0 )); then
-        log "${LDAP_SERVER}.IDEMPOTENCY: dc${_autodc_index}.${MY_DOMAIN_FQDN} set, skip. ${_result}"
+        log "${AUTH_SERVER}.IDEMPOTENCY: dc${_autodc_index}.${MY_DOMAIN_FQDN} set, skip. ${_result}"
       else
-        log "${LDAP_SERVER}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+        log "${AUTH_SERVER}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN}"
 
-       _error=12
-        _loop=0
-       _sleep=${SLEEP}
+        _error=12
+         _loop=0
+        _sleep=${SLEEP}
 
         repo_source AUTODC_REPOS[@]
 
-        if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${LDAP_SERVER} | wc --lines` == 0 )); then
-          log "Import ${LDAP_SERVER} image from ${SOURCE_URL}..."
-          acli image.create ${LDAP_SERVER} image_type=kDiskImage wait=true \
+        if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${AUTH_SERVER} | wc --lines` == 0 )); then
+          log "Import ${AUTH_SERVER} image from ${SOURCE_URL}..."
+          acli image.create ${AUTH_SERVER} image_type=kDiskImage wait=true \
             container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
         else
-          log "Image found, skipping ${LDAP_SERVER} import."
+          log "Image found, skipping ${AUTH_SERVER} import."
         fi
 
         # TODO: detect AUTH image ready, else...
-        log "Create ${LDAP_SERVER} VM based on ${LDAP_SERVER} image"
-        acli "vm.create ${LDAP_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
+        log "Create ${AUTH_SERVER} VM based on ${AUTH_SERVER} image"
+        acli "vm.create ${AUTH_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
         # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
-        acli "vm.disk_create ${LDAP_SERVER} cdrom=true empty=true"
-        acli "vm.disk_create ${LDAP_SERVER} clone_from_image=${LDAP_SERVER}"
-        acli "vm.nic_create ${LDAP_SERVER} network=${MY_PRIMARY_NET_NAME} ip=${LDAP_HOST}"
+        acli "vm.disk_create ${AUTH_SERVER} cdrom=true empty=true"
+        acli "vm.disk_create ${AUTH_SERVER} clone_from_image=${AUTH_SERVER}"
+        acli "vm.nic_create ${AUTH_SERVER} network=${MY_PRIMARY_NET_NAME} ip=${LDAP_HOST}"
 
-        log "Power on ${LDAP_SERVER} VM..."
-        acli "vm.on ${LDAP_SERVER}"
+        log "Power on ${AUTH_SERVER} VM..."
+        acli "vm.on ${AUTH_SERVER}"
 
         _attempts=20
             _loop=0
@@ -188,16 +194,17 @@ function authentication_source() {
         while true ; do
           (( _loop++ ))
 
-          _test=$(remote_exec 'SSH' 'LDAP_SERVER' "${_autodc_status}")
+          _test=$(remote_exec 'SSH' 'AUTH_SERVER' "${_autodc_status}")
           if [[ "${_test}" == "${_autodc_success}" ]]; then
-            log "${LDAP_SERVER} is ready."
+            log "${AUTH_SERVER} is ready."
             sleep ${_sleep}
             break
           elif (( ${_loop} > ${_attempts} )); then
-            log "Error ${_error}: ${LDAP_SERVER} VM running: giving up after ${_loop} tries."
+            log "Error ${_error}: ${AUTH_SERVER} VM running: giving up after ${_loop} tries."
             _result=$(source /etc/profile.d/nutanix_env.sh \
-              && for _vm in $(source /etc/profile.d/nutanix_env.sh && acli vm.list | grep ${LDAP_SERVER}) ; do acli -y vm.delete $_vm; done)
-            log "Remediate by deleting the ${LDAP_SERVER} VM from PE (just attempted by this script: ${_result}) and then running acli $_"
+              && for _vm in $(source /etc/profile.d/nutanix_env.sh && acli vm.list | grep ${AUTH_SERVER}) ; do acli -y vm.delete $_vm; done)
+            # acli image.delete ${AUTH_SERVER}
+            log "Remediate by deleting the ${AUTH_SERVER} VM from PE (just attempted by this script: ${_result}) and then running acli $_"
             exit ${_error}
           else
             log "_test ${_loop}/${_attempts}=|${_test}|: sleep ${_sleep} seconds..."
@@ -205,14 +212,14 @@ function authentication_source() {
           fi
         done
 
-        log "Create Reverse Lookup Zone on ${LDAP_SERVER} VM..."
+        log "Create Reverse Lookup Zone on ${AUTH_SERVER} VM..."
         _attempts=3
             _loop=0
 
         while true ; do
           (( _loop++ ))
           # TODO:130 Samba service reload better? vs. force-reload and restart
-          remote_exec 'SSH' 'LDAP_SERVER' \
+          remote_exec 'SSH' 'AUTH_SERVER' \
             "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa ${_autodc_auth} && ${_autodc_restart}" \
             'OPTIONAL'
           sleep ${_sleep}
@@ -225,8 +232,8 @@ function authentication_source() {
             break
           elif (( ${_loop} > ${_attempts} )); then
             if (( ${_autodc_release} < 2 )); then
-              log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
-              acli "-y vm.delete ${LDAP_SERVER}"
+              log "Error ${_error}: ${AUTH_SERVER}: giving up after ${_loop} tries; deleting VM..."
+              acli "-y vm.delete ${AUTH_SERVER}"
               exit ${_error}
             fi
           else
