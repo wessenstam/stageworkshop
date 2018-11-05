@@ -30,9 +30,14 @@ HTTP_CACHE_PORT=8181
       'https://s3.amazonaws.com/get-ahv-images/' \
 )
  QCOW2_IMAGES=(\
-  CentOS7-06252018.qcow2 \
-  Windows2012R2-04282018.qcow2 \
-  Windows10-1709-04282018.qcow2 \
+  CentOS7.qcow2 \
+  Windows2016.qcow2 \
+  Windows2012R2.qcow2 \
+  Windows10-1709.qcow2 \
+  CentOS7.iso \
+  Windows2016,iso \
+  Windows2012R2.iso \
+  Windows10.iso \
   Nutanix-VirtIO-1.1.3.iso \
 )
 # https://pkgs.org/download/sshpass
