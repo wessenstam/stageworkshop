@@ -51,8 +51,8 @@ MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
 MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
   AUTODC_REPOS=(\
-   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
    'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 #   'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
 #   'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \

@@ -3,16 +3,23 @@
 # Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 # Please configure according to your needs
 
-function test_dns() {
-  local   _dns
-  local _error=44
-  local  _test=$?
+function dns_check() {
+  local    _dns
+  local  _error
+  local _lookup=${2}
+  local   _test
 
-  CheckArgsExist 'LDAP_HOST MY_DOMAIN_FQDN'
+  if [[ -z ${_lookup} ]]; then
+    _error=43
+    log "Error ${_error}: missing lookup record!"
+    exit ${_error}
+  fi
 
-  _dns=$(dig +retry=0 +time=2 +short @${LDAP_HOST} dc1.${MY_DOMAIN_FQDN})
+   _dns=$(dig +retry=0 +time=2 +short @${LDAP_HOST} ${_lookup})
+  _test=$?
 
   if [[ ${_dns} != "${LDAP_HOST}" ]]; then
+    _error=44
     log "Error ${_error}: result was ${_test}: ${_dns}"
     return ${_error}
   fi
@@ -111,12 +118,13 @@ function authentication_source() {
   local   _attempts
   local      _error=13
   local       _loop
+  local _pc_version=$(echo ${PC_VERSION} | awk -F. '{ print $1 "." $2$3$4}')
   local     _result
   local      _sleep
-  local       _test
+  local       _test=0
   local         _vm
 
-  CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME'
+  CheckArgsExist 'LDAP_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
 
   if [[ -z ${LDAP_SERVER} ]]; then
     log "Error ${_error}: please provide a choice for authentication server."
@@ -128,12 +136,30 @@ function authentication_source() {
       log "Manual setup = https://github.com/nutanixworkshops/labs/blob/master/setup/active_directory/active_directory_setup.rst"
       ;;
     'AutoDC')
-      test_dns; _result=$?
+      local    _autodc_auth
+      local   _autodc_index=1
+      local _autodc_release=1
+      local _autodc_service='samba-ad-dc'
+      local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
+      local _autodc_success='SubState=running'
+
+      log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
+      if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
+           _autodc_auth=" --username=${MY_DOMAIN_USER} --password=${MY_DOMAIN_PASS}"
+          _autodc_index=''
+        _autodc_release=2
+        _autodc_service=samba
+        _autodc_status="service ${_autodc_service} status"
+        _autodc_success=' * status: started'
+      fi
+
+      dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+      _result=$?
 
       if (( ${_result} == 0 )); then
-        log "${LDAP_SERVER}.IDEMPOTENCY: dc1.${MY_DOMAIN_FQDN} set, skip. ${_result}"
+        log "${LDAP_SERVER}.IDEMPOTENCY: dc${_autodc_index}.${MY_DOMAIN_FQDN} set, skip. ${_result}"
       else
-        log "${LDAP_SERVER}.IDEMPOTENCY failed, no DNS record dc1.${MY_DOMAIN_FQDN}"
+        log "${LDAP_SERVER}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN}"
 
        _error=12
         _loop=0
@@ -166,11 +192,15 @@ function authentication_source() {
 
         while true ; do
           (( _loop++ ))
-          _test=$(remote_exec 'SSH' 'LDAP_SERVER' 'systemctl show samba-ad-dc --property=SubState')
 
-          if [[ "${_test}" == "SubState=running" ]]; then
+          _test=$(remote_exec 'SSH' 'LDAP_SERVER' "${_autodc_status}")
+          if [[ "${_test}" == "${_autodc_success}" ]]; then
             log "${LDAP_SERVER} is ready."
             sleep ${_sleep}
+            break
+          fi
+
+          if (( ${_test} == 1 )); then
             break
           elif (( ${_loop} > ${_attempts} )); then
             log "Error ${_error}: ${LDAP_SERVER} VM running: giving up after ${_loop} tries."
@@ -192,21 +222,22 @@ function authentication_source() {
           (( _loop++ ))
           # TODO:130 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
-            "samba-tool dns zonecreate dc1 ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa && service samba-ad-dc restart" \
+            "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa && service ${_autodc_service} restart" \
             'OPTIONAL'
           sleep ${_sleep}
 
-          test_dns; _result=$?
+          dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+          _result=$?
 
           if (( ${_result} == 0 )); then
-            log "Success: DNS record dc1.${MY_DOMAIN_FQDN} set."
+            log "Success: DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN} set."
             break
           elif (( ${_loop} > ${_attempts} )); then
             log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
             acli "-y vm.delete ${LDAP_SERVER}"
             exit ${_error}
           else
-            log "test_dns ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
+            log "dns_check ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
             sleep ${_sleep}
           fi
         done
