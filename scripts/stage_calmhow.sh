@@ -6,7 +6,7 @@
 function dns_check() {
   local    _dns
   local  _error
-  local _lookup=${2}
+  local _lookup=${1} # REQUIRED
   local   _test
 
   if [[ -z ${_lookup} ]]; then
