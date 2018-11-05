@@ -143,15 +143,15 @@ function authentication_source() {
       local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
       local _autodc_success='SubState=running'
 
-      log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
-      if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
+#      log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
+#      if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
            _autodc_auth=" --username=${MY_DOMAIN_USER} --password=${MY_DOMAIN_PASS}"
           _autodc_index=''
         _autodc_release=2
         _autodc_service=samba
-        _autodc_status="service ${_autodc_service} status"
+         _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
-      fi
+#      fi
 
       dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
       _result=$?
@@ -172,7 +172,7 @@ function authentication_source() {
           acli image.create ${LDAP_SERVER} image_type=kDiskImage wait=true \
             container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
         else
-          log "Image already found, skipping ${LDAP_SERVER} import."
+          log "Image found, skipping ${LDAP_SERVER} import."
         fi
 
         # TODO: detect AUTH image ready, else...
