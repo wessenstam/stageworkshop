@@ -142,7 +142,8 @@ OPTIONAL: cd stageworkshop-master
 pkill -f calm ; tail -f stage_calmhow*log
 EOF
 
-      echo 'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
+      echo 'rm -rf master.zip stage_calmhow.log stageworkshop-master/ && \'
+      echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password}' sh ${_##*/} \'
       echo '  && tail -f ~/stage_calmhow.log &'
       echo -e "cd stageworkshop-master/scripts/ && \ \n MY_PE_HOST=${PE_HOST} MY_PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./stage_calmhow.sh"

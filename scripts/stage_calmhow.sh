@@ -218,7 +218,7 @@ function authentication_source() {
           (( _loop++ ))
           # TODO:130 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
-            "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa && service ${_autodc_service} restart" \
+            "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa ${_autodc_auth} && service ${_autodc_service} restart" \
             'OPTIONAL'
           sleep ${_sleep}
 
