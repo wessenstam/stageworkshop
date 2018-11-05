@@ -92,21 +92,13 @@ function network_configure() {
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
-    log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}"
-    # log "VLAN: ${MY_PRIMARY_NET_VLAN}"
-    # log "Subnet: ${HPOC_PREFIX}.1/25"
-    # log "Domain: ${MY_DOMAIN_NAME}"
-    # log "Pool: ${HPOC_PREFIX}.50 to ${HPOC_PREFIX}.125"
+    log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}, VLAN: ${MY_PRIMARY_NET_VLAN}, Subnet: ${HPOC_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${HPOC_PREFIX}.50 to ${HPOC_PREFIX}.125"
     acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=${HPOC_PREFIX}.1/25"
     acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${LDAP_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
     acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${HPOC_PREFIX}.50 end=${HPOC_PREFIX}.125"
 
     if [[ ${MY_SECONDARY_NET_NAME} ]]; then
-      log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}"
-      # log "VLAN: ${MY_SECONDARY_NET_VLAN}"
-      # log "Subnet: ${HPOC_PREFIX}.129/25"
-      # log "Domain: ${MY_DOMAIN_NAME}"
-      # log "Pool: ${HPOC_PREFIX}.132 to ${HPOC_PREFIX}.253"
+      log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${HPOC_PREFIX}.129/25, Pool: ${HPOC_PREFIX}.132 to ${HPOC_PREFIX}.253"
       acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${HPOC_PREFIX}.129/25"
       acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${LDAP_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
       acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=${HPOC_PREFIX}.132 end=${HPOC_PREFIX}.253"
@@ -140,6 +132,7 @@ function authentication_source() {
       local   _autodc_index=1
       local _autodc_release=1
       local _autodc_service='samba-ad-dc'
+      local _autodc_restart="service ${_autodc_service} restart"
       local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
       local _autodc_success='SubState=running'
 
@@ -149,6 +142,7 @@ function authentication_source() {
           _autodc_index=''
         _autodc_release=2
         _autodc_service=samba
+        _autodc_restart="service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
 #      fi
@@ -188,7 +182,7 @@ function authentication_source() {
 
         _attempts=20
             _loop=0
-           _sleep=7
+           _sleep=10
 
         while true ; do
           (( _loop++ ))
@@ -218,7 +212,7 @@ function authentication_source() {
           (( _loop++ ))
           # TODO:130 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'LDAP_SERVER' \
-            "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa ${_autodc_auth} && service ${_autodc_service} restart" \
+            "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa ${_autodc_auth} && ${_autodc_restart}" \
             'OPTIONAL'
           sleep ${_sleep}
 
@@ -230,7 +224,7 @@ function authentication_source() {
             break
           elif (( ${_loop} > ${_attempts} )); then
             log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
-            acli "-y vm.delete ${LDAP_SERVER}"
+            #acli "-y vm.delete ${LDAP_SERVER}"
             exit ${_error}
           else
             log "dns_check ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
