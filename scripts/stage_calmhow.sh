@@ -198,10 +198,6 @@ function authentication_source() {
             log "${LDAP_SERVER} is ready."
             sleep ${_sleep}
             break
-          fi
-
-          if (( ${_test} == 1 )); then
-            break
           elif (( ${_loop} > ${_attempts} )); then
             log "Error ${_error}: ${LDAP_SERVER} VM running: giving up after ${_loop} tries."
             _result=$(source /etc/profile.d/nutanix_env.sh \
