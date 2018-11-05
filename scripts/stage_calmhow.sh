@@ -142,7 +142,7 @@ function authentication_source() {
           _autodc_index=''
         _autodc_release=2
         _autodc_service=samba
-        _autodc_restart="service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
+        _autodc_restart="sleep 2 && service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
 #      fi
@@ -224,7 +224,7 @@ function authentication_source() {
             break
           elif (( ${_loop} > ${_attempts} )); then
             log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
-            #acli "-y vm.delete ${LDAP_SERVER}"
+            #TOFIX: acli "-y vm.delete ${LDAP_SERVER}"
             exit ${_error}
           else
             log "dns_check ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
