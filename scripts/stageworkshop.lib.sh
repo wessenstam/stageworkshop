@@ -6,7 +6,7 @@
 
 . scripts/global.vars.sh
 
-if [[ -e ${RELEASE} ]]; then
+if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   echo -e "Sourced stageworkshop.lib.sh, release: $(jq -r '.FullSemVer' ${RELEASE})\n \
     \tPrismCentralStable=${PC_VERSION_STABLE}\n \
     \t   PrismCentralDev=${PC_VERSION_DEV}"

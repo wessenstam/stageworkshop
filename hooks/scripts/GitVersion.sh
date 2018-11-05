@@ -1,5 +1,5 @@
 pushd ~/Documents/github.com/mlavi/stageworkshop/ \
-&& source scripts/stageworkshop.lib.sh
+&& source scripts/stageworkshop.lib.sh 'quiet'
 
 if (( $(docker ps 2>&1 | grep Cannot | wc --lines) == 0 )); then
   docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux /repo \
