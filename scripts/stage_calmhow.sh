@@ -15,10 +15,10 @@ function dns_check() {
     exit ${_error}
   fi
 
-   _dns=$(dig +retry=0 +time=2 +short @${LDAP_HOST} ${_lookup})
+   _dns=$(dig +retry=0 +time=2 +short @${AUTH_HOST} ${_lookup})
   _test=$?
 
-  if [[ ${_dns} != "${LDAP_HOST}" ]]; then
+  if [[ ${_dns} != "${AUTH_HOST}" ]]; then
     _error=44
     log "Error ${_error}: result was ${_test}: ${_dns}"
     return ${_error}
@@ -84,7 +84,7 @@ function network_configure() {
   # DNS: 10.21.253.10,10.21.253.11
   # DHCP Pool: ${HPOC_PREFIX}.50 - ${HPOC_PREFIX}.120
 
-  CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME HPOC_PREFIX LDAP_HOST'
+  CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME HPOC_PREFIX AUTH_HOST'
 
   if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
     log "IDEMPOTENCY: ${MY_SECONDARY_NET_NAME} network set, skip"
@@ -94,13 +94,13 @@ function network_configure() {
 
     log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}, VLAN: ${MY_PRIMARY_NET_VLAN}, Subnet: ${HPOC_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${HPOC_PREFIX}.50 to ${HPOC_PREFIX}.125"
     acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=${HPOC_PREFIX}.1/25"
-    acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${LDAP_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
+    acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
     acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${HPOC_PREFIX}.50 end=${HPOC_PREFIX}.125"
 
     if [[ ${MY_SECONDARY_NET_NAME} ]]; then
       log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${HPOC_PREFIX}.129/25, Pool: ${HPOC_PREFIX}.132 to ${HPOC_PREFIX}.253"
       acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${HPOC_PREFIX}.129/25"
-      acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${LDAP_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
+      acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
       acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=${HPOC_PREFIX}.132 end=${HPOC_PREFIX}.253"
     fi
   fi
@@ -158,9 +158,9 @@ function authentication_source() {
       _result=$?
 
       if (( ${_result} == 0 )); then
-        log "${AUTH_SERVER}.IDEMPOTENCY: dc${_autodc_index}.${MY_DOMAIN_FQDN} set, skip. ${_result}"
+        log "${AUTH_SERVER}${_autodc_release}.IDEMPOTENCY: dc${_autodc_index}.${MY_DOMAIN_FQDN} set, skip. ${_result}"
       else
-        log "${AUTH_SERVER}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+        log "${AUTH_SERVER}${_autodc_release}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN}"
 
         _error=12
          _loop=0
@@ -168,24 +168,25 @@ function authentication_source() {
 
         repo_source AUTODC_REPOS[@]
 
-        if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${AUTH_SERVER} | wc --lines` == 0 )); then
-          log "Import ${AUTH_SERVER} image from ${SOURCE_URL}..."
-          acli image.create ${AUTH_SERVER} image_type=kDiskImage wait=true \
+        if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${AUTH_SERVER}${_autodc_release} | wc --lines` == 0 )); then
+          log "Import ${AUTH_SERVER}${_autodc_release} image from ${SOURCE_URL}..."
+          acli image.create ${AUTH_SERVER}${_autodc_release} \
+            image_type=kDiskImage wait=true \
             container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
         else
-          log "Image found, skipping ${AUTH_SERVER} import."
+          log "Image found, skipping ${AUTH_SERVER}${_autodc_release} import."
         fi
 
         # TODO: detect AUTH image ready, else...
-        log "Create ${AUTH_SERVER} VM based on ${AUTH_SERVER} image"
-        acli "vm.create ${AUTH_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
+        log "Create ${AUTH_SERVER}${_autodc_release} VM based on ${AUTH_SERVER}${_autodc_release} image"
+        acli "vm.create ${AUTH_SERVER}${_autodc_release} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
         # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
-        acli "vm.disk_create ${AUTH_SERVER} cdrom=true empty=true"
-        acli "vm.disk_create ${AUTH_SERVER} clone_from_image=${AUTH_SERVER}"
-        acli "vm.nic_create ${AUTH_SERVER} network=${MY_PRIMARY_NET_NAME} ip=${LDAP_HOST}"
+        #acli "vm.disk_create ${AUTH_SERVER}${_autodc_release} cdrom=true empty=true"
+        acli "vm.disk_create ${AUTH_SERVER}${_autodc_release} clone_from_image=${AUTH_SERVER}${_autodc_release}"
+        acli "vm.nic_create ${AUTH_SERVER}${_autodc_release} network=${MY_PRIMARY_NET_NAME} ip=${AUTH_HOST}"
 
-        log "Power on ${AUTH_SERVER} VM..."
-        acli "vm.on ${AUTH_SERVER}"
+        log "Power on ${AUTH_SERVER}${_autodc_release} VM..."
+        acli "vm.on ${AUTH_SERVER}${_autodc_release}"
 
         _attempts=20
             _loop=0
@@ -196,15 +197,15 @@ function authentication_source() {
 
           _test=$(remote_exec 'SSH' 'AUTH_SERVER' "${_autodc_status}")
           if [[ "${_test}" == "${_autodc_success}" ]]; then
-            log "${AUTH_SERVER} is ready."
+            log "${AUTH_SERVER}${_autodc_release} is ready."
             sleep ${_sleep}
             break
           elif (( ${_loop} > ${_attempts} )); then
-            log "Error ${_error}: ${AUTH_SERVER} VM running: giving up after ${_loop} tries."
+            log "Error ${_error}: ${AUTH_SERVER}${_autodc_release} VM running: giving up after ${_loop} tries."
             _result=$(source /etc/profile.d/nutanix_env.sh \
-              && for _vm in $(source /etc/profile.d/nutanix_env.sh && acli vm.list | grep ${AUTH_SERVER}) ; do acli -y vm.delete $_vm; done)
-            # acli image.delete ${AUTH_SERVER}
-            log "Remediate by deleting the ${AUTH_SERVER} VM from PE (just attempted by this script: ${_result}) and then running acli $_"
+              && for _vm in $(source /etc/profile.d/nutanix_env.sh && acli vm.list | grep ${AUTH_SERVER}${_autodc_release}) ; do acli -y vm.delete $_vm; done)
+            # acli image.delete ${AUTH_SERVER}${_autodc_release}
+            log "Remediate by deleting the ${AUTH_SERVER}${_autodc_release} VM from PE (just attempted by this script: ${_result}) and then running acli $_"
             exit ${_error}
           else
             log "_test ${_loop}/${_attempts}=|${_test}|: sleep ${_sleep} seconds..."
@@ -212,7 +213,7 @@ function authentication_source() {
           fi
         done
 
-        log "Create Reverse Lookup Zone on ${AUTH_SERVER} VM..."
+        log "Create Reverse Lookup Zone on ${AUTH_SERVER}${_autodc_release} VM..."
         _attempts=3
             _loop=0
 
@@ -232,8 +233,8 @@ function authentication_source() {
             break
           elif (( ${_loop} > ${_attempts} )); then
             if (( ${_autodc_release} < 2 )); then
-              log "Error ${_error}: ${AUTH_SERVER}: giving up after ${_loop} tries; deleting VM..."
-              acli "-y vm.delete ${AUTH_SERVER}"
+              log "Error ${_error}: ${AUTH_SERVER}${_autodc_release}: giving up after ${_loop} tries; deleting VM..."
+              acli "-y vm.delete ${AUTH_SERVER}${_autodc_release}"
               exit ${_error}
             fi
           else
@@ -359,7 +360,7 @@ function pc_init() {
         },
         "ip_list":["${MY_PC_HOST}"]
       }],
-      "dns_server_ip_list":["${LDAP_HOST}"],
+      "dns_server_ip_list":["${AUTH_HOST}"],
       "container_uuid":"${MY_CONTAINER_UUID}",
       "num_sockets":8,
       "memory_size_bytes":42949672960,

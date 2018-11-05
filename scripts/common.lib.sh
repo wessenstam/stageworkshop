@@ -247,10 +247,10 @@ function repo_source() {
 
     if [[ (( ${_http_code} == 200 )) || (( ${_http_code} == 302 )) ]]; then
       export SOURCE_URL="${_url}"
-      log "Found SOURCE_URL with HTTP:${_http_code} = ${SOURCE_URL}"
+      log "Found, HTTP:${_http_code} = ${SOURCE_URL}"
       break
     fi
-    log "DEBUG: SOURCE_URL miss, HTTP:${_http_code} = ${_url}"
+    log " Lost, HTTP:${_http_code} = ${_url}"
     ((_index++))
   done
 
@@ -389,7 +389,7 @@ function remote_exec() {
       ;;
     'AUTH_SERVER' )
        _account='root'
-          _host=${LDAP_HOST}
+          _host=${AUTH_HOST}
       _password=${_pw_init}
          _sleep=7
       ;;

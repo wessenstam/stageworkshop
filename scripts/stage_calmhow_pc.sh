@@ -53,7 +53,7 @@ EOF
   log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
   if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
     _http_body+=' "groupSearchType":"RECURSIVE", '
-    _http_body+=" \"directoryUrl\":\"ldap://${LDAP_HOST}:${LDAP_PORT}/\", "
+    _http_body+=" \"directoryUrl\":\"ldap://${AUTH_HOST}:${LDAP_PORT}/\", "
   else
     _http_body+=" \"directoryUrl\":\"${MY_DOMAIN_URL}\", "
   fi
@@ -89,7 +89,7 @@ EOF
 }
 
 function ssp_auth() {
-  CheckArgsExist 'AUTH_SERVER LDAP_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+  CheckArgsExist 'AUTH_SERVER AUTH_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
 
   local   _http_body
   local   _ldap_name
@@ -124,7 +124,7 @@ function ssp_auth() {
           "username": "${MY_DOMAIN_USER}",
           "password": "${MY_DOMAIN_PASS}"
         },
-        "url": "ldaps://${LDAP_HOST}/",
+        "url": "ldaps://${AUTH_HOST}/",
         "directory_type": "ACTIVE_DIRECTORY",
         "admin_user_reference_list": [],
         "domain_name": "${MY_DOMAIN_FQDN}"
@@ -158,7 +158,7 @@ EOF
           "username": "${MY_DOMAIN_USER}@${MY_DOMAIN_FQDN}",
           "password": "${MY_DOMAIN_PASS}"
         },
-        "url": "ldaps://${LDAP_HOST}/",
+        "url": "ldaps://${AUTH_HOST}/",
         "directory_type": "ACTIVE_DIRECTORY",
         "domain_name": "${MY_DOMAIN_FQDN}"
       }
@@ -189,7 +189,7 @@ EOF
           "username": "${MY_DOMAIN_USER}@${MY_DOMAIN_FQDN}",
           "password": "${MY_DOMAIN_PASS}"
         },
-        "url": "ldaps://${LDAP_HOST}/",
+        "url": "ldaps://${AUTH_HOST}/",
         "directory_type": "ACTIVE_DIRECTORY",
         "domain_name": "${MY_DOMAIN_FQDN}"
         "admin_user_reference_list": [],
@@ -415,7 +415,7 @@ function calm_update() {
   local     _error=19
   local      _loop=0
   local     _sleep=10
-  local       _url=http://${LDAP_HOST}:8080
+  local       _url=http://${AUTH_HOST}:8080
 
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
     log "Bypassing download of updated containers."
