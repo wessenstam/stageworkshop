@@ -1,24 +1,20 @@
 #!/usr/bin/env bash
 # use bash -x to debug command substitution and evaluation instead of echo.
 
-# For WORKSHOPS keyword mappings to scripts and variables:
-# - use Calm || Citrix || Summit
-# - use PC #.#
+# For WORKSHOPS keyword mappings to scripts and variables, please use:
+# - Calm || Citrix || Summit
+# - PC #.#
 WORKSHOPS=(\
-"Calm Workshop (AOS 5.5+/AHV PC 5.9.x)" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.8.x)" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.9.x) = Development (AutoDC2)" \
+# "Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
+# "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 ) # Adjust function stage_clusters for mappings as needed
 
 function stage_clusters() {
-  # Adjust as needed with $WORKSHOPS
-  # Send configuration scripts to remote clusters and execute Prism Element script
-
-  Dependencies 'install' 'sshpass'
-
+  # Adjust map below as needed with $WORKSHOPS
   local      _cluster
   local    _container
   local _dependencies
@@ -29,8 +25,8 @@ function stage_clusters() {
   local       _sshkey
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
-  # Map to latest and greatest version of each point release
-  # Metadata URLs are specified in common.lib.sh function: NTNX_Download
+  # Map to latest and greatest of each point release
+  # Metadata URLs MUST be specified in common.lib.sh function: NTNX_Download
   if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
     export PC_VERSION=5.9.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
@@ -55,7 +51,10 @@ function stage_clusters() {
     _pc_config=stage_ts18_pc.sh
   fi
 
+  Dependencies 'install' 'sshpass'
+
   log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
+  # Send configuration scripts to remote clusters and execute Prism Element script
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440"

@@ -135,9 +135,10 @@ function authentication_source() {
       local _autodc_restart="service ${_autodc_service} restart"
       local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
       local _autodc_success='SubState=running'
+      local     _pc_version=$(echo ${PC_VERSION} | awk -F. '{ print $1 "." $2$3$4}')
 
-#      log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
-#      if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
+      if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
+        log "PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9, setting AutoDC-2.0..."
            _autodc_auth=" --username=${MY_DOMAIN_USER} --password=${MY_DOMAIN_PASS}"
           _autodc_index=''
         _autodc_release=2
@@ -145,7 +146,7 @@ function authentication_source() {
         _autodc_restart="sleep 2 && service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
-#      fi
+      fi
 
       dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
       _result=$?
@@ -223,9 +224,11 @@ function authentication_source() {
             log "Success: DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN} set."
             break
           elif (( ${_loop} > ${_attempts} )); then
-            log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
-            #TOFIX: acli "-y vm.delete ${LDAP_SERVER}"
-            exit ${_error}
+            if (( ${_autodc_release} < 2 )); then
+              log "Error ${_error}: ${LDAP_SERVER}: giving up after ${_loop} tries; deleting VM..."
+              acli "-y vm.delete ${LDAP_SERVER}"
+              exit ${_error}
+            fi
           else
             log "dns_check ${_loop}/${_attempts}=|${_result}|: sleep ${_sleep} seconds..."
             sleep ${_sleep}

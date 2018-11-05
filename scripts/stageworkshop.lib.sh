@@ -18,6 +18,7 @@ if [[ -e ${RELEASE} ]]; then
 fi
 
 alias stageworkshop_w1='./stage_workshop.sh -f example_pocs.txt -w 1'
+alias stageworkshop_w2='./stage_workshop.sh -f example_pocs.txt -w 2'
 
 function stageworkshop_cache_stop() {
   echo "Killing service and tunnel:${HTTP_CACHE_PORT}"
