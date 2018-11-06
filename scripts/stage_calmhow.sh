@@ -408,6 +408,23 @@ function pc_configure() {
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
+function files_upload() {
+  #local _version_id
+
+    log "Files download..."
+
+    NTNX_Download 'AFS'
+
+    log "Files upload..."
+    #ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
+    ncli software upload software-type=FILE_SERVER \
+           file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
+      meta-file-path="`pwd`/${NTNX_META_URL##*/}"
+
+    log "Delete Files sources to free CVM space..."
+    rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
+}
+
 function nos_upgrade() {
   #this is a prototype, untried
   NTNX_Download
@@ -437,6 +454,7 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && network_configure \
 && authentication_source \
 && pe_auth \
+&& files_upload \
 && pc_init \
 && Check_Prism_API_Up 'PC'
 
