@@ -2,7 +2,9 @@
 .imdone/
 .kitchen/
 .kitchen.local.yml
-cache/
+*.log
+cache*/
+autodc/autodc.*
 example_pocs.txt
 Gemfile.lock
 logs/
