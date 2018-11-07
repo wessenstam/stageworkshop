@@ -4,6 +4,7 @@
    PC_VERSION_DEV=5.9.1
 PC_VERSION_STABLE=5.8.2
       PRISM_ADMIN=admin
+      AFS_VERSION=3.1.0.1
 
           OCTET=(${MY_PE_HOST//./ }) # zero index
     HPOC_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}

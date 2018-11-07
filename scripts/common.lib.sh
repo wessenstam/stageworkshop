@@ -87,7 +87,7 @@ function NTNX_cmd() {
 function NTNX_Download() {
   local   _checksum
   local   _meta_url='http://download.nutanix.com/'
-  local _source_url='http://download.nutanix.com/'
+  local _source_url=
   local    _version=0
 
   # When adding a new PC version, update BOTH case stanzas below...
@@ -134,7 +134,7 @@ function NTNX_Download() {
       3.1.0.1 )
     esac
 
-    _source_url+="afs/${AFS_VERSION}/nutanix-afs-el7.3-release-afs-${AFS_VERSION}-stable.qcow2"
+    _meta_url+="afs/${AFS_VERSION}/nutanix-afs-el7.3-release-afs-${AFS_VERSION}-stable.qcow2"
 
     case ${AFS_VERSION} in
       3.1.0.1 )
