@@ -1,7 +1,7 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - RFE: Marketing cluster
-  - Assert: only provision 2nd NW for HPOC
+  - Test assert: only provision 2nd NW for HPOC
   - Detect mtkg with PC-5.9: skip PE, PC Auth
 
 - BUG = PC 5.9 authentication regression

@@ -97,7 +97,7 @@ function network_configure() {
     acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
     acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125"
 
-    if [[ ${MY_SECONDARY_NET_NAME} ]]; then
+    if [[ ${MY_SECONDARY_NET_NAME} && "${OCTET[0]}.${OCTET[1]}" == '10.21' ]]; then
       log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
       acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${IPV4_PREFIX}.129/25"
       acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
