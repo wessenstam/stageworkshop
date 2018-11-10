@@ -79,12 +79,12 @@ function pe_init() {
 
 function network_configure() {
   # From this point, we assume according to SEWiki:
-  # IP Range: ${HPOC_PREFIX}.0/25
-  # Gateway: ${HPOC_PREFIX}.1
+  # IP Range: ${IPV4_PREFIX}.0/25
+  # Gateway: ${IPV4_PREFIX}.1
   # DNS: 10.21.253.10,10.21.253.11
-  # DHCP Pool: ${HPOC_PREFIX}.50 - ${HPOC_PREFIX}.120
+  # DHCP Pool: ${IPV4_PREFIX}.50 - ${IPV4_PREFIX}.120
 
-  CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME HPOC_PREFIX AUTH_HOST'
+  CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
 
   if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
     log "IDEMPOTENCY: ${MY_SECONDARY_NET_NAME} network set, skip"
@@ -92,16 +92,16 @@ function network_configure() {
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
-    log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}, VLAN: ${MY_PRIMARY_NET_VLAN}, Subnet: ${HPOC_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${HPOC_PREFIX}.50 to ${HPOC_PREFIX}.125"
-    acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=${HPOC_PREFIX}.1/25"
+    log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}, VLAN: ${MY_PRIMARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
+    acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=${IPV4_PREFIX}.1/25"
     acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
-    acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${HPOC_PREFIX}.50 end=${HPOC_PREFIX}.125"
+    acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125"
 
     if [[ ${MY_SECONDARY_NET_NAME} ]]; then
-      log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${HPOC_PREFIX}.129/25, Pool: ${HPOC_PREFIX}.132 to ${HPOC_PREFIX}.253"
-      acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${HPOC_PREFIX}.129/25"
+      log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
+      acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${IPV4_PREFIX}.129/25"
       acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
-      acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=${HPOC_PREFIX}.132 end=${HPOC_PREFIX}.253"
+      acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253"
     fi
   fi
 }
@@ -358,7 +358,7 @@ function pc_init() {
         "network_configuration":{
           "subnet_mask":"255.255.255.128",
           "network_uuid":"${MY_NET_UUID}",
-          "default_gateway":"${HPOC_PREFIX}.1"
+          "default_gateway":"${IPV4_PREFIX}.1"
         },
         "ip_list":["${PC_HOST}"]
       }],

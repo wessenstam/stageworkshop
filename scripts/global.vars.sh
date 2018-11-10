@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
-          RELEASE=release.json
-   PC_VERSION_DEV=5.9.1
-PC_VERSION_STABLE=5.8.2
-      PRISM_ADMIN=admin
+          RELEASE='release.json'
+   PC_VERSION_DEV='5.9.1'
+PC_VERSION_STABLE='5.8.2'
+      PRISM_ADMIN='admin'
 
           OCTET=(${PE_HOST//./ }) # zero index
-    HPOC_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
-DATA_SERVICE_IP=${HPOC_PREFIX}.$((${OCTET[3]} + 1))
-     PC_HOST=${HPOC_PREFIX}.$((${OCTET[3]} + 2))
+    IPV4_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
+DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
+        PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
 
            MY_SP_NAME='SP01'
     MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
 
-HTTP_CACHE_HOST=localhost
+HTTP_CACHE_HOST='localhost'
 HTTP_CACHE_PORT=8181
 
 # Conventions for *_REPOS arrays, the URL must end with:
@@ -47,7 +47,7 @@ HTTP_CACHE_PORT=8181
 )
 
    AUTH_SERVER='AutoDC'  # TODO:160 refactor AUTH_SERVER choice to input file, set default here.
-     AUTH_HOST=${HPOC_PREFIX}.$((${OCTET[3]} + 3))
+     AUTH_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 3))
      LDAP_PORT=389
  MY_DOMAIN_URL="ldaps://${AUTH_HOST}/"
 MY_DOMAIN_FQDN='ntnxlab.local'
@@ -64,13 +64,13 @@ MY_DOMAIN_ADMIN_GROUP='SSP Admins'
 )
 
   MY_PRIMARY_NET_NAME='Primary'
-  MY_PRIMARY_NET_VLAN='0'
+  MY_PRIMARY_NET_VLAN=0
 MY_SECONDARY_NET_NAME='Secondary'
 MY_SECONDARY_NET_VLAN="${OCTET[2]}1" # TODO:100 check this: what did Global Enablement mean?
 
 # https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F
-SMTP_SERVER_ADDRESS=nutanix-com.mail.protection.outlook.com
-   SMTP_SERVER_FROM=NutanixHostedPOC@nutanix.com
+SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+   SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
    SMTP_SERVER_PORT=25
 
    ATTEMPTS=40
