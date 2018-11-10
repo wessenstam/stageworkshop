@@ -55,7 +55,7 @@ function stageworkshop_cache_start() {
 
   echo "Setting up remote SSH tunnel on local and remote port ${HTTP_CACHE_PORT}..."
   #ServerAliveInterval 120
-  SSHPASS=${MY_PE_PASSWORD} sshpass -e ssh ${SSH_OPTS} -nNT \
+  SSHPASS=${PE_PASSWORD} sshpass -e ssh ${SSH_OPTS} -nNT \
     -R ${HTTP_CACHE_PORT}:localhost:${HTTP_CACHE_PORT} ${NTNX_USER}@${PE_HOST} &
 
   popd
@@ -109,10 +109,10 @@ function stageworkshop_cluster() {
   _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail --lines=1)
    _fields=(${_cluster//|/ })
 
-  export        PE_HOST=${_fields[0]}
-  export MY_PE_PASSWORD=${_fields[1]}
-  export       MY_EMAIL=${_fields[2]}
-  #echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} NTNX_USER=${NTNX_USER}."
+  export     PE_HOST=${_fields[0]}
+  export PE_PASSWORD=${_fields[1]}
+  export    MY_EMAIL=${_fields[2]}
+  #echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}."
 }
 
 function stageworkshop_ssh() {
@@ -121,7 +121,7 @@ function stageworkshop_ssh() {
   local      _cmd
   local     _host
   local    _octet
-  local _password=${MY_PE_PASSWORD}
+  local _password=${PE_PASSWORD}
   local     _user=${NTNX_USER}
 
   _octet=(${PE_HOST//./ }) # zero index
@@ -129,7 +129,7 @@ function stageworkshop_ssh() {
   case "${1}" in
     PC | pc)
       echo 'pkill -f calm ; tail -f calm*log'
-      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./calm_pc.sh"
+      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password} ./calm_pc.sh"
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
       _password='nutanix/4u'
       ;;
@@ -145,16 +145,16 @@ EOF
 
       echo 'rm -rf master.zip calm_*.log stageworkshop-master/ && \'
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
-      echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password}' sh ${_##*/} \'
+      echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
       echo '  && tail -f ~/calm_*.log'
-      echo -e "cd stageworkshop-master/scripts/ && \ \n MY_PE_HOST=${PE_HOST} MY_PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm_pe.sh"
+      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm_pe.sh"
       ;;
     AUTH | auth | ldap)
       _password='nutanix/4u'
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 3))
           _user=root
   esac
-  #echo "INFO|stageworkshop_ssh|PE_HOST=${PE_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} NTNX_USER=${NTNX_USER}."
+  #echo "INFO|stageworkshop_ssh|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}."
 
   case "${2}" in
     log | logs)

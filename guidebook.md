@@ -90,13 +90,13 @@ Typical download and install of Prism Central is 17 minutes of waiting!
             - or cut and paste the entire code block if you're comfortable editing the command line,
             - otherwise copy one line at a time and substitute __Cluster External IP__
             on the ````MY_HPOC```` assignment line or change that ````X```` you cleverly memorized
-            and paste the __PE admin password__ onto the ````MY_PE_PASSWORD```` line
+            and paste the __PE admin password__ onto the ````PE_PASSWORD```` line
             or change the ````###```` you cleverly memorized.
 
         git clone https://github.com/mlavi/stageworkshop.git && cd $_
         export MY_HPOC=10.21.X.37 \
-        && export MY_PE_PASSWORD='nx2Tech###!' \
-        && echo "${MY_HPOC}|${MY_PE_PASSWORD}" >> example_pocs.txt
+        && export PE_PASSWORD='nx2Tech###!' \
+        && echo "${MY_HPOC}|${PE_PASSWORD}" >> example_pocs.txt
 
         - *OPTIONAL:* Make a mistake with the HPoC octet to show a failure mode.
         - That's it, you're done! Just sit back and wait, periodically

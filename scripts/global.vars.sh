@@ -5,10 +5,10 @@
 PC_VERSION_STABLE=5.8.2
       PRISM_ADMIN=admin
 
-          OCTET=(${MY_PE_HOST//./ }) # zero index
+          OCTET=(${PE_HOST//./ }) # zero index
     HPOC_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
 DATA_SERVICE_IP=${HPOC_PREFIX}.$((${OCTET[3]} + 1))
-     MY_PC_HOST=${HPOC_PREFIX}.$((${OCTET[3]} + 2))
+     PC_HOST=${HPOC_PREFIX}.$((${OCTET[3]} + 2))
 
            MY_SP_NAME='SP01'
     MY_CONTAINER_NAME='Default'

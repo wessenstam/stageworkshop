@@ -10,7 +10,7 @@
 . global.vars.sh
 begin
 
-CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD PC_VERSION'
+CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
 
 #Dependencies 'install' 'jq' && NTNX_Download 'PC' & #attempt at parallelization
 
@@ -29,8 +29,8 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 if (( $? == 0 )) ; then
   pc_configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
   log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
-  log "PE = https://${MY_PE_HOST}:9440"
-  log "PC = https://${MY_PC_HOST}:9440"
+  log "PE = https://${PE_HOST}:9440"
+  log "PC = https://${PC_HOST}:9440"
   finish
 else
   log "Error 18: in main functional chain, exit!"

@@ -59,7 +59,7 @@ function stage_clusters() {
   # Send configuration scripts to remote clusters and execute Prism Element script
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
-    echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440"
+    echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
     get_configuration
     cd scripts && eval "${CONFIGURATION} ./${_pe_config}" >> ${HOME}/${_pe_config%%.sh}.log 2>&1 &
   else
@@ -67,9 +67,9 @@ function stage_clusters() {
     do
       set -f
              _fields=(${_cluster//|/ })
-          MY_PE_HOST=${_fields[0]}
-      MY_PE_PASSWORD=${_fields[1]}
-            MY_EMAIL=${_fields[2]}
+          PE_HOST=${_fields[0]}
+      PE_PASSWORD=${_fields[1]}
+         MY_EMAIL=${_fields[2]}
 
       get_configuration
 
@@ -87,10 +87,10 @@ function stage_clusters() {
       fi
 
       if (( $? == 0 )) ; then
-        log "Sending configuration script(s) to PE@${MY_PE_HOST}"
+        log "Sending configuration script(s) to PE@${PE_HOST}"
       else
         _error=15
-        log "Error ${_error}: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
+        log "Error ${_error}: Can't reach PE@${PE_HOST}, are you on VPN?"
         exit ${_error}
       fi
 
@@ -124,7 +124,7 @@ function stage_clusters() {
         remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
-      log "Remote execution configuration script on PE@${MY_PE_HOST}"
+      log "Remote execution configuration script on PE@${PE_HOST}"
       remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_config} >> ${_pe_config%%.sh}.log 2>&1 &"
 
       # shellcheck disable=SC2153
@@ -135,14 +135,14 @@ function stage_clusters() {
   If your SSH key has been uploaded to Prism > Gear > Cluster Lockdown,
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
-  $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PE_HOST} 'date; tail -f ${_pe_config%%.sh}.log'
+  $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
+      nutanix@${PE_HOST} 'date; tail -f ${_pe_config%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
-    https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
+    https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
-    https://${PRISM_ADMIN}@${MY_PC_HOST}:9440/
+      nutanix@${PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
+    https://${PRISM_ADMIN}@${PC_HOST}:9440/
 
 EOM
     done
@@ -153,7 +153,7 @@ EOM
 }
 
 function get_configuration() {
-  CONFIGURATION="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION}"
+  CONFIGURATION="MY_EMAIL=${MY_EMAIL} PE_HOST=${PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION}"
 }
 
 function validate_clusters() {
@@ -163,15 +163,15 @@ function validate_clusters() {
   for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
   do
     set -f
-           _fields=(${_cluster//|/ })
-        MY_PE_HOST=${_fields[0]}
-    MY_PE_PASSWORD=${_fields[1]}
+        _fields=(${_cluster//|/ })
+        PE_HOST=${_fields[0]}
+    PE_PASSWORD=${_fields[1]}
 
     Check_Prism_API_Up 'PE'
     if (( $? == 0 )) ; then
-      log "Success: execute PE API on ${MY_PE_HOST}"
+      log "Success: execute PE API on ${PE_HOST}"
     else
-      log "Failure: cannot validate PE API on ${MY_PE_HOST}"
+      log "Failure: cannot validate PE API on ${PE_HOST}"
     fi
   done
 }
@@ -185,7 +185,7 @@ See README.md and guidebook.md for more information.
 
     Interactive Usage: $0
 Non-interactive Usage: $0 -f [${_CLUSTER_FILE}] -w [workshop_number]
-Non-interactive Usage: MY_EMAIL=first.last@nutanix.com MY_PE_HOST=10.x.x.37 PRISM_ADMIN=admin MY_PE_PASSWORD=examplePW $0 -f -
+Non-interactive Usage: MY_EMAIL=first.last@nutanix.com PE_HOST=10.x.x.37 PRISM_ADMIN=admin PE_PASSWORD=examplePW $0 -f -
 
 Available Workshops:
 EOF
@@ -291,7 +291,7 @@ while getopts "f:w:\?" opt; do
     f )
       if [[ ${OPTARG} == '-' ]]; then
         log "${_CLUSTER_FILE} override, checking environment variables..."
-        CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD'
+        CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD'
         CLUSTER_LIST=${OPTARG}
       elif [[ -f ${OPTARG} ]]; then
         CLUSTER_LIST=${OPTARG}

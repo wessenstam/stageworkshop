@@ -9,8 +9,8 @@ function pe_unregister {
   # PE:
   cluster status # check
   ncli -h true multicluster remove-from-multicluster \
-    external-ip-address-or-svm-ips=${MY_PC_HOST} \
-    username=${PRISM_ADMIN} password=${MY_PE_PASSWORD} force=true
+    external-ip-address-or-svm-ips=${PC_HOST} \
+    username=${PRISM_ADMIN} password=${PE_PASSWORD} force=true
     # Error: This cluster was never added to Prism Central
   ncli multicluster get-cluster-state # check for none
   _cluster_uuid=$(ncli cluster info | grep -i uuid | awk -F: '{print $2}' | tr -d '[:space:]')
@@ -40,9 +40,9 @@ function pe_unregister {
 . global.vars.sh
 begin
 
-    MY_PC_HOST=10.21.43.37
-MY_PE_PASSWORD=nx2Tech381!
-   PRISM_ADMIN=admin
+    PC_HOST=10.21.43.37
+PE_PASSWORD=nx2Tech381!
+PRISM_ADMIN=admin
 
 pe_unregister
 

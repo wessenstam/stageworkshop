@@ -1,5 +1,9 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
+- RFE: Marketing cluster
+  - Detect 10.20=mtkg cluster, don’t provision 2nd NW
+  - Detect mtkg with PC-5.9: skip PE, PC Auth
+
 - BUG = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
     - Fix scheduled for PC 5.10.1

@@ -3,10 +3,10 @@
 # Dependencies: curl, ncli, nuclei, jq
 
 function pc_passwd() {
-  CheckArgsExist 'MY_PE_PASSWORD'
+  CheckArgsExist 'PE_PASSWORD'
 
   log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
-  ncli user reset-password user-name=${PRISM_ADMIN} password=${MY_PE_PASSWORD}
+  ncli user reset-password user-name=${PRISM_ADMIN} password=${PE_PASSWORD}
   if (( $? > 0 )); then
    log "Warning: password not reset: $?."# exit 10
   fi
@@ -14,7 +14,7 @@ function pc_passwd() {
 
   # local _old_pw='nutanix/4u'
   # local _http_body=$(cat <<EOF
-  # {"oldPassword": "${_old_pw}","newPassword": "${MY_PE_PASSWORD}"}
+  # {"oldPassword": "${_old_pw}","newPassword": "${PE_PASSWORD}"}
   # EOF
   # )
   # local _test
@@ -66,7 +66,7 @@ EOF
   )
 
   _test=$(curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_http_body}" \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
     https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
   log "_test=|${_test}|_http_body=|${_http_body}|"
 
@@ -82,7 +82,7 @@ EOF
 EOF
     )
     _test=$(curl ${CURL_POST_OPTS} \
-      --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_http_body}" \
+      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
       https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${AUTH_SERVER}/role_mappings)
     log "Cluster Admin=${_group}, _test=|${_test}|"
   done
@@ -98,7 +98,7 @@ function ssp_auth() {
 
   log "Find ${AUTH_SERVER} uuid"
   _ldap_uuid=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} --data '{ "kind": "directory_service" }' \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{ "kind": "directory_service" }' \
     https://localhost:9440/api/nutanix/v3/directory_services/list \
     | jq -r .entities[0].metadata.uuid)
   log "_ldap_uuid=|${_ldap_uuid}|"
@@ -141,7 +141,7 @@ function ssp_auth() {
 EOF
   )
   _ssp_connect=$(curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_http_body}" \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data "${_http_body}" \
     https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
   log "_ssp_connect=|${_ssp_connect}|"
 
@@ -174,7 +174,7 @@ EOF
 EOF
   )
   _ssp_connect=$(curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_http_body}" \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data "${_http_body}" \
     https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
   log "_ssp_connect=|${_ssp_connect}|"
   # POST https://localhost:9440/api/nutanix/v3/groups = spec-ssp-groups.json
@@ -220,7 +220,7 @@ EOF
 EOF
     )
     _ssp_connect=$(curl ${CURL_POST_OPTS} \
-      --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data "${_http_body}" \
+      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data "${_http_body}" \
       https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
     log "_ssp_connect=|${_ssp_connect}|"
 
@@ -240,7 +240,7 @@ EOF
   )
   _http_body='{"enable_nutanix_apps":true,"state":"ENABLE"}'
   _test=$(curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_http_body}" \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
   log "_test=|${_test}|"
 }
@@ -257,7 +257,7 @@ function pc_ui() {
 {"type":"custom_login_screen","key":"product_title","value":"PC-${PC_VERSION}"} \
 {"type":"custom_login_screen","key":"title","value":"Nutanix.HandsOnWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_status","value":true} \
-{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${MY_PE_PASSWORD}"} \
+{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${PE_PASSWORD}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","username":"system_data","key":"disable_2048","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \
@@ -268,14 +268,14 @@ EOF
 
   for _http_body in ${_json}; do
     _test=$(curl ${CURL_HTTP_OPTS} \
-      --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_http_body}" \
+      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
       https://localhost:9440/PrismGateway/services/rest/v1/application/system_data)
     log "_test=|${_test}|${_http_body}"
   done
 
   _http_body='{"type":"UI_CONFIG","key":"autoLogoutTime","value": 3600000}'
        _test=$(curl ${CURL_HTTP_OPTS} \
-    --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data "${_http_body}" \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
     https://localhost:9440/PrismGateway/services/rest/v1/application/user_data)
   log "autoLogoutTime _test=|${_test}|"
 }
@@ -289,7 +289,7 @@ function pc_init() {
     servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
 
   log "Validate EULA@PC"
-  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST -d '{
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
       "username": "SE",
       "companyName": "NTNX",
       "jobTitle": "SE"
@@ -297,7 +297,7 @@ function pc_init() {
   log "EULA _test=|${_test}|"
 
   log "Disable Pulse@PC"
-  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT -d '{
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT -d '{
       "emailContactList":null,
       "enable":false,
       "verbosityType":null,
@@ -350,8 +350,8 @@ function pc_smtp() {
   #log "sleep ${_sleep}..."; sleep ${_sleep}
   #log $(ncli cluster get-smtp-server | grep Status | grep success)
   ncli cluster send-test-email recipient="${MY_EMAIL}" \
-    subject="pc_smtp https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PC_HOST}:9440 Testing."
-  # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST -d '{
+    subject="pc_smtp https://${PRISM_ADMIN}:${PE_PASSWORD}@${PC_HOST}:9440 Testing."
+  # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
   #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
   #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
   # log "_test=|${_test}|"
@@ -477,8 +477,8 @@ Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 pc_passwd
 NTNX_cmd # check cli services available?
 
-if [[ -z "${MY_PE_HOST}" ]]; then
-  log "MY_PE_HOST unset, determining..."
+if [[ -z "${PE_HOST}" ]]; then
+  log "PE_HOST unset, determining..."
   Determine_PE
   . global.vars.sh
 fi
@@ -489,7 +489,7 @@ if [[ ! -z "${1}" ]]; then
   calm_update && exit 0
 fi
 
-CheckArgsExist 'MY_EMAIL MY_PC_HOST MY_PE_PASSWORD PC_VERSION'
+CheckArgsExist 'MY_EMAIL PC_HOST PE_PASSWORD PC_VERSION'
 
 export ATTEMPTS=2
 export    SLEEP=10
@@ -513,7 +513,7 @@ pc_project # TODO:50 pc_project is a new function, non-blocking at end.
 if (( $? == 0 )); then
   #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
   #&&
-  log "PC = https://${MY_PC_HOST}:9440"
+  log "PC = https://${PC_HOST}:9440"
   finish
 else
   _error=19

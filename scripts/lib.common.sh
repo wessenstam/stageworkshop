@@ -313,10 +313,10 @@ function Determine_PE() {
     exit ${_error}
   else
     CLUSTER_NAME=$(echo ${_hold} | jq .status.name | tr -d \")
-      MY_PE_HOST=$(echo ${_hold} | jq .status.resources.network.external_ip | tr -d \")
+         PE_HOST=$(echo ${_hold} | jq .status.resources.network.external_ip | tr -d \")
 
-    export CLUSTER_NAME MY_PE_HOST
-    log "Success: ${CLUSTER_NAME} PE external IP=${MY_PE_HOST}"
+    export CLUSTER_NAME PE_HOST
+    log "Success: ${CLUSTER_NAME} PE external IP=${PE_HOST}"
   fi
 }
 
@@ -373,7 +373,7 @@ function remote_exec() {
   local    _error=99
   local     _host
   local     _loop=0
-  local _password="${MY_PE_PASSWORD}"
+  local _password="${PE_PASSWORD}"
   local   _pw_init='nutanix/4u' # TODO:140 hardcoded p/w
   local    _sleep=${SLEEP}
   local     _test=0
@@ -381,10 +381,10 @@ function remote_exec() {
   # shellcheck disable=SC2153
   case ${2} in
     'PE' )
-          _host=${MY_PE_HOST}
+          _host=${PE_HOST}
       ;;
     'PC' )
-          _host=${MY_PC_HOST}
+          _host=${PC_HOST}
       _password=${_pw_init}
       ;;
     'AUTH_SERVER' )
@@ -555,17 +555,17 @@ function Check_Prism_API_Up {
   local    _error=77
   local     _host
   local     _loop=0
-  local _password="${MY_PE_PASSWORD}"
+  local _password="${PE_PASSWORD}"
   local  _pw_init='Nutanix/4u'
   local    _sleep=${SLEEP}
   local     _test=0
 
-  CheckArgsExist 'ATTEMPTS MY_PE_PASSWORD SLEEP'
+  CheckArgsExist 'ATTEMPTS PE_PASSWORD SLEEP'
 
   if [[ ${1} == 'PC' ]]; then
-    _host=${MY_PC_HOST}
+    _host=${PC_HOST}
   else
-    _host=${MY_PE_HOST}
+    _host=${PE_HOST}
   fi
   if [[ ! -z ${2} ]]; then
     _attempts=${2}

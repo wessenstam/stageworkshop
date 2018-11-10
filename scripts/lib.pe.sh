@@ -70,7 +70,7 @@ function pe_init() {
       || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
 
     # Set external IP address:
-    #ncli cluster edit-params external-ip-address=${MY_PE_HOST}
+    #ncli cluster edit-params external-ip-address=${PE_HOST}
 
     log "Set Data Services IP address to ${DATA_SERVICE_IP}"
     ncli cluster edit-params external-data-services-ip-address=${DATA_SERVICE_IP}
@@ -275,7 +275,7 @@ function pe_auth() {
 }
 
 function pe_license() {
-  CheckArgsExist 'CURL_POST_OPTS MY_PE_PASSWORD'
+  CheckArgsExist 'CURL_POST_OPTS PE_PASSWORD'
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
   Check_Prism_API_Up 'PC' 2 0
@@ -284,14 +284,14 @@ function pe_license() {
     log "IDEMPOTENCY: PC API responds, skip"
   else
     log "Validate EULA on PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data '{
+    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
       "username": "SE with calm_pe.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
     }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
 
     log "Disable Pulse in PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X PUT --data '{
+    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
       "enable": false,
@@ -304,11 +304,11 @@ function pe_license() {
 
     #echo; log "Create PE Banner Login" # TODO: for PC, login banner
     # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
-    # curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data \
+    # curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data \
     #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
-    #curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data
-    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET[2]}' password = '${MY_PE_PASSWORD}'"}' \
+    #curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data
+    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET[2]}' password = '${PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
   fi
 }
@@ -360,7 +360,7 @@ function pc_init() {
           "network_uuid":"${MY_NET_UUID}",
           "default_gateway":"${HPOC_PREFIX}.1"
         },
-        "ip_list":["${MY_PC_HOST}"]
+        "ip_list":["${PC_HOST}"]
       }],
       "dns_server_ip_list":["${AUTH_HOST}"],
       "container_uuid":"${MY_CONTAINER_UUID}",
@@ -373,7 +373,7 @@ function pc_init() {
 EOF
     )
     local _test
-    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} \
+    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} \
       -X POST --data "${HTTP_BODY}" \
       https://localhost:9440/api/nutanix/v3/prism_central)
     #log "_test=|${_test}|"
@@ -405,7 +405,7 @@ function pc_configure() {
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
   log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
-    "MY_EMAIL=${MY_EMAIL} MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION} \
+    "MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
     nohup bash ${HOME}/calm_pc.sh >> calm_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
