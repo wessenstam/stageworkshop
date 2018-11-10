@@ -26,7 +26,7 @@ function stage_clusters() {
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
-  # Metadata URLs MUST be specified in common.lib.sh function: NTNX_Download
+  # Metadata URLs MUST be specified in lib.common.sh function: NTNX_Download
   if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
     export PC_VERSION=5.9.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
@@ -39,8 +39,8 @@ function stage_clusters() {
 
   # Map to staging scripts
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-    _pe_config=stage_calmhow.sh
-    _pc_config=stage_calmhow_pc.sh
+    _pe_config=calm_pe.sh
+    _pc_config=calm_pc.sh
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
     _pe_config=stage_citrixhow.sh
@@ -98,7 +98,7 @@ function stage_clusters() {
       fi
 
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
+        && remote_exec 'SCP' 'PE' "lib.common.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
         && popd
 
       # For Calm container updates...
@@ -263,7 +263,7 @@ function select_workshop() {
 #__main__
 
 # Source Workshop common routines + global variables
-. scripts/common.lib.sh
+. scripts/lib.common.sh
 . scripts/global.vars.sh
 begin
 

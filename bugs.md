@@ -6,7 +6,7 @@
   - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
     - TODO: Validate
 
-- BUG = all stage_calmhow_pc.sh service timeout detect/retry
+- BUG = all calm_pc.sh service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403

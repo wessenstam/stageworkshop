@@ -32,7 +32,7 @@ When rebuilding a HPOC from rx, foundation automation takes:
 - 4 nodes@NX-3060-G5: 30 minutes
 - 4 nodes@NX-1050: 40 minutes.
 
-I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/stage_calmhow.sh#L131),
+I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/calm_pe.sh#L131),
  so I use that.
 
 You may wish to use ````poc_samba_user.sh```` to populate AutoDC past the initial set of users, above:

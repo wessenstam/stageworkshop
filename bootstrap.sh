@@ -130,7 +130,7 @@ cat <<EOM
 Optional: Please consider running ${0} clean.
 
 Watch progress with:
-          tail -f stage_calmhow.log &
+          tail -f calm_pe.log &
 or login to PE to see tasks in flight and eventual PC registration:
           https://${MY_PE_HOST}:9440/
 EOM

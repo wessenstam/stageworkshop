@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ./repo_source.sh 2>&1 | grep -v 8181 | grep SOURCE_URL
 
-. ../scripts/common.lib.sh
+. ../scripts/lib.common.sh
 . ../scripts/global.vars.sh
 
 log "__AutoDC__"

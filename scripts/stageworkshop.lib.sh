@@ -128,8 +128,8 @@ function stageworkshop_ssh() {
 
   case "${1}" in
     PC | pc)
-      echo 'pkill -f calm ; tail -f stage_calmhow*log'
-      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./stage_calmhow_pc.sh"
+      echo 'pkill -f calm ; tail -f calm*log'
+      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password} ./calm_pc.sh"
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
       _password='nutanix/4u'
       ;;
@@ -140,14 +140,14 @@ function stageworkshop_ssh() {
 OPTIONAL: cd stageworkshop-master
    CHECK: wget http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT} -q -O-
 
-pkill -f calm ; tail -f stage_calmhow*log
+pkill -f calm ; tail -f calm*log
 EOF
 
-      echo 'rm -rf master.zip stage_calmhow.log stageworkshop-master/ && \'
+      echo 'rm -rf master.zip calm_*.log stageworkshop-master/ && \'
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} MY_PE_PASSWORD=${_password}' sh ${_##*/} \'
-      echo '  && tail -f ~/stage_calmhow.log'
-      echo -e "cd stageworkshop-master/scripts/ && \ \n MY_PE_HOST=${PE_HOST} MY_PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./stage_calmhow.sh"
+      echo '  && tail -f ~/calm_*.log'
+      echo -e "cd stageworkshop-master/scripts/ && \ \n MY_PE_HOST=${PE_HOST} MY_PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm_pe.sh"
       ;;
     AUTH | auth | ldap)
       _password='nutanix/4u'
@@ -158,7 +158,7 @@ EOF
 
   case "${2}" in
     log | logs)
-      _cmd='date; tail -f stage_calmhow*log'
+      _cmd='date; tail -f calm*log'
       ;;
     calm | inflight)
       _cmd='ps -efww | grep calm'

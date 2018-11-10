@@ -7,7 +7,7 @@ EoM
 export PATH=${PATH}:${HOME}
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh
+. lib.common.sh
 . global.vars.sh
 begin
 

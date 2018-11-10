@@ -327,7 +327,7 @@ function images() {
       # fi
 
       nuclei image.create name=${_image} \
-         description="${0} via stage_calmhow_pc for ${_image}" \
+         description="${0} via calm_pc for ${_image}" \
          source_uri=${SOURCE_URL} 2>&1
        log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
        log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
@@ -468,7 +468,7 @@ function calm_update() {
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh
+. lib.common.sh
 . global.vars.sh
 begin
 
@@ -508,7 +508,7 @@ ssp_auth \
 && Check_Prism_API_Up 'PC'
 
 pc_project # TODO:50 pc_project is a new function, non-blocking at end.
-# NTNX_Upload 'AOS' # function in common.lib.sh
+# NTNX_Upload 'AOS' # function in lib.common.sh
 
 if (( $? == 0 )); then
   #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \

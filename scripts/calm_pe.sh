@@ -285,7 +285,7 @@ function pe_license() {
   else
     log "Validate EULA on PE"
     curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${MY_PE_PASSWORD} -X POST --data '{
-      "username": "SE with stage_calmhow.sh",
+      "username": "SE with calm_pe.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
     }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
@@ -382,7 +382,7 @@ EOF
 
 function pc_configure() {
   local    _container
-  local _dependencies='common.lib.sh global.vars.sh stage_calmhow_pc.sh'
+  local _dependencies='lib.common.sh global.vars.sh calm_pc.sh'
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -406,7 +406,7 @@ function pc_configure() {
   log "Launch PC configuration script"
   remote_exec 'ssh' 'PC' \
     "MY_EMAIL=${MY_EMAIL} MY_PC_HOST=${MY_PC_HOST} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION} \
-    nohup bash /home/nutanix/stage_calmhow_pc.sh >> stage_calmhow_pc.log 2>&1 &"
+    nohup bash /home/nutanix/calm_pc.sh >> calm_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
@@ -422,7 +422,7 @@ function nos_upgrade() {
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh
+. lib.common.sh
 . global.vars.sh
 begin
 
