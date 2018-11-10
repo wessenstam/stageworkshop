@@ -52,7 +52,7 @@ We'll round up to the nearest half minute.
 
 2. 0.5 min per cluster = ./stage_workshop.sh
 
-3. 28/26/20 min = PE:calm.sh
+3. 28/26/20 min = calm.sh PE
 Typical download and install of Prism Central is 17 minutes of waiting!
 
 | Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
@@ -60,7 +60,7 @@ Typical download and install of Prism Central is 17 minutes of waiting!
 | __start__ | 11:26:53 | 09:07:55 | 03:15:35 |
 | __end__ | 11:54:28 | 09:34:09 | 03:35:25 |
 
-4. 1.5 min = PC:calm_pc.sh
+4. 1.5 min = calm.sh PC
 
 | Function | Run1@5/24 (minutes) | 6/2 (min) | 6/10 (min) |
 | :------------- | :------------- | --- | ---------- |

@@ -130,7 +130,7 @@ function stageworkshop_ssh() {
   case "${1}" in
     PC | pc)
       echo 'pkill -f calm ; tail -f calm*log'
-      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password} ./calm_pc.sh"
+      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password} ./calm.sh 'PC'"
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
       _password='nutanix/4u'
       ;;

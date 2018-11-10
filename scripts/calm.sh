@@ -13,7 +13,7 @@ CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
 
 #Dependencies 'install' 'jq' && NTNX_Download 'PC' & #attempt at parallelization
 
-log "Adding key to PE/CVMs..."
+log "Adding key to ${1} VMs..."
 SSH_PubKey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
@@ -45,6 +45,55 @@ case ${1} in
       finish
       log "Error 18: in main functional chain, exit!"
       exit 18
+    fi
+  ;;
+  PC | pc )
+    . lib.pc.sh
+    Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
+
+    pc_passwd
+
+    export   NUCLEI_SERVER='localhost'
+    export NUCLEI_USERNAME="${PRISM_ADMIN}"
+    export NUCLEI_PASSWORD="${PE_PASSWORD}"
+    # nuclei -debug -username admin -server localhost -password nx2Tech704\! vm.list
+
+    NTNX_cmd # check cli services available?
+
+    if [[ ! -z "${2}" ]]; then
+      # hidden bonus
+      log "Don't forget: $0 first.last@nutanixdc.local%password"
+      calm_update && exit 0
+    fi
+
+    export ATTEMPTS=2
+    export    SLEEP=10
+
+    pc_init \
+    && pc_ui \
+    && pc_auth \
+    && pc_smtp
+
+    ssp_auth \
+    && calm_enable \
+    && images \
+    && flow_enable \
+    && Check_Prism_API_Up 'PC'
+
+    pc_project # TODO:50 pc_project is a new function, non-blocking at end.
+    # NTNX_Upload 'AOS' # function in lib.common.sh
+
+    unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD
+
+    if (( $? == 0 )); then
+      #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
+      #&&
+      log "PC = https://${PC_HOST}:9440"
+      finish
+    else
+      _error=19
+      log "Error ${_error}: failed to reach PC!"
+      exit ${_error}
     fi
   ;;
 esac

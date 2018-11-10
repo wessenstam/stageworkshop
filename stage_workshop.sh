@@ -41,9 +41,9 @@ function stage_clusters() {
 
   # Map to staging scripts
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-    _libraries+=' lib.pe.sh'
+    _libraries+=' lib.pe.sh lib.pc.sh'
      _pe_config='calm.sh'
-     _pc_config='calm_pc.sh'
+     _pc_config='calm.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
     _pe_config=stage_citrixhow.sh
