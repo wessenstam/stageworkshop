@@ -344,6 +344,8 @@ function pc_init() {
     log "Deploy Prism Central (typically takes 17+ minutes)..."
     # TODO:150 Parameterize DNS Servers & add secondary
     # TODO:120 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
+    # Sizing suggestions, certified configurations:
+    # https://portal.nutanix.com/#/page/docs/details?targetId=Release-Notes-Prism-Central-v591:sha-pc-scalability-r.html
 
     HTTP_BODY=$(cat <<EOF
 {
