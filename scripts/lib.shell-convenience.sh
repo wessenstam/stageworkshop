@@ -67,12 +67,13 @@ function stageworkshop_cache_start() {
   stageworkshop_chrome http://localhost:${HTTP_CACHE_PORT}
 }
 
-alias stageworkshop_chrome_pe='stageworkshop_chrome PE'
-alias stageworkshop_chrome_pc='stageworkshop_chrome PC'
+alias stageworkshop_pe-chrome='stageworkshop_chrome PE'
+alias stageworkshop_pc-chrome='stageworkshop_chrome PC'
 
 function stageworkshop_chrome() {
-  local _url="${1}"
   stageworkshop_cluster ''
+  local _octet=(${PE_HOST//./ }) # zero index
+  local   _url="${1}"
 
   case "${1}" in
     PC | pc)
@@ -114,19 +115,17 @@ function stageworkshop_cluster() {
   export     PE_HOST=${_fields[0]}
   export PE_PASSWORD=${_fields[1]}
   export    MY_EMAIL=${_fields[2]}
-  echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}."
+  echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
 }
 
 function stageworkshop_ssh() {
   stageworkshop_cluster ''
 
-  local      _cmd
+  local  _command
   local     _host
-  local    _octet
+  local    _octet=(${PE_HOST//./ }) # zero index
   local _password=${PE_PASSWORD}
   local     _user=${NTNX_USER}
-
-  _octet=(${PE_HOST//./ }) # zero index
 
   case "${1}" in
     PC | pc)
@@ -156,29 +155,29 @@ EOF
           _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 3))
           _user=root
   esac
-  #echo "INFO|stageworkshop_ssh|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}."
+  #echo "INFO|stageworkshop_ssh|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
 
   case "${2}" in
     log | logs)
-      _cmd='date; tail -f calm*log'
+      _command='date; tail -f calm*log'
       ;;
     calm | inflight)
-      _cmd='ps -efww | grep calm'
+      _command='ps -efww | grep calm'
       ;;
     kill | stop)
-      _cmd='ps -efww | grep calm ; pkill -f calm; ps -efww | grep calm'
+      _command='ps -efww | grep calm ; pkill -f calm; ps -efww | grep calm'
       ;;
     *)
-      _cmd="${2}"
+      _command="${2}"
       ;;
   esac
 
-  echo "INFO: ${_host} $ ${_cmd}"
+  echo "INFO: ${_host} $ ${_command}"
   SSHPASS="${_password}" sshpass -e ssh -q \
     -o StrictHostKeyChecking=no \
     -o GlobalKnownHostsFile=/dev/null \
     -o UserKnownHostsFile=/dev/null \
-    ${_user}@"${_host}" "${_cmd}"
+    ${_user}@"${_host}" "${_command}"
 
   unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
 }

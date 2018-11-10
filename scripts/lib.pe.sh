@@ -382,8 +382,10 @@ EOF
 }
 
 function pc_configure() {
+  local      _command
   local    _container
   local _dependencies='lib.common.sh global.vars.sh calm_pc.sh'
+  #TOFIX: hardcoded calm_pc.sh above
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -406,10 +408,10 @@ function pc_configure() {
   done
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-  log "Launch PC configuration script"
-  remote_exec 'ssh' 'PC' \
-    "MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
-    nohup bash ${HOME}/calm_pc.sh >> calm_pc.log 2>&1 &"
+  _command="MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
+  nohup bash ${HOME}/calm_pc.sh"
+  log "Launch PC configuration script... ${_command}"
+  remote_exec 'ssh' 'PC' "${_command} >> calm_pc.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 

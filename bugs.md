@@ -3,6 +3,7 @@
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC
   - Detect mtkg with PC-5.9: skip PE, PC Auth
+  - Email when PC is ready
 
 - BUG = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect

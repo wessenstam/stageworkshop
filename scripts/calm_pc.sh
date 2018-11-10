@@ -475,6 +475,12 @@ begin
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 
 pc_passwd
+
+export   NUCLEI_SERVER='localhost'
+export NUCLEI_USERNAME="${PRISM_ADMIN}"
+export NUCLEI_PASSWORD="${PE_PASSWORD}"
+# nuclei -debug -username admin -server localhost -password nx2Tech704\! vm.list
+
 NTNX_cmd # check cli services available?
 
 if [[ -z "${PE_HOST}" ]]; then
@@ -509,6 +515,8 @@ ssp_auth \
 
 pc_project # TODO:50 pc_project is a new function, non-blocking at end.
 # NTNX_Upload 'AOS' # function in lib.common.sh
+
+unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD
 
 if (( $? == 0 )); then
   #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
