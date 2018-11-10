@@ -19,6 +19,7 @@ function stage_clusters() {
   local    _container
   local _dependencies
   local       _fields
+  local    _libraries='global.vars.sh lib.common.sh'
   local    _pe_config
   local    _pc_config
   local      _release
@@ -39,8 +40,9 @@ function stage_clusters() {
 
   # Map to staging scripts
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-    _pe_config=calm_pe.sh
-    _pc_config=calm_pc.sh
+     _pe_config=calm_pe.sh
+    _libraries+=lib.pe.sh
+     _pc_config=calm_pc.sh
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
     _pe_config=stage_citrixhow.sh
@@ -98,7 +100,7 @@ function stage_clusters() {
       fi
 
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "lib.common.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
+        && remote_exec 'SCP' 'PE' "${_libraries} ${_release} ${_pe_config} ${_pc_config}" \
         && popd
 
       # For Calm container updates...
