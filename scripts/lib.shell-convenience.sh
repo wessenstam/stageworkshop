@@ -104,7 +104,8 @@ function stageworkshop_cluster() {
 
   echo -e "\nAssumptions:
     - Last uncommented cluster in: ${_filespec}
-    -     ssh user authentication: ${NTNX_USER}\n"
+    -     ssh user authentication: ${NTNX_USER}
+    -     Accept self-signed cert: *.nutanix.local\n"
 
   _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail --lines=1)
    _fields=(${_cluster//|/ })
@@ -112,7 +113,7 @@ function stageworkshop_cluster() {
   export     PE_HOST=${_fields[0]}
   export PE_PASSWORD=${_fields[1]}
   export    MY_EMAIL=${_fields[2]}
-  #echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}."
+  echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}."
 }
 
 function stageworkshop_ssh() {
