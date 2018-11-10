@@ -13,7 +13,8 @@ CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
 
 #Dependencies 'install' 'jq' && NTNX_Download 'PC' & #attempt at parallelization
 
-log "Adding key to PE/CVMs..." && SSH_PubKey || true & # non-blocking, parallel suitable
+log "Adding key to PE/CVMs..."
+SSH_PubKey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 

@@ -40,9 +40,9 @@ function stage_clusters() {
 
   # Map to staging scripts
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-     _pe_config=calm.sh
-    _libraries+=lib.pe.sh
-     _pc_config=calm_pc.sh
+    _libraries+=' lib.pe.sh'
+     _pe_config='calm.sh'
+     _pc_config='calm_pc.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
     _pe_config=stage_citrixhow.sh
@@ -125,7 +125,7 @@ function stage_clusters() {
       fi
 
       log "Remote execution configuration script on PE@${PE_HOST}"
-      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_config} >> ${_pe_config%%.sh}.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_config} 'PE' >> ${_pe_config%%.sh}.log 2>&1 &"
 
       # shellcheck disable=SC2153
       cat <<EOM

@@ -3,6 +3,7 @@
 # stageworkshop_pe kill && stageworkshop_w1 && stageworkshop_pe
 # TODO: prompt for choice when more than one cluster
 # TODO: scp?
+# TODO: ad-hoc: bash hooks/scripts/GitVersion.sh &
 
 . scripts/global.vars.sh
 
@@ -144,10 +145,10 @@ OPTIONAL: cd stageworkshop-master
 pkill -f calm ; tail -f calm*log
 EOF
 
-      echo 'rm -rf master.zip calm_*.log stageworkshop-master/ && \'
+      echo 'rm -rf master.zip calm*.log stageworkshop-master/ && \'
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
-      echo '  && tail -f ~/calm_*.log'
+      echo '  && tail -f ~/calm*.log'
       echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
       ;;
     AUTH | auth | ldap)

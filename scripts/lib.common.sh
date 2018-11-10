@@ -291,7 +291,7 @@ function SSH_PubKey() {
   if [[ -e ${_sshkey} ]]; then
     log "Note that a period and other symbols aren't allowed to be a key name."
     log "Locally adding ${_sshkey} under ${_name} label..."
-    ncli cluster add-public-key name=${_name} file-path=${_sshkey}
+    ncli cluster add-public-key name=${_name} file-path=${_sshkey} || true
   fi
 }
 
