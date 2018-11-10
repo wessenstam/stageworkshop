@@ -11,6 +11,7 @@ WORKSHOPS=(\
 # "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
+"Marketing Cluster with PC 5.9.x"
 ) # Adjust function stage_clusters for mappings as needed
 
 function stage_clusters() {
@@ -51,6 +52,10 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i Summit | wc -l) > 0 )); then
     _pe_config=stage_ts18.sh
     _pc_config=stage_ts18_pc.sh
+  fi
+  if (( $(echo ${_workshop} | grep -i Marketing | wc -l) > 0 )); then
+    _libraries+=' lib.pe.sh'
+     _pe_config='marketing.sh'
   fi
 
   Dependencies 'install' 'sshpass'
@@ -140,11 +145,16 @@ function stage_clusters() {
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
+EOM
+      if [[ ! -z ${_pc_config} ]]; then
+        cat <<EOM
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
       nutanix@${PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
     https://${PRISM_ADMIN}@${PC_HOST}:9440/
 
 EOM
+
+      fi
     done
 
   fi
