@@ -40,7 +40,7 @@ function stage_clusters() {
 
   # Map to staging scripts
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-     _pe_config=calm_pe.sh
+     _pe_config=calm.sh
     _libraries+=lib.pe.sh
      _pc_config=calm_pc.sh
   fi

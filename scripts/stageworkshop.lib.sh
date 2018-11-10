@@ -147,7 +147,7 @@ EOF
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
       echo '  && tail -f ~/calm_*.log'
-      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm_pe.sh"
+      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
       ;;
     AUTH | auth | ldap)
       _password='nutanix/4u'

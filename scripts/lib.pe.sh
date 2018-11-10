@@ -147,7 +147,8 @@ function authentication_source() {
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
 
-        export AUTODC_REPOS=(\ # override global.vars.
+        # REVIEW: override global.vars
+        export AUTODC_REPOS=(\
          'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
         # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
          'http://10.59.103.143:8000/autodc-2.0.qcow2' \
@@ -285,7 +286,7 @@ function pe_license() {
   else
     log "Validate EULA on PE"
     curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
-      "username": "SE with calm_pe.sh",
+      "username": "SE with calm.sh",
       "companyName": "Nutanix",
       "jobTitle": "SE"
     }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
@@ -386,6 +387,8 @@ function pc_configure() {
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
+  else
+    log 'Warning: did NOT find '${RELEASE}
   fi
   log "Send configuration scripts to PC and remove: ${_dependencies}"
   remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies}
