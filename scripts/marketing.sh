@@ -26,8 +26,6 @@ case ${1} in
     && pe_license \
     && pe_init \
     && network_configure \
-    && authentication_source \
-    && pe_auth \
     && pc_init \
     && Check_Prism_API_Up 'PC'
 

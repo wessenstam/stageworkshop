@@ -2,7 +2,7 @@
 
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC
-  - Detect mtkg with PC-5.9: skip PE, PC Auth
+  - Test mktg workshop: detect mtkg with PC-5.9: skip PE, PC Auth
   - Email when PC is ready
 
 - BUG = PC 5.9 authentication regression
