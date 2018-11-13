@@ -18,6 +18,9 @@ MY_IMG_CONTAINER_NAME='Images'
 HTTP_CACHE_HOST=localhost
 HTTP_CACHE_PORT=8181
 
+NTNX_FILES_SOURCE_URL="http://download.nutanix.com/downloads/afs/${AFS_VERSION}/nutanix-afs-el7.3-release-afs-${AFS_VERSION}-stable.qcow2"
+NTNX_FILES_META_URL="http://download.nutanix.com/afs/${AFS_VERSION}/afs-${AFS_VERSION}.json"
+
 # Conventions for *_REPOS arrays, the URL must end with:
 # - trailing slash (which imples _IMAGES argument to repo_source)
 # - or full package filename.
