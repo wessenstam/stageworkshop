@@ -6,7 +6,7 @@
   - Check if on VPN!!!
   - tail -f $Branch/workshop.log?
   - Email when PC is ready
-
+  - Howdy Robert
 - BUG = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
     - Fix scheduled for PC 5.10.1
