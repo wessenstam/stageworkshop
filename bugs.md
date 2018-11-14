@@ -3,6 +3,8 @@
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC
   - Test mktg workshop: detect mtkg with PC-5.9: skip PE, PC Auth
+  - Check if on VPN!!!
+  - tail -f $Branch/workshop.log?
   - Email when PC is ready
 
 - BUG = PC 5.9 authentication regression

@@ -12,8 +12,10 @@ This is a work in progress and your milage may vary!
 ### Acknowledgements ###
 
 The entire Global Technical Sales Enablement team has delivered an amazing
- amount of content and automation for Nutanix TechSummits and Workshops. Along with the Corporate SE team automation gurus, it has been a pleasure to work with all of them and this work stands on the shoulder of those giants.
- Thank you!
+amount of content and automation for Nutanix TechSummits and Workshops.
+Along with the Corporate SE team automation gurus,
+it has been a pleasure to work with all of them.
+This work stands on the shoulders of those giants. Thank you!
 
 ### For the Impatient ###
 
@@ -38,6 +40,14 @@ Approximately 30 minutes later, you can login to PE to get to PC and follow step
 ## Bugs, Priorities, Notes ##
 
 See [the planning and working document](bugs.md).
+
+## Marketing: Development Branch ##
+
+cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 \
+  | grep Cloning | awk -F\' '{print $2}') \
+  && git checkout marketing
+# Create your cluster file, e.g.: echo "${PE}|${PE_PASSWORD}|${EMAIL}" > example_pocs.txt
+./stage_workshop.sh -f example_pocs.txt
 
 ### Timing ###
 

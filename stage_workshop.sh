@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # use bash -x to debug command substitution and evaluation instead of echo.
+DEBUG=1
 
 # For WORKSHOPS keyword mappings to scripts and variables, please use:
 # - Calm || Citrix || Summit
@@ -216,7 +217,7 @@ function get_file() {
     read -p "$_CLUSTER_FILE: " CLUSTER_LIST # Prompt user
 
     if [[ ! -f "${CLUSTER_LIST}" ]]; then
-      echo "Warning ${_error}: file not found = ${CLUSTER_LIST}"
+      echo "Warning ${_error}: file not found = ${CLUSTER_LIST}. Use: Control+C to cancel."
       get_file
     fi
   fi
@@ -283,7 +284,7 @@ begin
 _CLUSTER_FILE='Cluster Input File'
  CLUSTER_LIST=
 
-# NONWORKSHOPS appended to end of WORKSHOPS
+# NONWORKSHOPS appended to WORKSHOPS
              WORKSHOP_COUNT=${#WORKSHOPS[@]}
 WORKSHOPS[${#WORKSHOPS[@]}]="Change ${_CLUSTER_FILE}"
 WORKSHOPS[${#WORKSHOPS[@]}]=${_VALIDATE}
@@ -294,7 +295,7 @@ WORKSHOPS[${#WORKSHOPS[@]}]="Quit"
 while getopts "f:w:\?" opt; do
 
   if [[ ${DEBUG} ]]; then
-    log "Checking option: ${opt} with arguent ${OPTARG}"
+    log "Checking option: ${opt} with argument ${OPTARG}"
   fi
 
   case ${opt} in
@@ -326,14 +327,23 @@ while getopts "f:w:\?" opt; do
 done
 shift $((OPTIND -1))
 
-if [[ -n ${CLUSTER_LIST} && -n ${WORKSHOP_NUM} ]]; then
-  stage_clusters
-elif [[ -n ${WORKSHOP_NUM} ]]; then
-  log "Error: missing workshop number argument."
-  script_usage
-elif [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == "${_VALIDATE}" ]]; then
+if [[ -z ${CLUSTER_LIST} ]]; then
+  get_file
+fi
+if [[ -z ${WORKSHOP_NUM} ]]; then
+  log "Warning: missing workshop number argument."
+  select_workshop
+fi
+
+if [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == "${_VALIDATE}" ]]; then
   validate_clusters
+elif (( ${WORKSHOP_NUM} == ${#WORKSHOPS[@]} - 1 )); then
+  echo ${WORKSHOPS[${WORKSHOP_NUM}]}
+  finish
+elif (( ${WORKSHOP_NUM} == ${#WORKSHOPS[@]} - 2 )); then
+  echo ${WORKSHOPS[${WORKSHOP_NUM}]}
+elif (( ${WORKSHOP_NUM} > 0 && ${WORKSHOP_NUM} < ${#WORKSHOPS[@]} - 3 )); then
+  stage_clusters
 else
-  log "Warning: missing ${_CLUSTER_FILE} argument."
-  get_file # If no command line arguments, start interactive session
+  script_usage
 fi
