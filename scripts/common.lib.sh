@@ -128,19 +128,19 @@ function NTNX_Download() {
     esac
 
   # When adding a new AFS version, update BOTH case stanzas below...
-  elif [[ ${1} == 'AFS']]; then
-    CheckArgsExist 'AFS_VERSION'
+  #elif [[ ${1} == 'AFS']]; then
+  #  CheckArgsExist 'AFS_VERSION'
     #case ${AFS_VERSION} in
     #  3.1.0.1 )
     #esac
 
     #_meta_url+="afs/${AFS_VERSION}/nutanix-afs-el7.3-release-afs-${AFS_VERSION}-stable.qcow2"
 
-    case ${AFS_VERSION} in
-      3.1.0.1 )
-    esac
+  #  case ${AFS_VERSION} in
+  #    3.1.0.1 )
+  #  esac
 
-    _meta_url+="afs/${AFS_VERSION}/afs-${AFS_VERSION}.json"
+  #  _meta_url+="afs/${AFS_VERSION}/afs-${AFS_VERSION}.json"
 
   else
     CheckArgsExist 'AOS_VERSION AOS_UPGRADE'
