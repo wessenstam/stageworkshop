@@ -4,7 +4,6 @@
    PC_VERSION_DEV=5.9.1
 PC_VERSION_STABLE=5.8.2
       PRISM_ADMIN=admin
-      AFS_VERSION=3.1.0.1
 
           OCTET=(${MY_PE_HOST//./ }) # zero index
     HPOC_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
@@ -17,9 +16,6 @@ MY_IMG_CONTAINER_NAME='Images'
 
 HTTP_CACHE_HOST=localhost
 HTTP_CACHE_PORT=8181
-
-NTNX_FILES_SOURCE_URL="http://download.nutanix.com/downloads/afs/${AFS_VERSION}/nutanix-afs-el7.3-release-afs-${AFS_VERSION}-stable.qcow2"
-NTNX_FILES_META_URL="http://download.nutanix.com/afs/${AFS_VERSION}/afs-${AFS_VERSION}.json"
 
 # Conventions for *_REPOS arrays, the URL must end with:
 # - trailing slash (which imples _IMAGES argument to repo_source)
@@ -44,7 +40,6 @@ NTNX_FILES_META_URL="http://download.nutanix.com/afs/${AFS_VERSION}/afs-${AFS_VE
   Windows10.iso \
   Nutanix-VirtIO-1.1.3.iso \
 )
-
 # https://pkgs.org/download/sshpass
 # https://sourceforge.net/projects/sshpass/files/sshpass/
   SSHPASS_REPOS=(\
@@ -62,8 +57,7 @@ MY_DOMAIN_PASS='nutanix/4u'
 MY_DOMAIN_ADMIN_GROUP='SSP Admins'
   AUTODC_REPOS=(\
    'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
-   'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
-   'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+   'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
    'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
   # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
    'http://10.59.103.143:8000/autodc-2.0.qcow2' \
