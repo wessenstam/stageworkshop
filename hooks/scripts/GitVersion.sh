@@ -1,3 +1,5 @@
+# shellcheck disable=SC2148
+
 pushd ~/Documents/github.com/mlavi/stageworkshop/ \
 && source scripts/stageworkshop.lib.sh 'quiet'
 
