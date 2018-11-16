@@ -1,7 +1,7 @@
 # shellcheck disable=SC2148
 
 pushd ~/Documents/github.com/mlavi/stageworkshop/ \
-&& source scripts/stageworkshop.lib.sh 'quiet'
+&& source scripts/lib.shell-convenience.sh 'quiet' || exit 1
 
 if (( $(docker ps 2>&1 | grep Cannot | wc --lines) == 0 )); then
   docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux /repo \
