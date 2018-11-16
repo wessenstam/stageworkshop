@@ -452,10 +452,10 @@ log "Adding key to PE/CVMs..." && SSH_PubKey || true & # non-blocking, parallel 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && pe_license \
 && pe_init \
+&& files_upload \
 && network_configure \
 && authentication_source \
 && pe_auth \
-&& files_upload \
 && pc_init \
 && Check_Prism_API_Up 'PC'
 
