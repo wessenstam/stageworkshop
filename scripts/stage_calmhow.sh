@@ -415,17 +415,15 @@ function files_upload() {
 
     #NTNX_Download 'AFS'
 
-    wget -nv ${NTNX_FILES_SOURCE_URL}
-    wget -nv ${NTNX_FILES_META_URL}
+    wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_SOURCE}
+    wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_META}
 
     log "Files upload..."
     #ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
-    ncli software upload software-type=afs \
-           file-path="`pwd`/${NTNX_FILES_SOURCE_URL}" \
-      meta-file-path="`pwd`/${NTNX_FILES_META_URL}"
+    ncli software upload software-type=afs file-path="`pwd`/${NTNX_FILES_SOURCE}" meta-file-path="`pwd`/${NTNX_FILES_META}"
 
     log "Delete Files sources to free CVM space..."
-    rm -f ${NTNX_FILES_SOURCE_URL} ${NTNX_FILES_META_URL}
+    rm -f ${NTNX_FILES_SOURCE} ${NTNX_FILES_META}
 }
 
 function nos_upgrade() {
