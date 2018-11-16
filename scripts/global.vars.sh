@@ -19,7 +19,7 @@ HTTP_CACHE_HOST=localhost
 HTTP_CACHE_PORT=8181
 
 NTNX_FILES_SOURCE="nutanix-afs-el7.3-release-afs-3.1.0.1-stable.qcow2"
-NTNX_FILES_META="afs-3.1.0.1.json"
+  NTNX_FILES_META="afs-3.1.0.1.json"
 
 # Conventions for *_REPOS arrays, the URL must end with:
 # - trailing slash (which imples _IMAGES argument to repo_source)
