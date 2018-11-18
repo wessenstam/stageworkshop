@@ -413,17 +413,11 @@ function files_upload() {
 
     log "Files download..."
 
-    #NTNX_Download 'AFS'
-
-    wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_SOURCE}
     wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_META}
-
-    log "Files upload..."
-    #ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
+    wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_SOURCE}
     ncli software upload software-type=afs file-path="`pwd`/${NTNX_FILES_SOURCE}" meta-file-path="`pwd`/${NTNX_FILES_META}"
-
-    log "Delete Files sources to free CVM space..."
     rm -f ${NTNX_FILES_SOURCE} ${NTNX_FILES_META}
+
 }
 
 function nos_upgrade() {
@@ -452,12 +446,16 @@ log "Adding key to PE/CVMs..." && SSH_PubKey || true & # non-blocking, parallel 
 Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
 && pe_license \
 && pe_init \
-&& files_upload \
 && network_configure \
 && authentication_source \
 && pe_auth \
 && pc_init \
 && Check_Prism_API_Up 'PC'
+
+wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_META}
+wget -nv https://s3.amazonaws.com/get-ahv-images/${NTNX_FILES_SOURCE}
+ncli software upload software-type=afs file-path="`pwd`/${NTNX_FILES_SOURCE}" meta-file-path="`pwd`/${NTNX_FILES_META}"
+rm -f ${NTNX_FILES_SOURCE} ${NTNX_FILES_META}
 
 if (( $? == 0 )) ; then
   pc_configure && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq';
