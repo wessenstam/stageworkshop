@@ -89,7 +89,7 @@ function stage_clusters() {
         log "Sending cached dependencies (optional)..."
         pushd cache \
           && remote_exec 'SCP' 'PE' "${_dependencies}" 'OPTIONAL' \
-          && popd
+          && popd || exit
       fi
 
       if (( $? == 0 )) ; then
@@ -107,7 +107,7 @@ function stage_clusters() {
 
       pushd scripts \
         && remote_exec 'SCP' 'PE' "${_libraries} ${_release} ${_pe_config} ${_pc_config}" \
-        && popd
+        && popd || exit
 
       # For Calm container updates...
       if [[ -d cache/pc-${PC_VERSION}/ ]]; then
@@ -119,7 +119,7 @@ function stage_clusters() {
             remote_exec 'SCP' 'PE' ${_container}.tar 'OPTIONAL' & \
           fi
         done
-        popd
+        popd || exit
       else
         log "No PC updates found in cache/pc-${PC_VERSION}/"
       fi
@@ -291,7 +291,7 @@ WORKSHOPS[${#WORKSHOPS[@]}]=${_VALIDATE}
 WORKSHOPS[${#WORKSHOPS[@]}]="Quit"
            let NONWORKSHOPS=${#WORKSHOPS[@]}-${WORKSHOP_COUNT}
 
-# Check if file passed via command line, otherwise prompt for cluster list file
+# shellcheck disable=SC2213
 while getopts "f:w:\?" opt; do
 
   if [[ ${DEBUG} ]]; then
@@ -342,8 +342,9 @@ elif (( ${WORKSHOP_NUM} == ${#WORKSHOPS[@]} - 1 )); then
   finish
 elif (( ${WORKSHOP_NUM} == ${#WORKSHOPS[@]} - 2 )); then
   echo ${WORKSHOPS[${WORKSHOP_NUM}]}
-elif (( ${WORKSHOP_NUM} > 0 && ${WORKSHOP_NUM} < ${#WORKSHOPS[@]} - 3 )); then
+elif (( ${WORKSHOP_NUM} > 0 && ${WORKSHOP_NUM} <= ${#WORKSHOPS[@]} - 3 )); then
   stage_clusters
 else
+  #log "DEBUG: WORKSHOP_NUM=${WORKSHOP_NUM}"
   script_usage
 fi

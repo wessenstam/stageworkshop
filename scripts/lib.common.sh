@@ -23,18 +23,26 @@ function fileserver() {
     _directory=cache
   fi
 
-  # Determine if on PE or PC with _host PE or PC, then _host=localhost
-  # ssh -nNT -R 8181:localhost:8181 nutanix@10.21.31.31
+case ${_action} in
+  'start' )
+    # Determine if on PE or PC with _host PE or PC, then _host=localhost
+    # ssh -nNT -R 8181:localhost:8181 nutanix@10.21.31.31
+    pushd ${_directory} || exit
 
-  remote_exec 'ssh' ${_host} \
-    "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
+    remote_exec 'ssh' ${_host} \
+      "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
 
-# acli image.create AutoDC2 image_type=kDiskImage wait=true container=Images \
-# source_url=http://10.4.150.64:8181/autodc-2.0.qcow2
-#AutoDC2: pending
-#AutoDC2: UploadFailure: Could not access the URL, please check the URL and make sure the hostname is resolvable
-  remote_exec 'ssh' ${_host} \
-    "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
+    # acli image.create AutoDC2 image_type=kDiskImage wait=true container=Images \
+    # source_url=http://10.4.150.64:8181/autodc-2.0.qcow2
+    #AutoDC2: pending
+    #AutoDC2: UploadFailure: Could not access the URL, please check the URL and make sure the hostname is resolvable
+    popd || exit
+    ;;
+  'stop' )
+    remote_exec 'ssh' ${_host} \
+      "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
+    ;;
+esac
 }
 
 function begin() {

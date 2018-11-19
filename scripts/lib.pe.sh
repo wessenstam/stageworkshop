@@ -286,7 +286,7 @@ function pe_license() {
   else
     log "Validate EULA on PE"
     curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
-      "username": "SE with calm.sh",
+      "username": "SE with $(basename ${0})",
       "companyName": "Nutanix",
       "jobTitle": "SE"
     }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept

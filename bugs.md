@@ -1,12 +1,14 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
+- Create a data structure to specify an image name (or rename after uploading)
+  - Change global.vars.sh to .json for new data structures
+
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC
-  - Test mktg workshop: detect mtkg with PC-5.9: skip PE, PC Auth
   - Check if on VPN!!!
   - tail -f $Branch/workshop.log?
   - Email when PC is ready
-  - Howdy Robert
+
 - BUG = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
     - Fix scheduled for PC 5.10.1
@@ -119,6 +121,7 @@
 - Add widget Deployed Applications to (default) dashboard
 
 - FEATURE: improved software engineering
+  - https://bors.tech/ "Bors is a GitHub bot that prevents merge skew / semantic merge conflicts, so when a developer checks out the main branch, they can expect all of the tests to pass out-of-the-box."
   - https://githooks.com/
     - https://github.com/nkantar/Autohook
     - https://pre-commit.com/

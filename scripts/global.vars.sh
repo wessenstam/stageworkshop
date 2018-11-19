@@ -22,13 +22,14 @@ HTTP_CACHE_PORT=8181
 # - or full package filename.
 
 # https://stedolan.github.io/jq/download/#checksums_and_signatures
+
      JQ_REPOS=(\
       'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
 )
   QCOW2_REPOS=(\
    'http://10.21.250.221/images/ahv/techsummit/' \
       'https://s3.amazonaws.com/get-ahv-images/' \
-)
+) # talk to Nathan Cox to populate s3, Sharon to populate MKTG share
  QCOW2_IMAGES=(\
   CentOS7.qcow2 \
   Windows2016.qcow2 \
@@ -39,6 +40,7 @@ HTTP_CACHE_PORT=8181
   Windows2012R2.iso \
   Windows10.iso \
   Nutanix-VirtIO-1.1.3.iso \
+  'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
 )
 # https://pkgs.org/download/sshpass
 # https://sourceforge.net/projects/sshpass/files/sshpass/
