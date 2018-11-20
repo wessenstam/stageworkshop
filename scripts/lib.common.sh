@@ -286,7 +286,7 @@ function images() {
         _command+=" name=${_name} description=\"${_image}\""
       fi
 
-      ${_cli} "image.create ${_command}" ${_source}=${SOURCE_URL} 2>&1
+      ${_cli} "image.create ${_command}" ${_source}=${SOURCE_URL} 2>&1 &
       if (( $? != 0 )); then
         log "Warning: Image submission: $?. Continuing..."
         #exit 10

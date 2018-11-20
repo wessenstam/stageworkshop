@@ -26,6 +26,7 @@ case ${1} in
     && pe_license \
     && pe_init \
     && network_configure \
+    && files_install \
     && images \
     && pc_init \
     && Check_Prism_API_Up 'PC'

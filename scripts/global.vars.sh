@@ -50,7 +50,7 @@ HTTP_CACHE_PORT=8181
 )
 
    AUTH_SERVER='AutoDC'  # TODO:160 refactor AUTH_SERVER choice to input file, set default here.
-     AUTH_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 3))
+     AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
      LDAP_PORT=389
  MY_DOMAIN_URL="ldaps://${AUTH_HOST}/"
 MY_DOMAIN_FQDN='ntnxlab.local'

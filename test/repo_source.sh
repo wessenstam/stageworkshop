@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # ./repo_source.sh 2>&1 | grep -v 8181 | grep SOURCE_URL
 
+# PE_HOST='1.1.1.1'
+
 . ../scripts/lib.common.sh
 . ../scripts/global.vars.sh
+
+# echo IPV4_PREFIX=${IPV4_PREFIX}
+# echo AUTH_HOST=${AUTH_HOST}
+# exit
 
 log "__AutoDC__"
 unset SOURCE_URL

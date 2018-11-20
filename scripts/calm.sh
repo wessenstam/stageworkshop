@@ -30,6 +30,7 @@ case ${1} in
     && network_configure \
     && authentication_source \
     && pe_auth \
+    && files_install \
     && pc_init \
     && Check_Prism_API_Up 'PC'
 
@@ -55,6 +56,7 @@ case ${1} in
 
     if [[ -n ${PE_PASSWORD} ]]; then
       Determine_PE
+      . global.vars.sh # populate PE_HOST dependencies
     fi
 
     pc_passwd
@@ -82,8 +84,8 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
-    && images \
     && flow_enable \
+    && images \
     && Check_Prism_API_Up 'PC'
 
     pc_project # TODO:50 pc_project is a new function, non-blocking at end.
