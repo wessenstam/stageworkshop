@@ -29,18 +29,18 @@ function stageworkshop_cache_stop() {
 
 function stageworkshop_cache_start() {
   local _file
-  local _bits=( \
-    http://10.59.103.143:8000/autodc-2.0.qcow2 \
-    http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
-    http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
-  )
+  local _bits=( ) # \
+  #   http://10.59.103.143:8000/autodc-2.0.qcow2 \
+  #   http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
+  #   http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
+  # )
   #https://github.com/mlavi/stageworkshop/archive/master.zip
   #http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
 
   if [[ ! -d cache ]]; then
     mkdir cache
   fi
-  pushd cache
+  pushd cache || true
 
   echo "Setting up http://localhost:${HTTP_CACHE_PORT}/ on cache directory..."
   python -m SimpleHTTPServer ${HTTP_CACHE_PORT} || python -m http.server ${HTTP_CACHE_PORT} &
@@ -60,7 +60,7 @@ function stageworkshop_cache_start() {
   SSHPASS=${PE_PASSWORD} sshpass -e ssh ${SSH_OPTS} -nNT \
     -R ${HTTP_CACHE_PORT}:localhost:${HTTP_CACHE_PORT} ${NTNX_USER}@${PE_HOST} &
 
-  popd
+  popd || true
   echo -e "\nTo turn service and tunnel off: stageworkshop_cache_stop"
 
   ps -efww | grep ssh

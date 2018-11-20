@@ -23,26 +23,26 @@ function fileserver() {
     _directory=cache
   fi
 
-case ${_action} in
-  'start' )
-    # Determine if on PE or PC with _host PE or PC, then _host=localhost
-    # ssh -nNT -R 8181:localhost:8181 nutanix@10.21.31.31
-    pushd ${_directory} || exit
+  case ${_action} in
+    'start' )
+      # Determine if on PE or PC with _host PE or PC, then _host=localhost
+      # ssh -nNT -R 8181:localhost:8181 nutanix@10.21.31.31
+      pushd ${_directory} || exit
 
-    remote_exec 'ssh' ${_host} \
-      "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
+      remote_exec 'ssh' ${_host} \
+        "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
 
-    # acli image.create AutoDC2 image_type=kDiskImage wait=true container=Images \
-    # source_url=http://10.4.150.64:8181/autodc-2.0.qcow2
-    #AutoDC2: pending
-    #AutoDC2: UploadFailure: Could not access the URL, please check the URL and make sure the hostname is resolvable
-    popd || exit
-    ;;
-  'stop' )
-    remote_exec 'ssh' ${_host} \
-      "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
-    ;;
-esac
+      # acli image.create AutoDC2 image_type=kDiskImage wait=true container=Images \
+      # source_url=http://10.4.150.64:8181/autodc-2.0.qcow2
+      #AutoDC2: pending
+      #AutoDC2: UploadFailure: Could not access the URL, please check the URL and make sure the hostname is resolvable
+      popd || exit
+      ;;
+    'stop' )
+      remote_exec 'ssh' ${_host} \
+        "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
+      ;;
+  esac
 }
 
 function begin() {
@@ -92,79 +92,114 @@ function NTNX_cmd() {
   done
 }
 
-function NTNX_Download() {
+function ntnx_download() {
   local   _checksum
   local   _meta_url='http://download.nutanix.com/'
   local _source_url
-  local    _version=0
+  local    _version
 
-  # When adding a new PC version, update BOTH case stanzas below...
-  if [[ ${1} == 'PC' ]]; then
-    CheckArgsExist 'PC_VERSION'
-    case ${PC_VERSION} in
-      5.9 | 5.6.2 | 5.8.0.1 )
-        _version=2
-        ;;
-      * )
-        _version=1
-        ;;
-    esac
+  case ${1} in
+    PC | pc )
+      # When adding a new PC version, update BOTH case stanzas below...
+      CheckArgsExist 'PC_VERSION'
 
-    _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/v${_version}/"
+      case ${PC_VERSION} in
+        5.9 | 5.6.2 | 5.8.0.1 )
+          _version=2
+          ;;
+        * )
+          _version=1
+          ;;
+      esac
 
-    case ${PC_VERSION} in
-      5.9 )
-        _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
-        ;;
-      5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 )
-        _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
-        ;;
-      5.7.0.1 | 5.7.1 | 5.7.1.1 )
-        _meta_url+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
-        ;;
-      5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
-        _meta_url+="pc_deploy-${PC_VERSION}.json"
-        ;;
-      * )
-        _error=22
-        log "Error ${_error}: unsupported PC_VERSION=${PC_VERSION}!"
-        log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
-        log " - Find ${PC_VERSION} in the Additional Releases section on the lower right side"
-        log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
-        exit ${_error}
-        ;;
-    esac
-  else
-    CheckArgsExist 'AOS_VERSION AOS_UPGRADE'
+      _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/v${_version}/"
 
-    # When adding a new AOS version, update BOTH case stanzas below...
-    case ${AOS_UPGRADE} in
-      5.8.0.1 )
-        _version=2
+      case ${PC_VERSION} in
+        5.9 )
+          _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
+          ;;
+        5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 )
+          _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
+          ;;
+        5.7.0.1 | 5.7.1 | 5.7.1.1 )
+          _meta_url+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
+          ;;
+        5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
+          _meta_url+="pc_deploy-${PC_VERSION}.json"
+          ;;
+        * )
+          _error=22
+          log "Error ${_error}: unsupported PC_VERSION=${PC_VERSION}!"
+          log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
+          log " - Find ${PC_VERSION} in the Additional Releases section on the lower right side"
+          log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
+          exit ${_error}
         ;;
-    esac
+      esac
+    ;;
+    'NOS' | 'nos' | 'AOS' | 'aos')
+      CheckArgsExist 'AOS_VERSION AOS_UPGRADE'
 
-    _meta_url+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
+      # When adding a new AOS version, update BOTH case stanzas below...
+      case ${AOS_UPGRADE} in
+        5.8.0.1 )
+          _version=2
+          ;;
+      esac
 
-    if (( ${_version} > 0 )); then
-      _meta_url+="v${_version}/"
-    fi
+      _meta_url+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
 
-    case ${AOS_UPGRADE} in
-      5.8.0.1 | 5.9 )
-        _meta_url+="euphrates-${AOS_UPGRADE}-metadata.json"
+      if (( ${_version} > 0 )); then
+        _meta_url+="v${_version}/"
+      fi
+
+      case ${AOS_UPGRADE} in
+        5.8.0.1 | 5.9 )
+          _meta_url+="euphrates-${AOS_UPGRADE}-metadata.json"
+          ;;
+        * )
+          _error=23
+          log "Error ${_error}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
+          # TODO: correct AOS_UPGRADE URL
+          log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
+          log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
+          log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
+          exit ${_error}
+          ;;
+      esac
+    ;;
+    FILES | files | AFS | afs )
+      # When adding a new FILES version, update BOTH case stanzas below...
+      CheckArgsExist 'FILES_VERSION'
+      # http://download.nutanix.com/afs/2.2.3/v1/afs-2.2.3.json
+      # http://download.nutanix.com/afs/3.1.0.1/afs-3.1.0.1.json
+      # https://s3.amazonaws.com/get-ahv-images/afs-3.1.0.1.json
+      case ${FILES_VERSION} in
+        TBD )
+          _version='v2/'
+          ;;
+        2.2.3 )
+          _version='v1/'
+          ;;
+      esac
+
+      _meta_url+="afs/${FILES_VERSION}/${_version}"
+
+      case ${FILES_VERSION} in
+        2.2.3 | 3.1.0.1 )
+          _meta_url+="afs-${FILES_VERSION}.json"
+          ;;
+        * )
+          _error=22
+          log "Error ${_error}: unsupported FILES_VERSION=${FILES_VERSION}!"
+          log 'Browse to https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA'
+          log " - Find ${FILES_VERSION} in the Additional Releases section on the lower right side"
+          log ' - Provide the metadata URL option to this function, both case stanzas.'
+          exit ${_error}
         ;;
-      * )
-        _error=23
-        log "Error ${_error}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
-        # TODO: correct AOS_UPGRADE URL
-        log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
-        log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
-        log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
-        exit ${_error}
-        ;;
-    esac
-  fi
+      esac
+    ;;
+  esac
 
   if [[ ! -e ${_meta_url##*/} ]]; then
     log "Retrieving download metadata ${_meta_url##*/} ..."
@@ -193,6 +228,77 @@ function NTNX_Download() {
   # Set globals for next step handoff
   export   NTNX_META_URL=${_meta_url}
   export NTNX_SOURCE_URL=${_source_url}
+}
+
+function images() {
+  # https://portal.nutanix.com/#/page/docs/details?targetId=Command-Ref-AOS-v59:acl-acli-image-auto-r.html
+  local         _cli='acli'
+  local     _command
+  local    _complete
+  local       _image
+  local  _image_type
+  local        _name
+  local      _source='source_url'
+
+  which "$_cli"
+  if (( $? > 0 )); then
+         _cli='nuclei'
+    _complete=' grep -i complete | '
+      _source='source_uri'
+  fi
+
+  for _image in "${QCOW2_IMAGES[@]}" ; do
+    # log "DEBUG: ${_image} image.create..."
+
+    if [[ -n $(${_cli} image.list 2>&1 | ${_complete} grep "${_image}") ]]; then
+      log "Skip: ${_image} already complete on cluster."
+    else
+      _command=''
+         _name="${_image}"
+
+      if (( $(echo "${_image}" | grep -i -e '^http' -e '^nfs' | wc --lines) )); then
+        log 'Bypass multiple repo source checks...'
+        SOURCE_URL="${_image}"
+      else
+        repo_source QCOW2_REPOS[@] "${_image}" # IMPORTANT: don't ${dereference}[array]!
+      fi
+
+      if [[ -z "${SOURCE_URL}" ]]; then
+        _error=30
+        log "Warning ${_error}: didn't find any sources for ${_image}, continuing..."
+        # exit ${_error}
+      fi
+
+      # TODO: TOFIX: ugly override for today...
+      if (( $(echo "${_image}" | grep -i 'acs-centos' | wc --lines ) > 0 )); then
+        _name=acs-centos
+      fi
+
+      if [[ ${_cli} == 'acli' ]]; then
+        _image_type='kDiskImage'
+        if (( $(echo "${SOURCE_URL}" | grep -i -e 'iso$' | wc --lines ) > 0 )); then
+          _image_type='kIsoImage'
+        fi
+
+        _command+=" ${_name} annotation=${_image} image_type=${_image_type} \
+          container=${MY_IMG_CONTAINER_NAME} architecture=kX86_64 wait=true"
+      else
+        _command+=" name=${_name} description=\"${_image}\""
+      fi
+
+      ${_cli} "image.create ${_command}" ${_source}=${SOURCE_URL} 2>&1
+      if (( $? != 0 )); then
+        log "Warning: Image submission: $?. Continuing..."
+        #exit 10
+      fi
+
+      if [[ ${_cli} == 'nuclei' ]]; then
+        log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
+        log "TODO: ${_cli} image.list, state = COMPLETE; image.list Name UUID State"
+      fi
+    fi
+
+  done
 }
 
 function log() {

@@ -9,9 +9,9 @@
 . global.vars.sh
 begin
 
-CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
+CheckArgsExist 'MY_EMAIL PE_PASSWORD PC_VERSION'
 
-#Dependencies 'install' 'jq' && NTNX_Download 'PC' & #attempt at parallelization
+#Dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
 log "Adding key to ${1} VMs..."
 SSH_PubKey & # non-blocking, parallel suitable
@@ -21,6 +21,8 @@ SSH_PubKey & # non-blocking, parallel suitable
 case ${1} in
   PE | pe )
     . lib.pe.sh
+
+    CheckArgsExist 'PE_HOST'
 
     Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
     && pe_license \
@@ -50,6 +52,10 @@ case ${1} in
   PC | pc )
     . lib.pc.sh
     Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
+
+    if [[ -n ${PE_PASSWORD} ]]; then
+      Determine_PE
+    fi
 
     pc_passwd
 

@@ -86,21 +86,21 @@ function network_configure() {
 
   CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
 
-  if [[ ! -z `acli "net.list" | grep ${MY_SECONDARY_NET_NAME}` ]]; then
-    log "IDEMPOTENCY: ${MY_SECONDARY_NET_NAME} network set, skip"
+  if [[ ! -z $(acli "net.list" | grep ${MY_PRIMARY_NET_NAME}) ]]; then
+    log "IDEMPOTENCY: ${MY_PRIMARY_NET_NAME} network set, skip"
   else
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
     log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}, VLAN: ${MY_PRIMARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
     acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=${IPV4_PREFIX}.1/25"
-    acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
+    acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${AUTH_HOST},${DNS_HOST} domains=${MY_DOMAIN_NAME}"
     acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125"
 
     if [[ ${MY_SECONDARY_NET_NAME} && "${OCTET[0]}.${OCTET[1]}" == '10.21' ]]; then
       log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
       acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${IPV4_PREFIX}.129/25"
-      acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${AUTH_HOST},10.21.253.10 domains=${MY_DOMAIN_NAME}"
+      acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${AUTH_HOST},${DNS_HOST} domains=${MY_DOMAIN_NAME}"
       acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253"
     fi
   fi
@@ -329,7 +329,7 @@ function pc_init() {
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
     log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 
-    NTNX_Download 'PC'
+    ntnx_download 'PC'
 
     log "Prism Central upload..."
     # TODO: Error: Software prism_central_deploy.5.9.0.1 already exists on the cluster
@@ -415,9 +415,19 @@ function pc_configure() {
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
+function files_install() {
+  #this is a prototype, untried
+  ntnx_download 'files'
+
+  ncli software upload software-type=afs \
+    meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
+    file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+}
+
+
 function nos_upgrade() {
   #this is a prototype, untried
-  NTNX_Download
+  ntnx_download 'nos'
 
   ncli software upload software-type=nos \
     meta-file-path="`pwd`/${NTNX_META_URL##*/}" \

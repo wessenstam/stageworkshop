@@ -1,13 +1,21 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
-- Create a data structure to specify an image name (or rename after uploading)
-  - Change global.vars.sh to .json for new data structures
+- Augment marketing:calm workshop to add AFS
+
+- BUG = all calm.sh PC service timeout detect/retry
+  - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
+  E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
+  2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
 
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC
   - Check if on VPN!!!
   - tail -f $Branch/workshop.log?
+  - migrate/import image catalog on PC:
+  {"action_on_failure":"CONTINUE","execution_order":"SEQUENTIAL","api_request_list":[{"operation":"POST","path_and_params":"/api/nutanix/v3/images/migrate","body":{"image_reference_list":[],"cluster_reference":{"uuid":"00057b0a-2472-da09-0000-0000000086b7","kind":"cluster","name":"string"}}}],"api_version":"3.0"}
   - Email when PC is ready
+  - Create a data structure to specify an image name (or rename after uploading)
+    - Change global.vars.sh to .json for new data structures
 
 - BUG = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
@@ -15,12 +23,8 @@
   - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
     - TODO: Validate
 
-- BUG = all calm.sh PC service timeout detect/retry
-  - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
-  E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
-  2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
-
 - FEATURE = Darksite/cache:
+  - Ping derik.davenport@ for testing
   - Ideal to do this on a CVM, but you can prepare by downloading all of the bits in advance.
    The goal is to get everything onto the CVM if there’s room.
    If not, get it onto a fileserver that the CVM can access, even via SCP/SSH.

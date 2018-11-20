@@ -4,11 +4,13 @@
    PC_VERSION_DEV='5.9.1'
 PC_VERSION_STABLE='5.8.2'
       PRISM_ADMIN='admin'
+    FILES_VERSION='3.1.0.1'
 
           OCTET=(${PE_HOST//./ }) # zero index
     IPV4_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
 DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
         PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
+       DNS_HOST='10.21.253.10'
 
            MY_SP_NAME='SP01'
     MY_CONTAINER_NAME='Default'
@@ -22,14 +24,13 @@ HTTP_CACHE_PORT=8181
 # - or full package filename.
 
 # https://stedolan.github.io/jq/download/#checksums_and_signatures
-
      JQ_REPOS=(\
       'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
 )
   QCOW2_REPOS=(\
    'http://10.21.250.221/images/ahv/techsummit/' \
       'https://s3.amazonaws.com/get-ahv-images/' \
-) # talk to Nathan Cox to populate s3, Sharon to populate MKTG share
+) # talk to Nathan Cox to populate S3, Sharon to populate Daisy File Share
  QCOW2_IMAGES=(\
   CentOS7.qcow2 \
   Windows2016.qcow2 \

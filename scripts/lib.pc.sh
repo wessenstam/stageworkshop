@@ -310,36 +310,6 @@ function pc_init() {
   log "PULSE _test=|${_test}|"
 }
 
-function images() {
-  local _image
-
-  for _image in "${QCOW2_IMAGES[@]}" ; do
-    # log "DEBUG: ${_image} image.create..."
-    if [[ -n $(nuclei image.list 2>&1 | grep -i complete | grep "${_image}") ]]; then
-      log "Skip: ${_image} already complete on cluster."
-    else
-      repo_source QCOW2_REPOS[@] "${_image}" # IMPORTANT: don't ${dereference}[array]!
-
-      # if [[ -z "${SOURCE_URL}" ]]; then
-      #   _error=30
-      #   log "Error ${_error}: didn't find any sources for ${_image}"
-      #   exit ${_error}
-      # fi
-
-      nuclei image.create name=${_image} \
-         description="${0} via calm.sh PC for ${_image}" \
-         source_uri=${SOURCE_URL} 2>&1
-       log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
-       log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
-      if (( $? != 0 )); then
-        log "Warning: Image submission: $?."
-        #exit 10
-      fi
-    fi
-
-  done
-}
-
 function pc_smtp() {
   log "Configure SMTP@PC"
   local _sleep=5

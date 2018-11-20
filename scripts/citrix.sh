@@ -11,7 +11,7 @@ begin
 
 CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
 
-#Dependencies 'install' 'jq' && NTNX_Download 'PC' & #attempt at parallelization
+#Dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
 log "Adding key to ${1} VMs..."
 SSH_PubKey & # non-blocking, parallel suitable
