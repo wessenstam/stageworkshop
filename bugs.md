@@ -365,7 +365,7 @@ origin
 $ git fetch upstream
 $ git merge upstream/master
 
-$ git tags
+$ git tag
 $ git tag -a 2.0.1 [hash]
 $ git push origin --tags
 ````
