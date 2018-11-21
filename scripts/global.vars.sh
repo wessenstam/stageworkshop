@@ -28,8 +28,9 @@ HTTP_CACHE_PORT=8181
       'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
 )
   QCOW2_REPOS=(\
+   'http://10.21.250.221/images/tech-enablement/' \
    'http://10.21.250.221/images/ahv/techsummit/' \
-      'https://s3.amazonaws.com/get-ahv-images/' \
+   'https://s3.amazonaws.com/get-ahv-images/' \
 ) # talk to Nathan Cox to populate S3, Sharon to populate Daisy File Share
  QCOW2_IMAGES=(\
   CentOS7.qcow2 \
@@ -41,6 +42,7 @@ HTTP_CACHE_PORT=8181
   Windows2012R2.iso \
   Windows10.iso \
   Nutanix-VirtIO-1.1.3.iso \
+  ERA-Server-build-0.9.3.qcow2 \
   'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
 )
 # https://pkgs.org/download/sshpass
