@@ -1,9 +1,23 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
+- Braindump:
+  - dev: PC5.10
+  - github 2FA
+  - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
+  - Calm 2.4 containers
+  - Move AFS deployment from PE to PC? Make it optional?
+  - Move images from PE to PC? Make Karbon and Era optional?
+    - JSON or YAML options? from bash/jq?
+  - LCM inventory
+  - PC import PE images
+  - Darksite Calm 2.4
+
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
+  - @Michael workaround: py-nuclei?
+    - ssh nutanix@10.21.78.39 'source /etc/profile; py-nuclei -u admin -p "nxLond2018!" image.list | grep acs'
 
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC

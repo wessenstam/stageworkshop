@@ -22,91 +22,63 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    # MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
-    # MY_AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
-    #
-    # MY_IMAGE="CentOS"
-    # source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2
-    # MY_IMAGE="Windows2012"
-    # source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2
-    # MY_IMAGE="Windows10"
-    # image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows10-1709-04282018.qcow2
-    # MY_IMAGE="XenDesktop-7.15.iso"
-    # image_type=kIsoImage source_url=http://10.21.250.221/images/ahv/techsummit/XD715.iso
-    #
-    # # Configure PE role mapping
-    # my_log "Configure PE role mapping"
-    # ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name="${MY_DOMAIN_NAME}" entity-values="${MY_DOMAIN_ADMIN_GROUP}"
-    #
-    # # Reverse Lookup Zone
-    # my_log "Creating Reverse Lookup Zone on DC VM"
-    # sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
-    # root@10.21.${MY_HPOC_NUMBER}.40 "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
-    #
-    # # Create custom OUs
-    # sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
-    # root@10.21.${MY_HPOC_NUMBER}.40 "apt install ldb-tools -y -q"
-    #
-    # sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
-    # root@10.21.${MY_HPOC_NUMBER}.40 "cat << EOF > ous.ldif
-    # dn: OU=Non-PersistentDesktop,DC=NTNXLAB,DC=local
-    # changetype: add
-    # objectClass: top
-    # objectClass: organizationalunit
-    # description: Non-Persistent Desktop OU
-    #
-    # dn: OU=PersistentDesktop,DC=NTNXLAB,DC=local
-    # changetype: add
-    # objectClass: top
-    # objectClass: organizationalunit
-    # description: Persistent Desktop OU
-    #
-    # dn: OU=XenAppServer,DC=NTNXLAB,DC=local
-    # changetype: add
-    # objectClass: top
-    # objectClass: organizationalunit
-    # description: XenApp Server OU
-    # EOF"
-    #
-    # sshpass -p nutanix/4u ssh -o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null \
-    # root@10.21.${MY_HPOC_NUMBER}.40 "ldbmodify  -H /var/lib/samba/private/sam.ldb ous.ldif; service samba-ad-dc restart"
-    #
-    # # Provision local Prism account for XD MCS Plugin
-    # my_log "Create PE user account xd for MCS Plugin"
-    # ncli user create user-name=xd user-password=nutanix/4u first-name=XenDesktop last-name=Service email-id=no-reply@nutanix.com
-    # ncli user grant-cluster-admin-role user-name=xd
-    #
-    # # Get UUID from cluster
-    # my_log "Get UUIDs from cluster:"
-    # MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
-    # my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
-    # MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-    # my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
-    #
-    # # AFS Download
-    # my_log "Download AFS image from ${MY_AFS_SRC_URL}"
-    # wget -nv ${MY_AFS_SRC_URL}
-    # my_log "Download AFS metadata JSON from ${MY_AFS_META_URL}"
-    # wget -nv ${MY_AFS_META_URL}
-    #
-    # # Staging AFS
-    # my_log "Stage AFS"
-    # ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
-    #
-    # # Freeing up space
-    # my_log "Delete AFS sources to free some space"
-    # rm ${MY_AFS_SRC_URL##*/} ${MY_AFS_META_URL##*/}
-    #
-    # curl -u admin:${PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST https://127.0.0.1:9440/api/nutanix/v3/prism_central -d "${MY_DEPLOY_BODY}"
-    # my_log "Waiting for PC deployment to complete (Sleeping 15m)"
-    # sleep 900
-    # my_log "Sending PC configuration script"
-    # pc_send_file stage_citrixhow_pc.sh
-    #
-    # # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-    # my_log "Launching PC configuration script"
-    # pc_remote_exec "PE_PASSWORD=${PE_PASSWORD} nohup bash /home/nutanix/stage_citrixhow_pc.sh >> pcconfig.log 2>&1 &"
-    # my_log "PE Configuration complete"
+    log "Configure PE role mapping"
+    ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name="${MY_DOMAIN_NAME}" entity-values="${MY_DOMAIN_ADMIN_GROUP}"
+
+    my_log "Creating Reverse Lookup Zone on DC VM"
+    remote_exec 'ssh' 'AUTH_SERVER' "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
+    log 'Create custom OUs...'
+    remote_exec 'ssh' 'AUTH_SERVER' "apt install ldb-tools -y -q"
+    remote_exec 'ssh' 'AUTH_SERVER' "cat << EOF > ous.ldif
+dn: OU=Non-PersistentDesktop,DC=NTNXLAB,DC=local
+changetype: add
+objectClass: top
+objectClass: organizationalunit
+description: Non-Persistent Desktop OU
+
+dn: OU=PersistentDesktop,DC=NTNXLAB,DC=local
+changetype: add
+objectClass: top
+objectClass: organizationalunit
+description: Persistent Desktop OU
+
+dn: OU=XenAppServer,DC=NTNXLAB,DC=local
+changetype: add
+objectClass: top
+objectClass: organizationalunit
+description: XenApp Server OU
+
+EOF"
+    remote_exec 'ssh' 'AUTH_SERVER' "ldbmodify  -H /var/lib/samba/private/sam.ldb ous.ldif; service samba-ad-dc restart"
+
+    log "Create PE user account XD for MCS Plugin"
+    ncli user create user-name=xd user-password=nutanix/4u first-name=XenDesktop last-name=Service email-id=no-reply@nutanix.com
+    ncli user grant-cluster-admin-role user-name=xd
+
+    log "Get UUIDs from cluster:"
+    MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
+    log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
+    MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+    log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+
+    log "Download AFS image from ${MY_AFS_SRC_URL}"
+    wget -nv ${MY_AFS_SRC_URL}
+    log "Download AFS metadata JSON from ${MY_AFS_META_URL}"
+    wget -nv ${MY_AFS_META_URL}
+    log "Stage AFS"
+    ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
+    log "Delete AFS sources to free some space"
+    rm ${MY_AFS_SRC_URL##*/} ${MY_AFS_META_URL##*/}
+
+    curl -u admin:${PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST https://127.0.0.1:9440/api/nutanix/v3/prism_central -d "${MY_DEPLOY_BODY}"
+    log "Waiting for PC deployment to complete (Sleeping 15m)"
+    sleep 900
+    log "Sending PC configuration script"
+    pc_send_file stage_citrixhow_pc.sh
+
+    # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
+    log "Launching PC configuration script"
+    pc_remote_exec "PE_PASSWORD=${PE_PASSWORD} nohup bash /home/nutanix/stage_citrixhow_pc.sh >> pcconfig.log 2>&1 &"
 
     Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
     && pe_license \
@@ -119,8 +91,7 @@ case ${1} in
 
     if (( $? == 0 )) ; then
       pc_configure \
-      && Dependencies 'remove' 'sshpass' \
-      && Dependencies 'remove' 'jq'
+      && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
@@ -153,7 +124,7 @@ case ${1} in
     #my_log "Upgrade PC"
     #cd /home/nutanix/install ; ./bin/cluster -i . -p upgrade
 
-    my_log "PC Configuration complete on `$date`"
+    log "PC Configuration complete on `$date`"
 
     Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 

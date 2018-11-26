@@ -118,13 +118,13 @@ function ntnx_download() {
         5.9 )
           _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
           ;;
-        5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 )
+        5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 | 5.10 )
           _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
           ;;
         5.7.0.1 | 5.7.1 | 5.7.1.1 )
           _meta_url+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
           ;;
-        5.8.0.1 | 5.8.1 | 5.8.2 | 5.10 | 5.11 )
+        5.8.0.1 | 5.8.1 | 5.8.2 )
           _meta_url+="pc_deploy-${PC_VERSION}.json"
           ;;
         * )

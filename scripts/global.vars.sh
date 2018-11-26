@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034
           RELEASE='release.json'
-   PC_VERSION_DEV='5.9.1'
+   PC_VERSION_DEV='5.10'
 PC_VERSION_STABLE='5.8.2'
       PRISM_ADMIN='admin'
     FILES_VERSION='3.1.0.1'
@@ -22,6 +22,9 @@ HTTP_CACHE_PORT=8181
 # Conventions for *_REPOS arrays, the URL must end with:
 # - trailing slash (which imples _IMAGES argument to repo_source)
 # - or full package filename.
+
+#  MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
+# MY_AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
 
 # https://stedolan.github.io/jq/download/#checksums_and_signatures
      JQ_REPOS=(\
@@ -45,6 +48,9 @@ HTTP_CACHE_PORT=8181
   ERA-Server-build-0.9.3.qcow2 \
   'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
 )
+# "XenDesktop-7.15.iso" http://10.21.250.221/images/ahv/techsummit/XD715.iso
+# http://download.nutanix.com/era/1.0.0/ERA-Server-build-1.0.0-bae7ca0d653e1af2bcb9826d1320e88d8c4713cc.qcow2
+
 # https://pkgs.org/download/sshpass
 # https://sourceforge.net/projects/sshpass/files/sshpass/
   SSHPASS_REPOS=(\
