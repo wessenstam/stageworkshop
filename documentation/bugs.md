@@ -1,11 +1,11 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - Braindump:
-  - dev: PC5.10
+  - dev :: PC-5.10 bugs: activate Calm, auth, import images
   - github 2FA
   - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
-    - deprecate AutoDC1?
-  - Darksite/Calm 2.4 containers
+    - deprecate AutoDC1 for 5.6+5.7+5.8?
+  - Calm 2.4 containers
   - Move AFS deployment from PE to PC? Make it optional?
   - Move images from PE to PC? Make Karbon and Era optional?
     - JSON or YAML options? from bash/jq?
@@ -37,26 +37,14 @@
 
 - FEATURE = Darksite/cache:
   - Ping derik.davenport@ for testing
-  - Ideal to do this on a CVM, but you can prepare by downloading all of the bits in advance.
-   The goal is to get everything onto the CVM if there’s room.
-   If not, get it onto a fileserver that the CVM can access, even via SCP/SSH.
-  - Download the push button Calm archive, unarchive, create a cache directory inside:
-  wget https://github.com/mlavi/stageworkshop/archive/master.zip && \
-  unzip master.zip && pushd stageworkshop-master && mkdir cache && cd ${_}
-  -  Put everything else below in this cache directory and contact me.
-    - AutoDC: http://10.59.103.143:8000/autodc-2.0.qcow2
-    - CentOS 7.4 image: http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
-    - PC-5.9.1 metadata and bits:
-      - http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json
-      - http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
-    - jq-1.5: https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64
-    - sshpass: http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm
-    # OPTIONAL rolling: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+  - See [Darksite](darksite.md)
 
 - Feature = improve MKTG+SRE cluster automation
   - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
   - detect HPOC networks to favor local URLs?
-  - Marketing cluster = 10.20, HPOC=10.21: add MKT DNS? remove secondary nw
+  - Marketing cluster = 10.20
+  - us-west HPOC=10.21:
+  - us-east HPOC=10.55:
 
 - Ongoing = refactor URLs into global.vars.sh?
   - ````egrep http *sh */*sh \

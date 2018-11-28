@@ -6,6 +6,7 @@ PC_VERSION_STABLE='5.8.2'
       PRISM_ADMIN='admin'
     FILES_VERSION='3.1.0.1'
 
+# shellcheck disable=2206
           OCTET=(${PE_HOST//./ }) # zero index
     IPV4_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
 DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
@@ -20,7 +21,7 @@ HTTP_CACHE_HOST='localhost'
 HTTP_CACHE_PORT=8181
 
 # Conventions for *_REPOS arrays, the URL must end with:
-# - trailing slash (which imples _IMAGES argument to repo_source)
+# - trailing slash (which imples _IMAGES argument to function repo_source())
 # - or full package filename.
 
 #  MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
