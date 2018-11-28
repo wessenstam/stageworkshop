@@ -29,13 +29,14 @@ case ${1} in
     && pe_init \
     && network_configure \
     && authentication_source \
-    && pe_auth \
-    && files_install \
-    && pc_init \
-    && Check_Prism_API_Up 'PC'
+    && pe_auth
 
     if (( $? == 0 )) ; then
-      pc_configure \
+      files_install & # parallel test, optional?
+
+      pc_init \
+      && Check_Prism_API_Up 'PC' \
+      && pc_configure \
       && Dependencies 'remove' 'sshpass' \
       && Dependencies 'remove' 'jq'
 

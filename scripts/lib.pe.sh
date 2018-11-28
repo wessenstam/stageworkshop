@@ -78,30 +78,48 @@ function pe_init() {
 }
 
 function network_configure() {
-  # From this point, we assume according to SEWiki:
+  # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
   # IP Range: ${IPV4_PREFIX}.0/25
-  # Gateway: ${IPV4_PREFIX}.1
-  # DNS: 10.21.253.10,10.21.253.11
   # DHCP Pool: ${IPV4_PREFIX}.50 - ${IPV4_PREFIX}.120
 
-  CheckArgsExist 'MY_PRIMARY_NET_NAME MY_PRIMARY_NET_VLAN MY_SECONDARY_NET_NAME MY_SECONDARY_NET_VLAN MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
+  local _dns_host='8.8.8.8'
+  local _nw1_name="${MY_PRIMARY_NET_NAME}"
+  local _nw1_vlan=0
 
-  if [[ ! -z $(acli "net.list" | grep ${MY_PRIMARY_NET_NAME}) ]]; then
-    log "IDEMPOTENCY: ${MY_PRIMARY_NET_NAME} network set, skip"
+  case "${OCTET[0]}.${OCTET[1]}" in
+    10.20 )
+      _dns_host='10.21.253.10'
+      ;;
+    10.21 )
+      _dns_host='10.21.253.10,10.21.253.11'
+      _nw1_vlan=$(( ${OCTET[2]} * 10 ))
+      ;;
+    10.55 )
+      _dns_host='10.21.253.11'
+      ;;
+  esac
+
+  if [[ ! -z $(acli "net.list" | grep ${_nw1_name}) ]]; then
+    log "IDEMPOTENCY: ${_nw1_name} network set, skip"
   else
+    CheckArgsExist 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
+
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
-    log "Create primary network: Name: ${MY_PRIMARY_NET_NAME}, VLAN: ${MY_PRIMARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
-    acli "net.create ${MY_PRIMARY_NET_NAME} vlan=${MY_PRIMARY_NET_VLAN} ip_config=${IPV4_PREFIX}.1/25"
-    acli "net.update_dhcp_dns ${MY_PRIMARY_NET_NAME} servers=${AUTH_HOST},${DNS_HOST} domains=${MY_DOMAIN_NAME}"
-    acli "net.add_dhcp_pool ${MY_PRIMARY_NET_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125"
+    log "Create primary network: Name: ${_nw1_name}, VLAN: ${_nw1_vlan}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
+    acli "net.create ${_nw1_name} vlan=${_nw1_vlan} ip_config=${IPV4_PREFIX}.1/25"
+    acli "net.update_dhcp_dns ${_nw1_name} servers=${AUTH_HOST},${_dns_host} domains=${MY_DOMAIN_NAME}"
+    acli "net.add_dhcp_pool ${_nw1_name} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125" # TOFIX: 51-100?
 
-    if [[ ${MY_SECONDARY_NET_NAME} && "${OCTET[0]}.${OCTET[1]}" == '10.21' ]]; then
-      log "Create secondary network: Name: ${MY_SECONDARY_NET_NAME}, VLAN: ${MY_SECONDARY_NET_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
-      acli "net.create ${MY_SECONDARY_NET_NAME} vlan=${MY_SECONDARY_NET_VLAN} ip_config=${IPV4_PREFIX}.129/25"
-      acli "net.update_dhcp_dns ${MY_SECONDARY_NET_NAME} servers=${AUTH_HOST},${DNS_HOST} domains=${MY_DOMAIN_NAME}"
-      acli "net.add_dhcp_pool ${MY_SECONDARY_NET_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253"
+    if [[ "${OCTET[0]}.${OCTET[1]}" == '10.21' || "${OCTET[0]}.${OCTET[1]}" == '10.55' ]]; then
+      local _nw2_name='Secondary'
+      local _nw2_vlan=$(( ${OCTET[2]} * 10 + 1 ))
+
+      log "Create secondary network: Name: ${_nw2_name}, VLAN: ${_nw2_vlan}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
+      acli "net.create ${_nw2_name} vlan=${_nw2_vlan} ip_config=${IPV4_PREFIX}.129/25"
+      acli "net.update_dhcp_dns ${_nw2_name} servers=${AUTH_HOST},${_dns_host} domains=${MY_DOMAIN_NAME}"
+      acli "net.add_dhcp_pool ${_nw2_name} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253" # TOFIX: 132-254?
     fi
   fi
 }
@@ -110,7 +128,7 @@ function authentication_source() {
   local   _attempts
   local      _error=13
   local       _loop
-  local _pc_version=$(echo ${PC_VERSION} | awk -F. '{ print $1 "." $2$3$4}')
+  local _pc_version
   local     _result
   local      _sleep
   local       _test=0
@@ -122,6 +140,8 @@ function authentication_source() {
     log "Error ${_error}: please provide a choice for authentication server."
     exit ${_error}
   fi
+  # shellcheck disable=2206
+  _pc_version=(${PC_VERSION//./ })
 
   case "${AUTH_SERVER}" in
     'ActiveDirectory')
@@ -135,10 +155,9 @@ function authentication_source() {
       local _autodc_restart="service ${_autodc_service} restart"
       local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
       local _autodc_success='SubState=running'
-      local     _pc_version=$(echo ${PC_VERSION} | awk -F. '{ print $1 "." $2$3$4}')
 
-      if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
-        log "PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9, setting AutoDC-2.0..."
+      if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
+        log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC-2.0..."
            _autodc_auth=" --username=${MY_DOMAIN_USER} --password=${MY_DOMAIN_PASS}"
           _autodc_index=''
         _autodc_release=2

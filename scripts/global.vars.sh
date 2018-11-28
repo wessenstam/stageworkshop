@@ -10,11 +10,11 @@ PC_VERSION_STABLE='5.8.2'
     IPV4_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
 DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
         PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
-       DNS_HOST='10.21.253.10'
 
            MY_SP_NAME='SP01'
     MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
+  MY_PRIMARY_NET_NAME='Primary'
 
 HTTP_CACHE_HOST='localhost'
 HTTP_CACHE_PORT=8181
@@ -45,7 +45,7 @@ HTTP_CACHE_PORT=8181
   Windows2012R2.iso \
   Windows10.iso \
   Nutanix-VirtIO-1.1.3.iso \
-  ERA-Server-build-0.9.3.qcow2 \
+  'https://s3.amazonaws.com/technology-boot-camp/ERA-Server-build-1.0.0-21edfbc990a8f3424fed146d837483cb1a00d56d.qcow2' \
   'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
 )
 # "XenDesktop-7.15.iso" http://10.21.250.221/images/ahv/techsummit/XD715.iso
@@ -73,11 +73,6 @@ MY_DOMAIN_ADMIN_GROUP='SSP Admins'
   # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
    'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
-
-  MY_PRIMARY_NET_NAME='Primary'
-  MY_PRIMARY_NET_VLAN=0
-MY_SECONDARY_NET_NAME='Secondary'
-MY_SECONDARY_NET_VLAN="${OCTET[2]}1" # TODO:100 check this: what did Global Enablement mean?
 
 # https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F
 SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'

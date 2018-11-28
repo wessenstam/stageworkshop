@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # use bash -x to debug command substitution and evaluation instead of echo.
-DEBUG=1
+DEBUG=
 
 # For WORKSHOPS keyword mappings to scripts and variables, please use:
 # - Calm || Citrix || Summit
@@ -75,7 +75,8 @@ function stage_clusters() {
     for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
     do
       set -f
-             _fields=(${_cluster//|/ })
+      # shellcheck disable=2206
+          _fields=(${_cluster//|/ })
           PE_HOST=${_fields[0]}
       PE_PASSWORD=${_fields[1]}
          MY_EMAIL=${_fields[2]}
@@ -129,7 +130,7 @@ function stage_clusters() {
 
       _sshkey=${HOME}/.ssh/id_rsa.pub
       if [[ -f ${_sshkey} ]]; then
-        log "Sending ${_sshkey} for additon to cluster..."
+        log "Sending ${_sshkey} for addition to cluster..."
         remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
@@ -151,6 +152,7 @@ function stage_clusters() {
 
 EOM
       if [[ ! -z ${_pc_config} ]]; then
+        # shellcheck disable=2153
         cat <<EOM
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
       nutanix@${PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
@@ -174,9 +176,10 @@ function validate_clusters() {
   local _cluster
   local  _fields
 
-  for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
+  for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^\#)
   do
     set -f
+    # shellcheck disable=2206
         _fields=(${_cluster//|/ })
         PE_HOST=${_fields[0]}
     PE_PASSWORD=${_fields[1]}

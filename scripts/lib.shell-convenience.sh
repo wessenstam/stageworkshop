@@ -18,18 +18,19 @@ if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   fi
 fi
 
-alias stageworkshop_w1='./stage_workshop.sh -f example_pocs.txt -w 1'
-alias stageworkshop_w2='./stage_workshop.sh -f example_pocs.txt -w 2'
-alias stageworkshop_w4='./stage_workshop.sh -f example_pocs.txt -w 4'
+alias stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
 
 function stageworkshop_cache_stop() {
-  echo "Killing service and tunnel:${HTTP_CACHE_PORT}"
-  kill -9 $(pgrep -f ${HTTP_CACHE_PORT})
+  echo "Killing service and tunnel:${HTTP_CACHE_PORT}..."
+  pkill -f ${HTTP_CACHE_PORT}
 }
 
 function stageworkshop_cache_start() {
-  local _file
-  local _bits=( ) # \
+  local  _hold
+  local  _host
+  local _hosts
+  local  _file
+  local  _bits=( ) # \
   #   http://10.59.103.143:8000/autodc-2.0.qcow2 \
   #   http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
   #   http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
@@ -42,9 +43,12 @@ function stageworkshop_cache_start() {
   fi
   pushd cache || true
 
+  stageworkshop_cache_stop
+
   echo "Setting up http://localhost:${HTTP_CACHE_PORT}/ on cache directory..."
   python -m SimpleHTTPServer ${HTTP_CACHE_PORT} || python -m http.server ${HTTP_CACHE_PORT} &
 
+  # populate cache files
   for _file in "${_bits[@]}"; do
     if [[ -e ${_file##*/} ]]; then
       echo "Cached: ${_file##*/}"
@@ -55,10 +59,22 @@ function stageworkshop_cache_start() {
 
   stageworkshop_cluster ''
 
-  echo "Setting up remote SSH tunnel on local and remote port ${HTTP_CACHE_PORT}..."
-  #ServerAliveInterval 120
-  SSHPASS=${PE_PASSWORD} sshpass -e ssh ${SSH_OPTS} -nNT \
-    -R ${HTTP_CACHE_PORT}:localhost:${HTTP_CACHE_PORT} ${NTNX_USER}@${PE_HOST} &
+  echo "Setting up remote SSH tunnels on local and remote port ${HTTP_CACHE_PORT}..."
+  #acli -o json host.list | jq -r .data[].hypervisorAddress
+  _hosts=$(SSHPASS=${PE_PASSWORD} \
+    sshpass -e ssh ${SSH_OPTS} -n ${NTNX_USER}@${PE_HOST} \
+    'source /etc/profile.d/nutanix_env.sh ; ncli host list | grep Controller')
+   _hold=$(echo "${_hosts}" | awk -F': ' '{print $2}')
+
+  # shellcheck disable=2206
+  _hosts=(${_hold// / }) # zero index
+
+  for _host in "${_hosts[@]}"; do
+    echo "SSH tunnel for _host=$_host"
+    #ServerAliveInterval 120
+    SSHPASS=${PE_PASSWORD} sshpass -e ssh ${SSH_OPTS} -nNT \
+      -R ${HTTP_CACHE_PORT}:localhost:${HTTP_CACHE_PORT} ${NTNX_USER}@${_host} &
+  done
 
   popd || true
   echo -e "\nTo turn service and tunnel off: stageworkshop_cache_stop"
@@ -73,6 +89,7 @@ alias stageworkshop_pc-chrome='stageworkshop_chrome PC'
 
 function stageworkshop_chrome() {
   stageworkshop_cluster ''
+  # shellcheck disable=2206
   local _octet=(${PE_HOST//./ }) # zero index
   local   _url="${1}"
 
@@ -111,6 +128,7 @@ function stageworkshop_cluster() {
     -     Accept self-signed cert: *.nutanix.local\n"
 
   _cluster=$(grep --invert-match --regexp '^#' "${_filespec}" | tail --lines=1)
+  # shellcheck disable=2206
    _fields=(${_cluster//|/ })
 
   export     PE_HOST=${_fields[0]}
@@ -124,6 +142,7 @@ function stageworkshop_ssh() {
 
   local  _command
   local     _host
+  # shellcheck disable=2206
   local    _octet=(${PE_HOST//./ }) # zero index
   local _password=${PE_PASSWORD}
   local     _user=${NTNX_USER}

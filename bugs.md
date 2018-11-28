@@ -4,13 +4,13 @@
   - dev: PC5.10
   - github 2FA
   - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
-  - Calm 2.4 containers
+    - deprecate AutoDC1?
+  - Darksite/Calm 2.4 containers
   - Move AFS deployment from PE to PC? Make it optional?
   - Move images from PE to PC? Make Karbon and Era optional?
     - JSON or YAML options? from bash/jq?
   - LCM inventory
   - PC import PE images
-  - Darksite Calm 2.4
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...

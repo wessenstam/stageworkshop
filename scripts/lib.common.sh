@@ -662,9 +662,12 @@ function Dependencies {
 }
 
 function Check_Prism_API_Up {
-# Argument ${1} = REQUIRED: PE or PC
-# Argument ${2} = OPTIONAL: number of attempts
-# Argument ${3} = OPTIONAL: number of seconds per cycle
+  # Argument ${1} = REQUIRED: PE or PC
+  # Argument ${2} = OPTIONAL: number of attempts
+  # Argument ${3} = OPTIONAL: number of seconds per cycle
+
+  CheckArgsExist 'ATTEMPTS PE_PASSWORD SLEEP'
+
   local _attempts=${ATTEMPTS}
   local    _error=77
   local     _host
@@ -673,8 +676,6 @@ function Check_Prism_API_Up {
   local  _pw_init='Nutanix/4u'
   local    _sleep=${SLEEP}
   local     _test=0
-
-  CheckArgsExist 'ATTEMPTS PE_PASSWORD SLEEP'
 
   if [[ ${1} == 'PC' ]]; then
     _host=${PC_HOST}
@@ -700,7 +701,7 @@ function Check_Prism_API_Up {
       log "Warning: unauthorized ${1} user or password."
     fi
 
-    if (( ${_test} == 401 )) && [[ ${1} == 'PC' ]] && [[ ${_password} != "${_pw_init}" ]]; then
+    if (( ${_test} == 401 )) && [[ ${1} == 'PC' && ${_password} != "${_pw_init}" ]]; then
       _password=${_pw_init}
       log "Warning @${1}: Fallback on ${_host}: try initial password next cycle..."
       _sleep=0 #break
