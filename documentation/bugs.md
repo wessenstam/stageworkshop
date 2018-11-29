@@ -371,4 +371,8 @@ $ git merge upstream/master
 $ git tag
 $ git tag -a 2.0.1 [hash]
 $ git push origin --tags
+
+git remote show origin
+git branch --delete [branch]
+git push origin --delete [branch|tag]
 ````

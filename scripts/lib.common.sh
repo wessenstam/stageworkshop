@@ -257,23 +257,34 @@ function images() {
   # https://portal.nutanix.com/#/page/docs/details?targetId=Command-Ref-AOS-v59:acl-acli-image-auto-r.html
   local         _cli='acli'
   local     _command
-  local    _complete
+  local   _http_body
   local       _image
   local  _image_type
   local        _name
   local      _source='source_url'
+  local        _test
 
   which "$_cli"
   if (( $? > 0 )); then
          _cli='nuclei'
-    _complete=' grep -i complete | '
       _source='source_uri'
   fi
 
   for _image in "${QCOW2_IMAGES[@]}" ; do
-    # log "DEBUG: ${_image} image.create..."
 
-    if [[ -n $(${_cli} image.list 2>&1 | ${_complete} grep "${_image}") ]]; then
+    # log "DEBUG: ${_image} image.create..."
+    if [[ ${_cli} == 'nuclei' ]]; then
+      _test=$(source /etc/profile.d/nutanix_env.sh \
+        && ${_cli} image.list 2>&1 \
+        | grep -i complete \
+        | grep "${_image}")
+    else
+      _test=$(source /etc/profile.d/nutanix_env.sh \
+        && ${_cli} image.list 2>&1 \
+        | grep "${_image}")
+    fi
+
+    if [[ -z ${_test} ]]; then
       log "Skip: ${_image} already complete on cluster."
     else
       _command=''
@@ -309,15 +320,35 @@ function images() {
         _command+=" name=${_name} description=\"${_image}\""
       fi
 
-      ${_cli} "image.create ${_command}" ${_source}=${SOURCE_URL} 2>&1 &
-      if (( $? != 0 )); then
-        log "Warning: Image submission: $?. Continuing..."
-        #exit 10
-      fi
-
       if [[ ${_cli} == 'nuclei' ]]; then
-        log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
-        log "TODO: ${_cli} image.list, state = COMPLETE; image.list Name UUID State"
+        _http_body=$(cat <<EOF
+{"action_on_failure":"CONTINUE",
+"execution_order":"SEQUENTIAL",
+"api_request_list":[
+  {"operation":"POST",
+  "path_and_params":"/api/nutanix/v3/images",
+  "body":{"spec":
+  {"name":"${_name}","description":"${_image}","resources":{
+    "image_type":"DISK_IMAGE",
+    "source_uri":"${SOURCE_URL}"}},
+  "metadata":{"kind":"image"},"api_version":"3.1.0"}}],"api_version":"3.0"}
+EOF
+        )
+        _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+          https://localhost:9440/api/nutanix/v3/batch)
+        log "batch _test=|${_test}|"
+      else
+
+        ${_cli} "image.create ${_command}" ${_source}=${SOURCE_URL} 2>&1 &
+        if (( $? != 0 )); then
+          log "Warning: Image submission: $?. Continuing..."
+          #exit 10
+        fi
+
+        if [[ ${_cli} == 'nuclei' ]]; then
+          log "NOTE: image.uuid = RUNNING, but takes a while to show up in:"
+          log "TODO: ${_cli} image.list, state = COMPLETE; image.list Name UUID State"
+        fi
       fi
     fi
 

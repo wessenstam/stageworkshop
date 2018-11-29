@@ -151,6 +151,33 @@ EOF
   done
 }
 
+function pc_cluster_img_import() {
+  local _http_body
+  local      _test
+  local      _uuid
+
+       _uuid=$(source /etc/profile.d/nutanix_env.sh \
+              && ncli --json=true cluster info \
+              | ./jq -r .data.uuid)
+  _http_body=$(cat <<EOF
+{"action_on_failure":"CONTINUE",
+ "execution_order":"SEQUENTIAL",
+ "api_request_list":[{
+   "operation":"POST",
+   "path_and_params":"/api/nutanix/v3/images/migrate",
+   "body":{
+     "image_reference_list":[],
+     "cluster_reference":{
+       "uuid":"${_uuid}",
+       "kind":"cluster",
+       "name":"string"}}}],
+ "api_version":"3.0"}
+EOF
+  )
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/api/nutanix/v3/batch)
+  log "batch _test=|${_test}|"
+}
 function pc_dns_add() {
   local _dns_server
   local       _test
