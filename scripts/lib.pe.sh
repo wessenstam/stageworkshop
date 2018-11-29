@@ -389,12 +389,21 @@ function pc_configure() {
 }
 
 function files_install() {
-  #this is a prototype, untried
-  ntnx_download 'files'
+  local _test
 
-  ncli software upload software-type=afs \
-    meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
-    file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+  _test=$(source /etc/profile.d/nutanix_env.sh \
+    && ncli --json=true software list \
+    | jq -r '.data[] | select(.softwareType == "FOUNDATION") | .status')
+
+  if [[ ${_test} != 'AVAILABLE' ]]; then
+    ntnx_download 'files'
+
+    ncli software upload software-type=afs \
+      meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
+      file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+    else
+      log "IDEMPOTENCY: Files already available. ${_test}"
+  fi
 }
 
 
