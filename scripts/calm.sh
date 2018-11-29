@@ -72,7 +72,7 @@ case ${1} in
     . lib.pc.sh
     Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
 
-    if [[ -n ${PE_PASSWORD} ]]; then
+    if [[ -z "${PE_HOST}" ]]; then
       Determine_PE
       . global.vars.sh # populate PE_HOST dependencies
     fi

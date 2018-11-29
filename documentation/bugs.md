@@ -11,6 +11,7 @@
       - JSON or YAML options? from bash/jq?
   - LCM inventory
     - Calm 2.4 containers
+  - Banner: PC-X@HPOC #
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
