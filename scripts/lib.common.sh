@@ -1,4 +1,37 @@
 #!/usr/bin/env bash
+# dependencies: dig
+
+function begin() {
+  local _release
+
+  if [[ -e ${RELEASE} ]]; then
+    _release=" release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
+  fi
+
+  log "$(basename ${0})${_release} start._____________________"
+}
+
+function dns_check() {
+  local    _dns
+  local  _error
+  local _lookup=${1} # REQUIRED
+  local   _test
+
+  if [[ -z ${_lookup} ]]; then
+    _error=43
+    log "Error ${_error}: missing lookup record!"
+    exit ${_error}
+  fi
+
+   _dns=$(dig +retry=0 +time=2 +short @${AUTH_HOST} ${_lookup})
+  _test=$?
+
+  if [[ ${_dns} != "${AUTH_HOST}" ]]; then
+    _error=44
+    log "Error ${_error}: result was ${_test}: ${_dns}"
+    return ${_error}
+  fi
+}
 
 function fileserver() {
   local    _action=${1} # REQUIRED
@@ -43,16 +76,6 @@ function fileserver() {
         "kill -9 $(pgrep python -a | grep ${_port} | awk '{ print $1 }')" 'OPTIONAL'
       ;;
   esac
-}
-
-function begin() {
-  local _release
-
-  if [[ -e ${RELEASE} ]]; then
-    _release=" release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
-  fi
-
-  log "$(basename ${0})${_release} start._____________________"
 }
 
 function finish() {

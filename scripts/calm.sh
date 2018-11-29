@@ -1,6 +1,23 @@
 #!/usr/bin/env bash
 # -x
 
+function img_import() {
+  local _http_body='{"action_on_failure":"CONTINUE","execution_order":"SEQUENTIAL","api_request_list":[{"operation":"POST","path_and_params":"/api/nutanix/v3/images","body":{"spec":{"name":"nutanix-afs","description":"testdesc","resources":{"image_type":"DISK_IMAGE","source_uri":"http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2"}},"metadata":{"kind":"image"},"api_version":"3.1.0"}}],"api_version":"3.0"}'
+  local      _test
+
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/api/nutanix/v3/batch)
+  log "batch _test=|${_test}|"
+}
+function cluster_img_import() {
+  local _http_body='{"action_on_failure":"CONTINUE","execution_order":"SEQUENTIAL","api_request_list":[{"operation":"POST","path_and_params":"/api/nutanix/v3/images/migrate","body":{"image_reference_list":[],"cluster_reference":{"uuid":"00057baf-2e83-dcfd-0000-0000000086b7","kind":"cluster","name":"string"}}}],"api_version":"3.0"}'
+  local      _test
+
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/api/nutanix/v3/batch)
+  log "batch _test=|${_test}|"
+}
+
 #__main()__________
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
@@ -79,17 +96,22 @@ case ${1} in
     export    SLEEP=10
 
     pc_init \
+    && pc_dns_add \
     && pc_ui \
     && pc_auth \
     && pc_smtp
 
     ssp_auth \
     && calm_enable \
-    && flow_enable \
+    && lcm \
     && images \
     && Check_Prism_API_Up 'PC'
 
     pc_project # TODO:50 pc_project is a new function, non-blocking at end.
+    flow_enable
+
+    img_import
+    cluster_img_import
     # NTNX_Upload 'AOS' # function in lib.common.sh
 
     unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD

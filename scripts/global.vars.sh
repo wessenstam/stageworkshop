@@ -15,7 +15,31 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
            MY_SP_NAME='SP01'
     MY_CONTAINER_NAME='Default'
 MY_IMG_CONTAINER_NAME='Images'
-  MY_PRIMARY_NET_NAME='Primary'
+
+DNS_SERVERS='8.8.8.8'
+   NW1_NAME='Primary'
+   NW1_VLAN=0
+
+# For Nutanix HPOC/Marketing clusters
+# https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
+# IP Range: ${IPV4_PREFIX}.0/25
+# DHCP Pool: ${IPV4_PREFIX}.50 - ${IPV4_PREFIX}.120
+case "${OCTET[0]}.${OCTET[1]}" in
+  10.20 )
+    DNS_SERVERS='10.21.253.10'
+    ;;
+  10.21 )
+    DNS_SERVERS='10.21.253.10,10.21.253.11'
+    NW1_VLAN=$(( ${OCTET[2]} * 10 ))
+    NW2_NAME='Secondary'
+    NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+    ;;
+  10.55 )
+    DNS_SERVERS='10.21.253.11'
+    nw2_name='Secondary'
+    NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+    ;;
+esac
 
 HTTP_CACHE_HOST='localhost'
 HTTP_CACHE_PORT=8181

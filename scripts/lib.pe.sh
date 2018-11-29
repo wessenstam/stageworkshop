@@ -1,29 +1,6 @@
 #!/usr/bin/env bash
 # -x
-# Dependencies: acli, ncli, dig, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
-# Please configure according to your needs
-
-function dns_check() {
-  local    _dns
-  local  _error
-  local _lookup=${1} # REQUIRED
-  local   _test
-
-  if [[ -z ${_lookup} ]]; then
-    _error=43
-    log "Error ${_error}: missing lookup record!"
-    exit ${_error}
-  fi
-
-   _dns=$(dig +retry=0 +time=2 +short @${AUTH_HOST} ${_lookup})
-  _test=$?
-
-  if [[ ${_dns} != "${AUTH_HOST}" ]]; then
-    _error=44
-    log "Error ${_error}: result was ${_test}: ${_dns}"
-    return ${_error}
-  fi
-}
+# Dependencies: acli, ncli, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 
 function acli() {
   local _cmd
@@ -78,48 +55,25 @@ function pe_init() {
 }
 
 function network_configure() {
-  # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
-  # IP Range: ${IPV4_PREFIX}.0/25
-  # DHCP Pool: ${IPV4_PREFIX}.50 - ${IPV4_PREFIX}.120
 
-  local _dns_host='8.8.8.8'
-  local _nw1_name="${MY_PRIMARY_NET_NAME}"
-  local _nw1_vlan=0
-
-  case "${OCTET[0]}.${OCTET[1]}" in
-    10.20 )
-      _dns_host='10.21.253.10'
-      ;;
-    10.21 )
-      _dns_host='10.21.253.10,10.21.253.11'
-      _nw1_vlan=$(( ${OCTET[2]} * 10 ))
-      ;;
-    10.55 )
-      _dns_host='10.21.253.11'
-      ;;
-  esac
-
-  if [[ ! -z $(acli "net.list" | grep ${_nw1_name}) ]]; then
-    log "IDEMPOTENCY: ${_nw1_name} network set, skip"
+  if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
+    log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
   else
     CheckArgsExist 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
 
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
-    log "Create primary network: Name: ${_nw1_name}, VLAN: ${_nw1_vlan}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
-    acli "net.create ${_nw1_name} vlan=${_nw1_vlan} ip_config=${IPV4_PREFIX}.1/25"
-    acli "net.update_dhcp_dns ${_nw1_name} servers=${AUTH_HOST},${_dns_host} domains=${MY_DOMAIN_NAME}"
-    acli "net.add_dhcp_pool ${_nw1_name} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125" # TOFIX: 51-100?
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
+    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${IPV4_PREFIX}.1/25"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+    acli "net.add_dhcp_pool ${NW1_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125" # TOFIX: 51-100?
 
-    if [[ "${OCTET[0]}.${OCTET[1]}" == '10.21' || "${OCTET[0]}.${OCTET[1]}" == '10.55' ]]; then
-      local _nw2_name='Secondary'
-      local _nw2_vlan=$(( ${OCTET[2]} * 10 + 1 ))
-
-      log "Create secondary network: Name: ${_nw2_name}, VLAN: ${_nw2_vlan}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
-      acli "net.create ${_nw2_name} vlan=${_nw2_vlan} ip_config=${IPV4_PREFIX}.129/25"
-      acli "net.update_dhcp_dns ${_nw2_name} servers=${AUTH_HOST},${_dns_host} domains=${MY_DOMAIN_NAME}"
-      acli "net.add_dhcp_pool ${_nw2_name} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253" # TOFIX: 132-254?
+    if [[ ! -z "${NW2_NAME}" ]]; then
+      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
+      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${IPV4_PREFIX}.129/25"
+      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+      acli "net.add_dhcp_pool ${NW2_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253" # TOFIX: 132-254?
     fi
   fi
 }
@@ -203,7 +157,7 @@ function authentication_source() {
         # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
         #acli "vm.disk_create ${AUTH_SERVER}${_autodc_release} cdrom=true empty=true"
         acli "vm.disk_create ${AUTH_SERVER}${_autodc_release} clone_from_image=${AUTH_SERVER}${_autodc_release}"
-        acli "vm.nic_create ${AUTH_SERVER}${_autodc_release} network=${MY_PRIMARY_NET_NAME} ip=${AUTH_HOST}"
+        acli "vm.nic_create ${AUTH_SERVER}${_autodc_release} network=${NW1_NAME} ip=${AUTH_HOST}"
 
         log "Power on ${AUTH_SERVER}${_autodc_release} VM..."
         acli "vm.on ${AUTH_SERVER}${_autodc_release}"
@@ -343,8 +297,8 @@ function pc_init() {
     log "IDEMPOTENCY: PC API responds, skip."
   else
     log "Get NET_UUID,MY_CONTAINER_UUID from cluster: pc_init dependency."
-    MY_NET_UUID=$(acli "net.get ${MY_PRIMARY_NET_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
-    log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
+    MY_NET_UUID=$(acli "net.get ${NW1_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
+    log "${NW1_NAME} UUID is ${MY_NET_UUID}"
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
     log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 

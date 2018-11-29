@@ -56,8 +56,8 @@ EOF"
     ncli user grant-cluster-admin-role user-name=xd
 
     log "Get UUIDs from cluster:"
-    MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
-    log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
+    MY_NET_UUID=$(acli net.get ${NW1_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
+    log "${NW1_NAME} UUID is ${MY_NET_UUID}"
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
     log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 

@@ -1,6 +1,213 @@
 #!/usr/bin/env bash
 # -x
 # Dependencies: curl, ncli, nuclei, jq
+# shellcheck disable=SC2120
+function calm_update() {
+  local  _attempts=12
+  local  _calm_bin=/usr/local/nutanix/epsilon
+  local _container
+  local     _error=19
+  local      _loop=0
+  local     _sleep=10
+  local       _url=http://${AUTH_HOST}:8080
+
+  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
+    log "Bypassing download of updated containers."
+  else
+    remote_exec 'ssh' 'AUTH_SERVER' \
+      'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
+      'OPTIONAL'
+
+    while true ; do
+      (( _loop++ ))
+      _test=$(curl ${CURL_HTTP_OPTS} ${_url} \
+        | tr -d \") # wonderful addition of "" around HTTP status code by cURL
+
+      if (( ${_test} == 200 )); then
+        log "Success reaching ${_url}"
+        break;
+      elif (( ${_loop} > ${_attempts} )); then
+        log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
+        return ${_error}
+      else
+        log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
+        sleep ${_sleep}
+      fi
+    done
+
+    Download ${_url}/epsilon.tar
+    Download ${_url}/nucacallm.tar
+  fi
+
+  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
+    ls -lh ${HOME}/*tar
+    mkdir ${HOME}/calm.backup || true
+    cp ${_calm_bin}/*tar ${HOME}/calm.backup/ \
+    && genesis stop nucalm epsilon \
+    && docker rm -f "$(docker ps -aq)" || true \
+    && docker rmi -f "$(docker images -q)" || true \
+    && cp ${HOME}/*tar ${_calm_bin}/ \
+    && cluster start # ~75 seconds to start both containers
+
+    for _container in epsilon nucalm ; do
+      local _test=0
+      while (( ${_test} < 1 )); do
+        _test=$(docker ps -a | grep ${_container} | grep -i healthy | wc --lines)
+      done
+    done
+  fi
+}
+
+function flow_enable() {
+  ## (API; Didn't work. Used nuclei instead)
+  ## https://localhost:9440/api/nutanix/v3/services/microseg
+  ## {"state":"ENABLE"}
+  # To disable flow run the following on PC: nuclei microseg.disable
+
+  log "Enable Nutanix Flow..."
+  nuclei microseg.enable 2>/dev/null
+  nuclei microseg.get_status 2>/dev/null
+}
+
+function lcm() {
+  local _pc_version
+
+  # shellcheck disable=2206
+  _pc_version=(${PC_VERSION//./ })
+
+  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
+    log "PC_VERSION ${PC_VERSION} >= 5.9, starting LCM inventory..."
+
+    local _http_body='value: "{".oid":"LifeCycleManager",".method":"lcm_framework_rpc",".kwargs":{"method_class":"LcmFramework","method":"perform_inventory","args":["http://download.nutanix.com/lcm/2.0"]}}"'
+    local      _test
+
+    _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+      https://localhost:9440/PrismGateway/services/rest/v1/genesis)
+    log "inventory _test=|${_test}|"
+  fi
+}
+
+function pc_auth() {
+  # TODO:170 configure case for each authentication server type?
+  local      _group
+  local  _http_body
+  local _pc_version
+  local       _test
+
+  # TODO: hadcoded URL, not passing arguments yet. Disabling by appending v1
+  if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
+    # local  _autodc_conf='/etc/samba/smb.conf'
+    # local _autodc_patch='ldap server require strong auth = no'
+    remote_exec 'ssh' 'AUTH_SERVER' \
+    'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh && bash ${_##*/}' \
+    'OPTIONAL'
+  fi
+
+  log "Add Directory ${AUTH_SERVER}"
+  _http_body=$(cat <<EOF
+{"name":"${AUTH_SERVER}","domain":"${MY_DOMAIN_FQDN}","directoryType":"ACTIVE_DIRECTORY","connectionType":"LDAP",
+EOF
+  )
+
+  # shellcheck disable=2206
+  _pc_version=(${PC_VERSION//./ })
+
+  log "Checking if PC_VERSION ${PC_VERSION} >= 5.9"
+  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
+    _http_body+=$(cat <<EOF
+"groupSearchType":"RECURSIVE","directoryUrl":"ldap://${AUTH_HOST}:${LDAP_PORT}",
+EOF
+)
+  else
+    _http_body+=" \"directoryUrl\":\"${MY_DOMAIN_URL}\","
+  fi
+
+  _http_body+=$(cat <<EOF
+    "serviceAccountUsername":"${MY_DOMAIN_USER}",
+    "serviceAccountPassword":"${MY_DOMAIN_PASS}"
+  }
+EOF
+  )
+
+  _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
+  log "directories: _test=|${_test}|_http_body=|${_http_body}|"
+
+  log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO:40 hardcoded role mappings
+  for _group in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
+    _http_body=$(cat <<EOF
+    {
+      "directoryName":"${AUTH_SERVER}",
+      "role":"ROLE_CLUSTER_ADMIN",
+      "entityType":"GROUP",
+      "entityValues":["${_group}"]
+    }
+EOF
+    )
+    _test=$(curl ${CURL_POST_OPTS} \
+      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+      https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${AUTH_SERVER}/role_mappings)
+    log "Cluster Admin=${_group}, _test=|${_test}|"
+  done
+}
+
+function pc_dns_add() {
+  local _dns_server
+  local       _test
+
+  for _dns_server in $(echo "${DNS_SERVERS}" | sed -e 's/,/ /'); do
+    _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "[\"$_dns_server\"]" \
+      https://localhost:9440/PrismGateway/services/rest/v1/cluster/name_servers/add_list)
+    log "name_servers/add_list |${_dns_server}| _test=|${_test}|"
+  done
+}
+
+function pc_init() {
+  # TODO:70 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
+  local _test
+
+  log "Configure NTP@PC"
+  ncli cluster add-to-ntp-servers \
+    servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
+
+  log "Validate EULA@PC"
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
+      "username": "SE",
+      "companyName": "NTNX",
+      "jobTitle": "SE"
+  }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
+  log "EULA _test=|${_test}|"
+
+  log "Disable Pulse@PC"
+  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT -d '{
+      "emailContactList":null,
+      "enable":false,
+      "verbosityType":null,
+      "enableDefaultNutanixEmail":false,
+      "defaultNutanixEmail":null,
+      "nosVersion":null,
+      "isPulsePromptNeeded":false,
+      "remindLater":null
+  }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
+  log "PULSE _test=|${_test}|"
+}
+
+function pc_smtp() {
+  log "Configure SMTP@PC"
+  local _sleep=5
+
+  CheckArgsExist 'SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT'
+  ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
+    address=${SMTP_SERVER_ADDRESS} from-email-address=${SMTP_SERVER_FROM}
+  #log "sleep ${_sleep}..."; sleep ${_sleep}
+  #log $(ncli cluster get-smtp-server | grep Status | grep success)
+  ncli cluster send-test-email recipient="${MY_EMAIL}" \
+    subject="pc_smtp https://${PRISM_ADMIN}:${PE_PASSWORD}@${PC_HOST}:9440 Testing."
+  # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
+  #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
+  #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
+  # log "_test=|${_test}|"
+}
 
 function pc_passwd() {
   CheckArgsExist 'PE_PASSWORD'
@@ -21,71 +228,6 @@ function pc_passwd() {
   # _test=$(curl ${CURL_HTTP_OPTS} --user "${PRISM_ADMIN}:${_old_pw}" -X POST --data "${_http_body}" \
   #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
   # log "cURL reset password _test=${_test}"
-}
-
-function pc_auth() {
-  # TODO:170 configure case for each authentication server type?
-  local      _group
-  local  _http_body
-  local _pc_version
-  local       _test
-
-  # TODO: hadcoded URL, not passing arguments yet. Disabling by appending v1
-  if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
-    local  _autodc_conf=/etc/samba/smb.conf
-    local _autodc_patch='ldap server require strong auth = no'
-    remote_exec 'ssh' 'AUTH_SERVER' \
-    'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh && bash ${_##*/}' \
-    'OPTIONAL'
-  fi
-
-  log "Add Directory ${AUTH_SERVER}"
-  _http_body=$(cat <<EOF
-  {
-    "name":"${AUTH_SERVER}",
-    "domain":"${MY_DOMAIN_FQDN}",
-    "directoryType":"ACTIVE_DIRECTORY",
-    "connectionType":"LDAP",
-EOF
-  )
-
-  _pc_version=$(echo ${PC_VERSION} | awk -F. '{ print $1 "." $2$3$4}')
-  log "Checking if PC_VERSION ${PC_VERSION}==${_pc_version} >= 5.9"
-  if (( $(echo "${_pc_version} >= 5.9" | bc -l) )); then
-    _http_body+=' "groupSearchType":"RECURSIVE", '
-    _http_body+=" \"directoryUrl\":\"ldap://${AUTH_HOST}:${LDAP_PORT}/\", "
-  else
-    _http_body+=" \"directoryUrl\":\"${MY_DOMAIN_URL}\", "
-  fi
-
-  _http_body+=$(cat <<EOF
-    "serviceAccountUsername":"${MY_DOMAIN_USER}",
-    "serviceAccountPassword":"${MY_DOMAIN_PASS}"
-  }
-EOF
-  )
-
-  _test=$(curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
-  log "_test=|${_test}|_http_body=|${_http_body}|"
-
-  log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO:40 hardcoded role mappings
-  for _group in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
-    _http_body=$(cat <<EOF
-    {
-      "directoryName":"${AUTH_SERVER}",
-      "role":"ROLE_CLUSTER_ADMIN",
-      "entityType":"GROUP",
-      "entityValues":["${_group}"]
-    }
-EOF
-    )
-    _test=$(curl ${CURL_POST_OPTS} \
-      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
-      https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${AUTH_SERVER}/role_mappings)
-    log "Cluster Admin=${_group}, _test=|${_test}|"
-  done
 }
 
 function ssp_auth() {
@@ -247,9 +389,10 @@ EOF
 
 function pc_ui() {
   # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
-  local _http_body
-  local      _json
-  local      _test
+  local  _http_body
+  local       _json
+  local _pc_version
+  local       _test
 
   _json=$(cat <<EOF
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
@@ -278,64 +421,27 @@ EOF
     --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
     https://localhost:9440/PrismGateway/services/rest/v1/application/user_data)
   log "autoLogoutTime _test=|${_test}|"
-}
 
-function pc_init() {
-  # TODO:70 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
-  local _test
+  # shellcheck disable=2206
+  _pc_version=(${PC_VERSION//./ })
 
-  log "Configure NTP@PC"
-  ncli cluster add-to-ntp-servers \
-    servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
+  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
+    log "PC_VERSION ${PC_VERSION} >= 5.9, setting favorites..."
 
-  log "Validate EULA@PC"
-  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
-      "username": "SE",
-      "companyName": "NTNX",
-      "jobTitle": "SE"
-  }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
-  log "EULA _test=|${_test}|"
+    _json=$(cat <<EOF
+{"complete_query":"Karbon","route":"ebrowser/k8_cluster_entitys"} \
+{"complete_query":"Images","route":"ebrowser/image_infos"} \
+{"complete_query":"Projects","route":"ebrowser/projects"} \
+{"complete_query":"Calm","route":"calm"}
+EOF
+    )
 
-  log "Disable Pulse@PC"
-  _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT -d '{
-      "emailContactList":null,
-      "enable":false,
-      "verbosityType":null,
-      "enableDefaultNutanixEmail":false,
-      "defaultNutanixEmail":null,
-      "nosVersion":null,
-      "isPulsePromptNeeded":false,
-      "remindLater":null
-  }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
-  log "PULSE _test=|${_test}|"
-}
-
-function pc_smtp() {
-  log "Configure SMTP@PC"
-  local _sleep=5
-
-  CheckArgsExist 'SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT'
-  ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
-    address=${SMTP_SERVER_ADDRESS} from-email-address=${SMTP_SERVER_FROM}
-  #log "sleep ${_sleep}..."; sleep ${_sleep}
-  #log $(ncli cluster get-smtp-server | grep Status | grep success)
-  ncli cluster send-test-email recipient="${MY_EMAIL}" \
-    subject="pc_smtp https://${PRISM_ADMIN}:${PE_PASSWORD}@${PC_HOST}:9440 Testing."
-  # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
-  #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
-  #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
-  # log "_test=|${_test}|"
-}
-
-function flow_enable() {
-  ## (API; Didn't work. Used nuclei instead)
-  ## https://localhost:9440/api/nutanix/v3/services/microseg
-  ## {"state":"ENABLE"}
-  # To disable flow run the following on PC: nuclei microseg.disable
-
-  log "Enable Nutanix Flow..."
-  nuclei microseg.enable 2>/dev/null
-  nuclei microseg.get_status 2>/dev/null
+    for _http_body in ${_json}; do
+      _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+        https://localhost:9440/api/nutanix/v3/search/favorites)
+      log "favs _test=|${_test}|${_http_body}"
+    done
+  fi
 }
 
 function pc_project() {
@@ -375,61 +481,4 @@ function pc_update() {
   log "This function not implemented yet."
   log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
   cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
-}
-
-# shellcheck disable=SC2120
-function calm_update() {
-  local  _attempts=12
-  local  _calm_bin=/usr/local/nutanix/epsilon
-  local _container
-  local     _error=19
-  local      _loop=0
-  local     _sleep=10
-  local       _url=http://${AUTH_HOST}:8080
-
-  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
-    log "Bypassing download of updated containers."
-  else
-    remote_exec 'ssh' 'AUTH_SERVER' \
-      'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
-      'OPTIONAL'
-
-    while true ; do
-      (( _loop++ ))
-      _test=$(curl ${CURL_HTTP_OPTS} ${_url} \
-        | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-
-      if (( ${_test} == 200 )); then
-        log "Success reaching ${_url}"
-        break;
-      elif (( ${_loop} > ${_attempts} )); then
-        log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
-        return ${_error}
-      else
-        log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
-        sleep ${_sleep}
-      fi
-    done
-
-    Download ${_url}/epsilon.tar
-    Download ${_url}/nucacallm.tar
-  fi
-
-  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
-    ls -lh ${HOME}/*tar
-    mkdir ${HOME}/calm.backup || true
-    cp ${_calm_bin}/*tar ${HOME}/calm.backup/ \
-    && genesis stop nucalm epsilon \
-    && docker rm -f "$(docker ps -aq)" || true \
-    && docker rmi -f "$(docker images -q)" || true \
-    && cp ${HOME}/*tar ${_calm_bin}/ \
-    && cluster start # ~75 seconds to start both containers
-
-    for _container in epsilon nucalm ; do
-      local _test=0
-      while (( ${_test} < 1 )); do
-        _test=$(docker ps -a | grep ${_container} | grep -i healthy | wc --lines)
-      done
-    done
-  fi
 }
