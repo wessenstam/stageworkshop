@@ -394,19 +394,22 @@ function files_install() {
   local               _test
 
   # | jq -r '.data[] | select(.softwareType == "PRISM_CENTRAL_DEPLOY") | select(.status == "COMPLETED") | .version'
+  Dependencies 'install' 'jq' || exit 13
 
   _test=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true software list \
-    | jq -r '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | .status')
+    | ${HOME}/jq -r \
+      '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | select(.status == "COMPLETED") | .version')
 
-  if [[ ${_test} != 'COMPLETED' ]]; then
+  if [[ ${_test} != "${FILES_VERSION}" ]]; then
+    log "Files ${FILES_VERSION} not completed. ${_test}"
     ntnx_download "${_ncli_software_type}"
 
     ncli software upload software-type=${_ncli_software_type} \
       meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
       file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
   else
-    log "IDEMPOTENCY: Files already available. ${_test}"
+    log "IDEMPOTENCY: Files ${FILES_VERSION} already completed."
   fi
 }
 

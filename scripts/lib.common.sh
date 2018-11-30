@@ -229,6 +229,7 @@ function ntnx_download() {
     log "Warning: using cached download ${_meta_url##*/}"
   fi
 
+  Dependencies 'install' 'jq' || exit 13
   _source_url=$(cat ${_meta_url##*/} | jq -r .download_url_cdn)
 
   if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
