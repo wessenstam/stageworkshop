@@ -59,33 +59,6 @@ function calm_update() {
   fi
 }
 
-function pe_determine() {
-  local _attempts=5
-  local    _error=10
-  local     _hold
-  local     _loop=0
-  local    _sleep=2
-
-  # WORKAROUND: Entities errors on lines 1-2, due to non-JSON outputs by nuclei...
-  _hold=$(source /etc/profile.d/nutanix_env.sh \
-    && nuclei cluster.list format=json 2>/dev/null \
-    | grep -v 'Entities :' \
-    | ${HOME}/jq \
-    '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)')
-
-  if [[ -z "${_hold}" ]]; then
-    _error=12
-    log "Error ${_error}: couldn't resolve clusters ${_hold}"
-    exit ${_error}
-  else
-    CLUSTER_NAME=$(echo ${_hold} | ${HOME}/jq -r .name)
-         PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .resources.network.external_ip)
-
-    export CLUSTER_NAME PE_HOST
-    log "Success: ${CLUSTER_NAME} PE external IP=${PE_HOST}"
-  fi
-}
-
 function flow_enable() {
   ## (API; Didn't work. Used nuclei instead)
   ## https://localhost:9440/api/nutanix/v3/services/microseg
@@ -269,7 +242,7 @@ function pc_smtp() {
 }
 
 function pc_passwd() {
-  args_required 'PE_PASSWORD'
+  args_required 'PRISM_ADMIN PE_PASSWORD'
 
   log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
   ncli user reset-password user-name=${PRISM_ADMIN} password=${PE_PASSWORD}
@@ -287,6 +260,38 @@ function pc_passwd() {
   # _test=$(curl ${CURL_HTTP_OPTS} --user "${PRISM_ADMIN}:${_old_pw}" -X POST --data "${_http_body}" \
   #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
   # log "cURL reset password _test=${_test}"
+}
+
+function pe_determine() {
+  local _attempts=5
+  local    _error=10
+  local     _hold
+  local     _loop=0
+  local    _sleep=2
+
+  rm -f /tmp/cluster.list.json
+  # WORKAROUND: Entities non-JSON outputs by nuclei on lines 1-2...
+  _hold=$(source /etc/profile.d/nutanix_env.sh \
+    && export   NUCLEI_SERVER='localhost' \
+    && export NUCLEI_USERNAME="${PRISM_ADMIN}" \
+    && export NUCLEI_PASSWORD="nutanix/4u" \
+    && nuclei cluster.list format=json 2>/dev/null \
+    | grep -v 'Entities :' \
+    | ${HOME}/jq \
+    '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)'
+  )
+
+  if [[ -z "${_hold}" ]]; then
+    _error=12
+    log "Error ${_error}: couldn't resolve clusters ${_hold}"
+    exit ${_error}
+  else
+    CLUSTER_NAME=$(echo ${_hold} | ${HOME}/jq -r .name)
+         PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .resources.network.external_ip)
+
+    export CLUSTER_NAME PE_HOST
+    log "Success: ${CLUSTER_NAME} PE external IP=${PE_HOST}"
+  fi
 }
 
 function ssp_auth() {
@@ -456,10 +461,10 @@ function pc_ui() {
   _json=$(cat <<EOF
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
-{"type":"custom_login_screen","key":"product_title","value":"${CLUSTER_NAME} PC-${PC_VERSION}"} \
+{"type":"custom_login_screen","key":"product_title","value":"${CLUSTER_NAME}<div>PC-${PC_VERSION}"} \
 {"type":"custom_login_screen","key":"title","value":"Nutanix.HandsOnWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_status","value":true} \
-{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${CLUSTER_NAME}<br>${PE_PASSWORD}"} \
+{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${CLUSTER_NAME}<div>${PE_PASSWORD}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","username":"system_data","key":"disable_2048","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \

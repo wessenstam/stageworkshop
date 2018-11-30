@@ -215,7 +215,7 @@ function pc_configure() {
   local      _command
   local    _container
   local _dependencies='lib.common.sh global.vars.sh lib.pc.sh calm.sh'
-  #TOFIX: hardcoded lib.pc.sh calm.sh above
+  #TODO: TOFIX: hardcoded lib.pc.sh calm.sh above
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -238,7 +238,7 @@ function pc_configure() {
   done
 
   # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-  _command="MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
+  _command="MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
   nohup bash ${HOME}/calm.sh PC"
   log "Launch PC configuration script... ${_command}"
   remote_exec 'ssh' 'PC' "${_command} >> calm.log 2>&1 &"

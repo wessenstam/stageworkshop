@@ -12,8 +12,7 @@ if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
     \t   PrismCentralDev=${PC_VERSION_DEV}"
 
   if [[ -z ${PC_VERSION} ]]; then
-    PC_VERSION="Check stage_workshop.sh::stage_clusters() for the best known \
-    choice since $(grep CommitDate ${RELEASE} | awk -F\" '{print $4}')."
+    export PC_VERSION="${PC_VERSION_DEV}"
   fi
 fi
 
