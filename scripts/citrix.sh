@@ -86,7 +86,7 @@ EOF"
     && network_configure \
     && authentication_source \
     && pe_auth \
-    && pc_init \
+    && pc_install \
     && prism_check 'PC'
 
     if (( $? == 0 )) ; then

@@ -60,11 +60,10 @@ case ${1} in
     if (( $? == 0 )) ; then
       files_install & # parallel test, optional?
 
-      pc_init \
+      pc_install \
       && prism_check 'PC' \
       && pc_configure \
-      && dependencies 'remove' 'sshpass' \
-      && dependencies 'remove' 'jq'
+      && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"

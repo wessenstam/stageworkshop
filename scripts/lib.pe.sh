@@ -247,7 +247,7 @@ function pc_configure() {
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
-function pc_init() {
+function pc_install() {
   local _version_id
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
@@ -256,27 +256,28 @@ function pc_init() {
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else
-    log "Get NET_UUID,MY_CONTAINER_UUID from cluster: pc_init dependency."
+    log "Get NET_UUID,MY_CONTAINER_UUID from cluster: pc_install dependency."
     MY_NET_UUID=$(acli "net.get ${NW1_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
     log "${NW1_NAME} UUID is ${MY_NET_UUID}"
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
     log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 
-    ntnx_download 'PC'
 
-    log "Prism Central upload..."
-    # TODO: Error: Software prism_central_deploy.5.9.0.1 already exists on the cluster
-    ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
-           file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
-      meta-file-path="`pwd`/${NTNX_META_URL##*/}"
+    if [[ condition ]]; then
+      ntnx_download 'PC'
 
-    _version_id=$(cat ${NTNX_META_URL##*/} | jq -r .version_id)
+      log "Prism Central upload..."
+      ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
+             file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
+        meta-file-path="`pwd`/${NTNX_META_URL##*/}"
 
-    log "Delete PC sources to free CVM space..."
-    rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
+      _version_id=$(cat ${NTNX_META_URL##*/} | jq -r .version_id)
+
+      log "Delete PC sources to free CVM space..."
+      rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
+    fi
 
     log "Deploy Prism Central (typically takes 17+ minutes)..."
-    # TODO:150 Parameterize DNS Servers & add secondary
     # TODO:120 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     # Sizing suggestions, certified configurations:
     # https://portal.nutanix.com/#/page/docs/details?targetId=Release-Notes-Prism-Central-v591:sha-pc-scalability-r.html
