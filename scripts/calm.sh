@@ -81,18 +81,17 @@ case ${1} in
     . lib.pc.sh
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13
 
-    if [[ -z "${PE_HOST}" ]]; then
-      determine_pe
-      . global.vars.sh # re-populate PE_HOST dependencies
-    fi
-
-    pc_passwd
-
     export   NUCLEI_SERVER='localhost'
     export NUCLEI_USERNAME="${PRISM_ADMIN}"
     export NUCLEI_PASSWORD="${PE_PASSWORD}"
     # nuclei -debug -username admin -server localhost -password x vm.list
 
+    if [[ -z "${PE_HOST}" ]]; then
+      pe_determine
+      . global.vars.sh # re-populate PE_HOST dependencies
+    fi
+
+    pc_passwd
     ntnx_cmd # check cli services available?
 
     if [[ ! -z "${2}" ]]; then

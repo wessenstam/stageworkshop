@@ -18,11 +18,12 @@ if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   fi
 fi
 
-alias stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
+alias stageworkshop_pe-chrome='stageworkshop_chrome PE'
+alias stageworkshop_pc-chrome='stageworkshop_chrome PC'
+alias         stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
 
-function stageworkshop_cache_stop() {
-  echo "Killing service and tunnel:${HTTP_CACHE_PORT}..."
-  pkill -f ${HTTP_CACHE_PORT}
+function stageworkshop_auth() {
+  stageworkshop_ssh 'AUTH' "${1}"
 }
 
 function stageworkshop_cache_start() {
@@ -84,8 +85,10 @@ function stageworkshop_cache_start() {
   stageworkshop_chrome http://localhost:${HTTP_CACHE_PORT}
 }
 
-alias stageworkshop_pe-chrome='stageworkshop_chrome PE'
-alias stageworkshop_pc-chrome='stageworkshop_chrome PC'
+function stageworkshop_cache_stop() {
+  echo "Killing service and tunnel:${HTTP_CACHE_PORT}..."
+  pkill -f ${HTTP_CACHE_PORT}
+}
 
 function stageworkshop_chrome() {
   stageworkshop_cluster ''
@@ -106,7 +109,6 @@ function stageworkshop_chrome() {
   if [[ `uname -s` == "Darwin" ]]; then
     open -a 'Google Chrome' ${_url}
   fi
-
 }
 
 function stageworkshop_cluster() {
@@ -135,6 +137,14 @@ function stageworkshop_cluster() {
   export PE_PASSWORD=${_fields[1]}
   export    MY_EMAIL=${_fields[2]}
   echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
+}
+
+function stageworkshop_pe() {
+  stageworkshop_ssh 'PE' "${1}"
+}
+
+function stageworkshop_pc() {
+  stageworkshop_ssh 'PC' "${1}"
 }
 
 function stageworkshop_ssh() {
@@ -179,7 +189,7 @@ EOF
 
   case "${2}" in
     log | logs)
-      _command='date; tail -f calm*log'
+      _command='date; echo; tail -f calm*log'
       ;;
     calm | inflight)
       _command='ps -efww | grep calm'
@@ -192,7 +202,7 @@ EOF
       ;;
   esac
 
-  echo "INFO: ${_host} $ ${_command}"
+  echo -e "INFO: ${_host} $ ${_command}\n"
   SSHPASS="${_password}" sshpass -e ssh -q \
     -o StrictHostKeyChecking=no \
     -o GlobalKnownHostsFile=/dev/null \
@@ -200,16 +210,4 @@ EOF
     ${_user}@"${_host}" "${_command}"
 
   unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
-}
-
-function stageworkshop_pe() {
-  stageworkshop_ssh 'PE' "${1}"
-}
-
-function stageworkshop_pc() {
-  stageworkshop_ssh 'PC' "${1}"
-}
-
-function stageworkshop_auth() {
-  stageworkshop_ssh 'AUTH' "${1}"
 }

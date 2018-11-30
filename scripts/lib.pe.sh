@@ -10,74 +10,6 @@ function acli() {
   # DEBUG=1 && if [[ ${DEBUG} ]]; then log "$@"; fi
 }
 
-function pe_init() {
-  args_required 'DATA_SERVICE_IP MY_EMAIL \
-    SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
-    MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
-    SLEEP ATTEMPTS'
-
-  if [[ `ncli cluster get-params | grep 'External Data' | \
-         awk -F: '{print $2}' | tr -d '[:space:]'` == "${DATA_SERVICE_IP}" ]]; then
-    log "IDEMPOTENCY: Data Services IP set, skip."
-  else
-    log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
-    ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
-      from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
-    ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
-      --subject="[pe_init:Config SMTP:alert test] `ncli cluster get-params`" \
-      && ${HOME}/serviceability/bin/send-email
-
-    log "Configure NTP"
-    ncli cluster add-to-ntp-servers \
-      servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
-
-    log "Rename default container to ${MY_CONTAINER_NAME}"
-    default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
-      | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
-    ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
-
-    log "Rename default storage pool to ${MY_SP_NAME}"
-    default_sp=$(ncli storagepool ls | grep 'Name' | cut -d ':' -f 2 | sed s/' '//g)
-    ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
-
-    log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
-    (ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
-      | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" > /dev/null 2>&1) \
-      && log "Container ${MY_IMG_CONTAINER_NAME} exists" \
-      || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
-
-    # Set external IP address:
-    #ncli cluster edit-params external-ip-address=${PE_HOST}
-
-    log "Set Data Services IP address to ${DATA_SERVICE_IP}"
-    ncli cluster edit-params external-data-services-ip-address=${DATA_SERVICE_IP}
-  fi
-}
-
-function network_configure() {
-
-  if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
-    log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
-  else
-    args_required 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
-
-    log "Remove Rx-Automation-Network if it exists..."
-    acli "-y net.delete Rx-Automation-Network"
-
-    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
-    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${IPV4_PREFIX}.1/25"
-    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
-    acli "net.add_dhcp_pool ${NW1_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125" # TOFIX: 51-100?
-
-    if [[ ! -z "${NW2_NAME}" ]]; then
-      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
-      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${IPV4_PREFIX}.129/25"
-      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
-      acli "net.add_dhcp_pool ${NW2_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253" # TOFIX: 132-254?
-    fi
-  fi
-}
-
 function authentication_source() {
   local   _attempts
   local      _error=13
@@ -224,67 +156,95 @@ function authentication_source() {
       ;;
   esac
 }
+function files_install() {
+  local  _ncli_softwaretype='FILE_SERVER'
+  local _ncli_software_type='afs'
+  local               _test
 
-function pe_auth() {
-  args_required 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
+  dependencies 'install' 'jq' || exit 13
 
-  if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
-    log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
+  _test=$(source /etc/profile.d/nutanix_env.sh \
+    && ncli --json=true software list \
+    | ${HOME}/jq -r \
+      '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | select(.status == "COMPLETED") | .version')
+
+  if [[ ${_test} != "${FILES_VERSION}" ]]; then
+    log "Files ${FILES_VERSION} not completed. ${_test}"
+    ntnx_download "${_ncli_software_type}"
+
+    ncli software upload software-type=${_ncli_software_type} \
+      meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
+      file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
   else
-    log "Configure PE external authentication"
-    ncli authconfig add-directory \
-      directory-type=ACTIVE_DIRECTORY \
-      connection-type=LDAP directory-url="${MY_DOMAIN_URL}" \
-      domain="${MY_DOMAIN_FQDN}" \
-      name="${MY_DOMAIN_NAME}" \
-      service-account-username="${MY_DOMAIN_USER}" \
-      service-account-password="${MY_DOMAIN_PASS}"
-
-    log "Configure PE role map"
-    ncli authconfig add-role-mapping \
-      role=ROLE_CLUSTER_ADMIN \
-      entity-type=group name="${MY_DOMAIN_NAME}" \
-      entity-values="${MY_DOMAIN_ADMIN_GROUP}"
+    log "IDEMPOTENCY: Files ${FILES_VERSION} already completed."
   fi
 }
 
-function pe_license() {
-  args_required 'CURL_POST_OPTS PE_PASSWORD'
+function network_configure() {
 
-  log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
-  prism_check 'PC' 2 0
-
-  if (( $? == 0 )) ; then
-    log "IDEMPOTENCY: PC API responds, skip"
+  if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
+    log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
   else
-    log "Validate EULA on PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
-      "username": "SE with $(basename ${0})",
-      "companyName": "Nutanix",
-      "jobTitle": "SE"
-    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
+    args_required 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
 
-    log "Disable Pulse in PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
-      "defaultNutanixEmail": null,
-      "emailContactList": null,
-      "enable": false,
-      "enableDefaultNutanixEmail": false,
-      "isPulsePromptNeeded": false,
-      "nosVersion": null,
-      "remindLater": null,
-      "verbosityType": null
-    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse
+    log "Remove Rx-Automation-Network if it exists..."
+    acli "-y net.delete Rx-Automation-Network"
 
-    #echo; log "Create PE Banner Login" # TODO: for PC, login banner
-    # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
-    # curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data \
-    #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
-    #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
-    #curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data
-    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET[2]}' password = '${PE_PASSWORD}'"}' \
-    #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
+    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${IPV4_PREFIX}.1/25"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+    acli "net.add_dhcp_pool ${NW1_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125" # TOFIX: 51-100?
+
+    if [[ ! -z "${NW2_NAME}" ]]; then
+      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
+      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${IPV4_PREFIX}.129/25"
+      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+      acli "net.add_dhcp_pool ${NW2_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253" # TOFIX: 132-254?
+    fi
   fi
+}
+
+function nos_upgrade() {
+  #this is a prototype, untried
+  ntnx_download 'nos'
+
+  ncli software upload software-type=nos \
+    meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
+    file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+}
+
+function pc_configure() {
+  local      _command
+  local    _container
+  local _dependencies='lib.common.sh global.vars.sh lib.pc.sh calm.sh'
+  #TOFIX: hardcoded lib.pc.sh calm.sh above
+
+  if [[ -e ${RELEASE} ]]; then
+    _dependencies+=" ${RELEASE}"
+  else
+    log 'Warning: did NOT find '${RELEASE}
+  fi
+  log "Send configuration scripts to PC and remove: ${_dependencies}"
+  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies}
+
+  _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE} id_rsa.pub"
+
+  log "OPTIONAL: Send binary dependencies to PC: ${_dependencies}"
+  remote_exec 'scp' 'PC' "${_dependencies}" 'OPTIONAL'
+
+  for _container in epsilon nucalm ; do
+    if [[ -e ${_container}.tar ]]; then
+      log "Uploading Calm container updates in background..."
+      remote_exec 'SCP' 'PC' ${_container}.tar 'OPTIONAL' &
+    fi
+  done
+
+  # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
+  _command="MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
+  nohup bash ${HOME}/calm.sh PC"
+  log "Launch PC configuration script... ${_command}"
+  remote_exec 'ssh' 'PC' "${_command} >> calm.log 2>&1 &"
+  log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
 function pc_init() {
@@ -354,69 +314,108 @@ EOF
   fi
 }
 
-function pc_configure() {
-  local      _command
-  local    _container
-  local _dependencies='lib.common.sh global.vars.sh lib.pc.sh calm.sh'
-  #TOFIX: hardcoded lib.pc.sh calm.sh above
+function pe_auth() {
+  args_required 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
 
-  if [[ -e ${RELEASE} ]]; then
-    _dependencies+=" ${RELEASE}"
+  if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
+    log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
   else
-    log 'Warning: did NOT find '${RELEASE}
-  fi
-  log "Send configuration scripts to PC and remove: ${_dependencies}"
-  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies}
+    log "Configure PE external authentication"
+    ncli authconfig add-directory \
+      directory-type=ACTIVE_DIRECTORY \
+      connection-type=LDAP directory-url="${MY_DOMAIN_URL}" \
+      domain="${MY_DOMAIN_FQDN}" \
+      name="${MY_DOMAIN_NAME}" \
+      service-account-username="${MY_DOMAIN_USER}" \
+      service-account-password="${MY_DOMAIN_PASS}"
 
-  _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE} id_rsa.pub"
-
-  log "OPTIONAL: Send binary dependencies to PC: ${_dependencies}"
-  remote_exec 'scp' 'PC' "${_dependencies}" 'OPTIONAL'
-
-  for _container in epsilon nucalm ; do
-    if [[ -e ${_container}.tar ]]; then
-      log "Uploading Calm container updates in background..."
-      remote_exec 'SCP' 'PC' ${_container}.tar 'OPTIONAL' &
-    fi
-  done
-
-  # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-  _command="MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
-  nohup bash ${HOME}/calm.sh PC"
-  log "Launch PC configuration script... ${_command}"
-  remote_exec 'ssh' 'PC' "${_command} >> calm.log 2>&1 &"
-  log "PC Configuration complete: try Validate Staged Clusters now."
-}
-
-function files_install() {
-  local  _ncli_softwaretype='FILE_SERVER'
-  local _ncli_software_type='afs'
-  local               _test
-
-  dependencies 'install' 'jq' || exit 13
-
-  _test=$(source /etc/profile.d/nutanix_env.sh \
-    && ncli --json=true software list \
-    | ${HOME}/jq -r \
-      '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | select(.status == "COMPLETED") | .version')
-
-  if [[ ${_test} != "${FILES_VERSION}" ]]; then
-    log "Files ${FILES_VERSION} not completed. ${_test}"
-    ntnx_download "${_ncli_software_type}"
-
-    ncli software upload software-type=${_ncli_software_type} \
-      meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
-      file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
-  else
-    log "IDEMPOTENCY: Files ${FILES_VERSION} already completed."
+    log "Configure PE role map"
+    ncli authconfig add-role-mapping \
+      role=ROLE_CLUSTER_ADMIN \
+      entity-type=group name="${MY_DOMAIN_NAME}" \
+      entity-values="${MY_DOMAIN_ADMIN_GROUP}"
   fi
 }
 
-function nos_upgrade() {
-  #this is a prototype, untried
-  ntnx_download 'nos'
+function pe_init() {
+  args_required 'DATA_SERVICE_IP MY_EMAIL \
+    SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
+    MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
+    SLEEP ATTEMPTS'
 
-  ncli software upload software-type=nos \
-    meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
-    file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+  if [[ `ncli cluster get-params | grep 'External Data' | \
+         awk -F: '{print $2}' | tr -d '[:space:]'` == "${DATA_SERVICE_IP}" ]]; then
+    log "IDEMPOTENCY: Data Services IP set, skip."
+  else
+    log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
+    ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
+      from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
+    ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
+      --subject="[pe_init:Config SMTP:alert test] `ncli cluster get-params`" \
+      && ${HOME}/serviceability/bin/send-email
+
+    log "Configure NTP"
+    ncli cluster add-to-ntp-servers \
+      servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
+
+    log "Rename default container to ${MY_CONTAINER_NAME}"
+    default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
+      | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
+    ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
+
+    log "Rename default storage pool to ${MY_SP_NAME}"
+    default_sp=$(ncli storagepool ls | grep 'Name' | cut -d ':' -f 2 | sed s/' '//g)
+    ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
+
+    log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
+    (ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
+      | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" > /dev/null 2>&1) \
+      && log "Container ${MY_IMG_CONTAINER_NAME} exists" \
+      || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
+
+    # Set external IP address:
+    #ncli cluster edit-params external-ip-address=${PE_HOST}
+
+    log "Set Data Services IP address to ${DATA_SERVICE_IP}"
+    ncli cluster edit-params external-data-services-ip-address=${DATA_SERVICE_IP}
+  fi
+}
+
+function pe_license() {
+  args_required 'CURL_POST_OPTS PE_PASSWORD'
+
+  log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
+  prism_check 'PC' 2 0
+
+  if (( $? == 0 )) ; then
+    log "IDEMPOTENCY: PC API responds, skip"
+  else
+    log "Validate EULA on PE"
+    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
+      "username": "SE with $(basename ${0})",
+      "companyName": "Nutanix",
+      "jobTitle": "SE"
+    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
+
+    log "Disable Pulse in PE"
+    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
+      "defaultNutanixEmail": null,
+      "emailContactList": null,
+      "enable": false,
+      "enableDefaultNutanixEmail": false,
+      "isPulsePromptNeeded": false,
+      "nosVersion": null,
+      "remindLater": null,
+      "verbosityType": null
+    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse
+
+    #echo; log "Create PE Banner Login" # TODO: for PC, login banner
+    # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
+    # curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data \
+    #  '{type: "welcome_banner", key: "welcome_banner_status", value: true}' \
+    #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
+    #curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data
+    #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET[2]}' password = '${PE_PASSWORD}'"}' \
+    #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
+  fi
 }

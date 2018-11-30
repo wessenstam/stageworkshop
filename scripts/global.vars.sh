@@ -35,7 +35,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
     ;;
   10.55 )
     DNS_SERVERS='10.21.253.11'
-    nw2_name='Secondary'
+    NW2_NAME='Secondary'
     NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
     ;;
 esac

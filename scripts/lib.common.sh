@@ -131,31 +131,6 @@ function dependencies {
   esac
 }
 
-function determine_pe() {
-  local _attempts=5
-  local    _error=10
-  local     _hold
-  local     _loop=0
-  local    _sleep=2
-
-  log 'Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...'
-  _hold=$(nuclei cluster.list format=json 2>/dev/null \
-    | jq '.entities[] | select(.status.state == "COMPLETE")' \
-    | jq '. | select(.status.resources.network.external_ip != null)')
-
-  if (( $? > 0 )); then
-    _error=12
-    log "Error ${_error}: couldn't resolve clusters $?"
-    exit ${_error}
-  else
-    CLUSTER_NAME=$(echo ${_hold} | jq .status.name | tr -d \")
-         PE_HOST=$(echo ${_hold} | jq .status.resources.network.external_ip | tr -d \")
-
-    export CLUSTER_NAME PE_HOST
-    log "Success: ${CLUSTER_NAME} PE external IP=${PE_HOST}"
-  fi
-}
-
 function dns_check() {
   local    _dns
   local  _error

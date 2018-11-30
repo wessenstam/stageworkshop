@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # -x
 # Dependencies: curl, ncli, nuclei, jq
+
 # shellcheck disable=SC2120
 function calm_update() {
   local  _attempts=12
@@ -55,6 +56,33 @@ function calm_update() {
         _test=$(docker ps -a | grep ${_container} | grep -i healthy | wc --lines)
       done
     done
+  fi
+}
+
+function pe_determine() {
+  local _attempts=5
+  local    _error=10
+  local     _hold
+  local     _loop=0
+  local    _sleep=2
+
+  # WORKAROUND: Entities errors on lines 1-2, due to non-JSON outputs by nuclei...
+  _hold=$(source /etc/profile.d/nutanix_env.sh \
+    && nuclei cluster.list format=json 2>/dev/null \
+    | grep -v 'Entities :' \
+    | ${HOME}/jq \
+    '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)')
+
+  if [[ -z "${_hold}" ]]; then
+    _error=12
+    log "Error ${_error}: couldn't resolve clusters ${_hold}"
+    exit ${_error}
+  else
+    CLUSTER_NAME=$(echo ${_hold} | ${HOME}/jq -r .name)
+         PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .resources.network.external_ip)
+
+    export CLUSTER_NAME PE_HOST
+    log "Success: ${CLUSTER_NAME} PE external IP=${PE_HOST}"
   fi
 }
 
@@ -229,6 +257,8 @@ function pc_smtp() {
     address=${SMTP_SERVER_ADDRESS} from-email-address=${SMTP_SERVER_FROM}
   #log "sleep ${_sleep}..."; sleep ${_sleep}
   #log $(ncli cluster get-smtp-server | grep Status | grep success)
+
+  # shellcheck disable=2153
   ncli cluster send-test-email recipient="${MY_EMAIL}" \
     subject="pc_smtp https://${PRISM_ADMIN}:${PE_PASSWORD}@${PC_HOST}:9440 Testing."
   # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
@@ -425,10 +455,10 @@ function pc_ui() {
   _json=$(cat <<EOF
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
-{"type":"custom_login_screen","key":"product_title","value":"PC-${PC_VERSION}"} \
+{"type":"custom_login_screen","key":"product_title","value":"${CLUSTER_NAME} PC-${PC_VERSION}"} \
 {"type":"custom_login_screen","key":"title","value":"Nutanix.HandsOnWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_status","value":true} \
-{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${PE_PASSWORD}"} \
+{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${CLUSTER_NAME}<br>${PE_PASSWORD}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","username":"system_data","key":"disable_2048","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \

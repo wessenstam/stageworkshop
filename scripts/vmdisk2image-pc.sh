@@ -8,12 +8,13 @@ export PATH=${PATH}:${HOME}
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
 . lib.common.sh
+. lib.pc.sh
 . global.vars.sh
 begin
 
 dependencies 'install' 'jq'
 
-determine_pe || log 'Error: cannot determine_pe' && exit 13
+pe_determine || log 'Error: cannot pe_determine' && exit 13
 
 #  CLUSTER_NAME=Specialty02
 # PE_HOST=$(nuclei cluster.get ${CLUSTER_NAME} format=json \
