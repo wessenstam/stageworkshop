@@ -257,9 +257,9 @@ function pc_install() {
   else
     log "Get NET_UUID,MY_CONTAINER_UUID from cluster: pc_install dependency."
     MY_NET_UUID=$(acli "net.get ${NW1_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
-    log "${NW1_NAME} UUID is ${MY_NET_UUID}"
+    log "${NW1_NAME} network UUID is ${MY_NET_UUID}"
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-    log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+    log "${MY_CONTAINER_NAME} storage container UUID is ${MY_CONTAINER_UUID}"
 
     _test=$(source /etc/profile.d/nutanix_env.sh \
       && ncli --json=true software list \
@@ -268,9 +268,9 @@ function pc_install() {
 
     if [[ ${_test} != "${PC_VERSION}" ]]; then
       log "PC-${PC_VERSION} not completed. ${_test}"
-      ntnx_download "${_ncli_software_type}"
+      ntnx_download "${_ncli_softwaretype}"
 
-      ncli software upload software-type=${_ncli_software_type} \
+      ncli software upload software-type=${_ncli_softwaretype} \
              file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
         meta-file-path="`pwd`/${NTNX_META_URL##*/}"
 

@@ -391,7 +391,7 @@ function ntnx_download() {
   local _source_url
   local    _version
 
-  case ${1} in
+  case "${1}" in
     PC | pc | PRISM_CENTRAL_DEPLOY )
       # When adding a new PC version, update BOTH case stanzas below...
       args_required 'PC_VERSION'
@@ -488,6 +488,11 @@ function ntnx_download() {
           exit ${_error}
         ;;
       esac
+    ;;
+    * )
+      _error=88
+      log "Error: couldn't determine software-type ${1}!"
+      exit ${_error}
     ;;
   esac
 
