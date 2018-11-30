@@ -393,7 +393,7 @@ function ntnx_download() {
   local    _version
 
   case ${1} in
-    PC | pc )
+    PC | pc | PRISM_CENTRAL_DEPLOY )
       # When adding a new PC version, update BOTH case stanzas below...
       args_required 'PC_VERSION'
 

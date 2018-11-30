@@ -248,7 +248,8 @@ function pc_configure() {
 }
 
 function pc_install() {
-  local _version_id
+  local _ncli_softwaretype='PRISM_CENTRAL_DEPLOY'
+  local              _test
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
   prism_check 'PC' 2 0
@@ -262,19 +263,23 @@ function pc_install() {
     MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
     log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
 
+    _test=$(source /etc/profile.d/nutanix_env.sh \
+      && ncli --json=true software list \
+      | ${HOME}/jq -r \
+        '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | select(.status == "COMPLETED") | .version')
 
-    if [[ condition ]]; then
-      ntnx_download 'PC'
+    if [[ ${_test} != "${PC_VERSION}" ]]; then
+      log "PC-${PC_VERSION} not completed. ${_test}"
+      ntnx_download "${_ncli_software_type}"
 
-      log "Prism Central upload..."
-      ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
+      ncli software upload software-type=${_ncli_software_type} \
              file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
         meta-file-path="`pwd`/${NTNX_META_URL##*/}"
 
-      _version_id=$(cat ${NTNX_META_URL##*/} | jq -r .version_id)
-
       log "Delete PC sources to free CVM space..."
       rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
+    else
+      log "IDEMPOTENCY: PC-${PC_VERSION} upload already completed."
     fi
 
     log "Deploy Prism Central (typically takes 17+ minutes)..."
@@ -301,7 +306,7 @@ function pc_install() {
       "container_uuid":"${MY_CONTAINER_UUID}",
       "num_sockets":8,
       "memory_size_bytes":42949672960,
-      "vm_name":"Prism Central ${_version_id}"
+      "vm_name":"Prism Central ${PC_VERSION}"
     }]
   }
 }
