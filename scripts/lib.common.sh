@@ -283,7 +283,7 @@ function images() {
         | grep "${_image}")
     fi
 
-    if [[ -z ${_test} ]]; then
+    if [[ ! -z ${_test} ]]; then
       log "Skip: ${_image} already complete on cluster."
     else
       _command=''
