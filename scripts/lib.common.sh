@@ -564,6 +564,7 @@ function prism_check {
   local    _sleep=${SLEEP}
   local     _test=0
 
+  #shellcheck disable=2153
   if [[ ${1} == 'PC' ]]; then
     _host=${PC_HOST}
   else
