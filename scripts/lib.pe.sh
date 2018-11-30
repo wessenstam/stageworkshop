@@ -393,7 +393,6 @@ function files_install() {
   local _ncli_software_type='afs'
   local               _test
 
-  # | jq -r '.data[] | select(.softwareType == "PRISM_CENTRAL_DEPLOY") | select(.status == "COMPLETED") | .version'
   Dependencies 'install' 'jq' || exit 13
 
   _test=$(source /etc/profile.d/nutanix_env.sh \

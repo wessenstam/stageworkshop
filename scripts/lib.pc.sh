@@ -70,7 +70,9 @@ function flow_enable() {
 }
 
 function lcm() {
+  local  _http_body
   local _pc_version
+  local       _test
 
   # shellcheck disable=2206
   _pc_version=(${PC_VERSION//./ })
@@ -78,8 +80,7 @@ function lcm() {
   if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
     log "PC_VERSION ${PC_VERSION} >= 5.9, starting LCM inventory..."
 
-    local _http_body='value: "{".oid":"LifeCycleManager",".method":"lcm_framework_rpc",".kwargs":{"method_class":"LcmFramework","method":"perform_inventory","args":["http://download.nutanix.com/lcm/2.0"]}}"'
-    local      _test
+    _http_body='value: "{".oid":"LifeCycleManager",".method":"lcm_framework_rpc",".kwargs":{"method_class":"LcmFramework","method":"perform_inventory","args":["http://download.nutanix.com/lcm/2.0"]}}"'
 
     _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
       https://localhost:9440/PrismGateway/services/rest/v1/genesis)
@@ -452,8 +453,8 @@ EOF
   # shellcheck disable=2206
   _pc_version=(${PC_VERSION//./ })
 
-  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
-    log "PC_VERSION ${PC_VERSION} >= 5.9, setting favorites..."
+  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 && ${_test} != 500 )); then
+    log "PC_VERSION ${PC_VERSION} >= 5.10, setting favorites..."
 
     _json=$(cat <<EOF
 {"complete_query":"Karbon","route":"ebrowser/k8_cluster_entitys"} \

@@ -1,6 +1,32 @@
 #!/usr/bin/env bash
 # -x
 
+function pc_admin() {
+  local  _http_body
+  local       _test
+  local _admin_user='marklavi'
+
+  _http_body=$(cat <<EOF
+  {"profile":{
+    "username":"${_admin_user}",
+    "firstName":"Mark",
+    "lastName":"Lavi",
+    "emailId":"${MY_EMAIL}",
+    "password":"${PE_PASSWORD}",
+    "locale":"en-US"},"enabled":false,"roles":[]}
+EOF
+  )
+  _test=$(curl ${CURL_HTTP_OPTS} \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/PrismGateway/services/rest/v1/users)
+  log "create.user=${_admin_user}=|${_test}|"
+
+  _http_body='["ROLE_USER_ADMIN","ROLE_MULTICLUSTER_ADMIN"]'
+       _test=$(curl ${CURL_HTTP_OPTS} \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/PrismGateway/services/rest/v1/users/${_admin_user}/roles)
+  log "add.roles ${_http_body}=|${_test}|"
+}
 #__main()__________
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
@@ -93,6 +119,7 @@ case ${1} in
 
     pc_project # TODO:50 pc_project is a new function, non-blocking at end.
     flow_enable
+    pc_admin
 
     # NTNX_Upload 'AOS' # function in lib.common.sh
 
