@@ -7,13 +7,13 @@ DEBUG=
 # - PC #.#
 WORKSHOPS=(\
 "Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.9.x) = Development (AutoDC2)" \
+#"Calm Workshop (AOS 5.5+/AHV PC 5.9.x) = Development (AutoDC2)" \
+"Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
 # "Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
 # "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Marketing Cluster with PC 5.9.x" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
 ) # Adjust function stage_clusters for mappings as needed
 
 function stage_clusters() {
@@ -34,7 +34,7 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc -l) > 0 )); then
     export PC_VERSION=5.10
   elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
-    export PC_VERSION=5.9.1
+    export PC_VERSION=5.9.2
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
     export PC_VERSION=5.8.2
   elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then
