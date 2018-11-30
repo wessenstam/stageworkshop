@@ -3,22 +3,21 @@
           RELEASE='release.json'
    PC_VERSION_DEV='5.10'
 PC_VERSION_STABLE='5.8.2'
-      PRISM_ADMIN='admin'
     FILES_VERSION='3.1.0.1'
+
+          PRISM_ADMIN='admin'
+           MY_SP_NAME='SP01'
+    MY_CONTAINER_NAME='Default'
+MY_IMG_CONTAINER_NAME='Images'
 
 # shellcheck disable=2206
           OCTET=(${PE_HOST//./ }) # zero index
     IPV4_PREFIX=${OCTET[0]}.${OCTET[1]}.${OCTET[2]}
 DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
         PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
-
-           MY_SP_NAME='SP01'
-    MY_CONTAINER_NAME='Default'
-MY_IMG_CONTAINER_NAME='Images'
-
-DNS_SERVERS='8.8.8.8'
-   NW1_NAME='Primary'
-   NW1_VLAN=0
+    DNS_SERVERS='8.8.8.8'
+       NW1_NAME='Primary'
+       NW1_VLAN=0
 
 # For Nutanix HPOC/Marketing clusters
 # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
@@ -50,6 +49,9 @@ HTTP_CACHE_PORT=8181
 
 #  MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
 # MY_AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
+# http://download.nutanix.com/afs/2.2.3/v1/afs-2.2.3.json
+# http://download.nutanix.com/afs/3.1.0.1/afs-3.1.0.1.json
+# https://s3.amazonaws.com/get-ahv-images/afs-3.1.0.1.json
 
 # https://stedolan.github.io/jq/download/#checksums_and_signatures
      JQ_REPOS=(\

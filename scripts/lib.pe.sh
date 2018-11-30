@@ -389,23 +389,26 @@ function pc_configure() {
 }
 
 function files_install() {
-  local _test
+  local  _ncli_softwaretype='FILE_SERVER'
+  local _ncli_software_type='afs'
+  local               _test
+
+  # | jq -r '.data[] | select(.softwareType == "PRISM_CENTRAL_DEPLOY") | select(.status == "COMPLETED") | .version'
 
   _test=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true software list \
-    | jq -r '.data[] | select(.softwareType == "FOUNDATION") | .status')
+    | jq -r '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | .status')
 
-  if [[ ${_test} != 'AVAILABLE' ]]; then
-    ntnx_download 'files'
+  if [[ ${_test} != 'COMPLETED' ]]; then
+    ntnx_download "${_ncli_software_type}"
 
-    ncli software upload software-type=afs \
+    ncli software upload software-type=${_ncli_software_type} \
       meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
       file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
-    else
-      log "IDEMPOTENCY: Files already available. ${_test}"
+  else
+    log "IDEMPOTENCY: Files already available. ${_test}"
   fi
 }
-
 
 function nos_upgrade() {
   #this is a prototype, untried

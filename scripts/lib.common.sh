@@ -194,9 +194,7 @@ function ntnx_download() {
     FILES | files | AFS | afs )
       # When adding a new FILES version, update BOTH case stanzas below...
       CheckArgsExist 'FILES_VERSION'
-      # http://download.nutanix.com/afs/2.2.3/v1/afs-2.2.3.json
-      # http://download.nutanix.com/afs/3.1.0.1/afs-3.1.0.1.json
-      # https://s3.amazonaws.com/get-ahv-images/afs-3.1.0.1.json
+
       case ${FILES_VERSION} in
         TBD )
           _version='v2/'
