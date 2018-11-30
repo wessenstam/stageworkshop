@@ -113,9 +113,8 @@ function dependencies {
       fi
       ;;
     'remove')
-      log "Removing ${2}..."
+      log "Warning: assuming on PC or PE VM, removing ${2}..."
       if [[ ${_os_found} == '"centos"' ]]; then
-        #TODO:30 assuming we're on PC or PE VM.
         case "${2}" in
           sshpass | ${_sshpass_pkg})
             sudo rpm -e sshpass
@@ -156,7 +155,7 @@ function dns_check() {
 function download() {
   local           _attempts=5
   local              _error=0
-  local _http_range_enabled   # TODO disabled '--continue-at -'
+  local _http_range_enabled   # TODO:50 disabled '--continue-at -'
   local               _loop=0
   local             _output
   local              _sleep=2
@@ -295,7 +294,7 @@ function images() {
         # exit ${_error}
       fi
 
-      # TODO: TOFIX: ugly override for today...
+      # TODO: TOFIX: acs-centos ugly override for today...
       if (( $(echo "${_image}" | grep -i 'acs-centos' | wc --lines ) > 0 )); then
         _name=acs-centos
       fi
@@ -454,7 +453,6 @@ function ntnx_download() {
         * )
           _error=23
           log "Error ${_error}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
-          # TODO: correct AOS_UPGRADE URL
           log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
           log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
           log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
@@ -595,7 +593,7 @@ function remote_exec() {
   local     _host
   local     _loop=0
   local _password="${PE_PASSWORD}"
-  local   _pw_init='nutanix/4u' # TODO:140 hardcoded p/w
+  local   _pw_init='nutanix/4u' # TODO:230 hardcoded p/w
   local    _sleep=${SLEEP}
   local     _test=0
 

@@ -157,9 +157,6 @@ EOF"
     && flow_enable \
     && prism_check 'PC'
 
-    pc_project # TODO:50 pc_project is a new function, non-blocking at end.
-    # ntnx_download 'AOS' # function in lib.common.sh
-
     unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD
 
     if (( $? == 0 )); then

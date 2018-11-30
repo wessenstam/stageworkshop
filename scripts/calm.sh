@@ -115,7 +115,8 @@ case ${1} in
     && pc_cluster_img_import \
     && prism_check 'PC'
 
-    pc_project # TODO:50 pc_project is a new function, non-blocking at end.
+    # new functions, non-blocking, at the end.
+    pc_project
     flow_enable
     pc_admin
 

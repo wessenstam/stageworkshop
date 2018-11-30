@@ -84,7 +84,7 @@ HTTP_CACHE_PORT=8181
    'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
 )
 
-   AUTH_SERVER='AutoDC'  # TODO:160 refactor AUTH_SERVER choice to input file, set default here.
+   AUTH_SERVER='AutoDC'  # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
      AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
      LDAP_PORT=389
  MY_DOMAIN_URL="ldaps://${AUTH_HOST}/"

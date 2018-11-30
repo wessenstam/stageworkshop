@@ -117,13 +117,13 @@ function lcm() {
 }
 
 function pc_auth() {
-  # TODO:170 configure case for each authentication server type?
+  # TODO:250 configure case for each authentication server type?
   local      _group
   local  _http_body
   local _pc_version
   local       _test
 
-  # TODO: hadcoded URL, not passing arguments yet. Disabling by appending v1
+  # TODO:60 not passing arguments yet; disabling by appending v1
   if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
     # local  _autodc_conf='/etc/samba/smb.conf'
     # local _autodc_patch='ldap server require strong auth = no'
@@ -162,7 +162,8 @@ EOF
     https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
   log "directories: _test=|${_test}|_http_body=|${_http_body}|"
 
-  log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..." #TODO:40 hardcoded role mappings
+  log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..."
+  #TODO:130 hardcoded role mappings
   for _group in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
     _http_body=$(cat <<EOF
     {
@@ -219,7 +220,7 @@ function pc_dns_add() {
 }
 
 function pc_init() {
-  # TODO:70 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
+  # TODO:170 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
   local _test
 
   log "Configure NTP@PC"
@@ -303,9 +304,9 @@ function ssp_auth() {
     | jq -r .entities[0].metadata.uuid)
   log "_ldap_uuid=|${_ldap_uuid}|"
 
-  # TODO:20 get directory service name _ldap_name
+  # TODO:110 get directory service name _ldap_name
   _ldap_name=${AUTH_SERVER}
-  # TODO:80 bats? test ldap connection
+  # TODO:180 bats? test ldap connection
 
   log "Connect SSP Authentication (spec-ssp-authrole.json)..."
   _http_body=$(cat <<EOF
@@ -345,9 +346,9 @@ EOF
     https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
   log "_ssp_connect=|${_ssp_connect}|"
 
-  # TODO:60 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
+  # TODO:160 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
   # PUT https://localhost:9440/api/nutanix/v3/directory_services/9d8c2c33-9d95-438c-a7f4-2187120ae99e = spec-ssp-direcory_service.json
-  # TODO:0 make directory_type variable?
+  # TODO:70 make directory_type variable?
   log "Enable SSP Admin Authentication (spec-ssp-direcory_service.json)..."
   _http_body=$(cat <<EOF
   {
@@ -378,7 +379,7 @@ EOF
     https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
   log "_ssp_connect=|${_ssp_connect}|"
   # POST https://localhost:9440/api/nutanix/v3/groups = spec-ssp-groups.json
-  # TODO:10 can we skip previous step?
+  # TODO:100 can we skip previous step?
   log "Enable SSP Admin Authentication (spec-ssp-groupauth_2.json)..."
   _http_body=$(cat <<EOF
   {

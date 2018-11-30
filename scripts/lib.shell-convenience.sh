@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # stageworkshop_pe kill && stageworkshop_w1 && stageworkshop_pe
-# TODO: prompt for choice when more than one cluster
-# TODO: scp?
-# TODO: ad-hoc: bash hooks/scripts/GitVersion.sh &
+# TODO:80 prompt for choice when more than one cluster
+# TODO:90 scp?
 
 . scripts/global.vars.sh
 

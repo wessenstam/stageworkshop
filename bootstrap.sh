@@ -11,6 +11,7 @@ if [[ -z ${SOURCE} ]]; then
     REPOSITORY=stageworkshop
         BRANCH=master
 else
+  # shellcheck disable=2206
     URL_SOURCE=(${SOURCE//\// }) # zero index
   ORGANIZATION=${URL_SOURCE[2]}
     REPOSITORY=${URL_SOURCE[3]}
@@ -56,7 +57,7 @@ CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' \
 EMAIL_DOMAIN=nutanix.com
 
 if [[ -z ${PE_PASSWORD} ]]; then
-  _PRISM_ADMIN=admin
+  _PRISM_ADMIN='admin'
   echo -e "\n    Note: Hit [Return] to use the default answer inside brackets.\n"
   read -p "Optional: What is this cluster's admin username? [${_PRISM_ADMIN}] " PRISM_ADMIN
   if [[ -z ${PRISM_ADMIN} ]]; then
@@ -123,7 +124,7 @@ fi
 PRISM_ADMIN=${PRISM_ADMIN} \
 PE_PASSWORD=${PE_PASSWORD} \
 ./stage_workshop.sh -f - ${MY_WORKSHOP} \
-  && popd
+  && popd || exit
 
 echo -e "\n    DONE: ${0} ran for ${SECONDS} seconds."
 cat <<EOM
@@ -134,5 +135,3 @@ Watch progress with:
 or login to PE to see tasks in flight and eventual PC registration:
           https://${PE_HOST}:9440/
 EOM
-
-# TODO: determine if I'm on HPOC nw variant for a local URL, etc.

@@ -80,10 +80,9 @@ function authentication_source() {
             image_type=kDiskImage wait=true \
             container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
         else
-          log "Image found, skipping ${AUTH_SERVER}${_autodc_release} import."
+          log "Image found, assuming ready. Skipping ${AUTH_SERVER}${_autodc_release} import."
         fi
 
-        # TODO: detect AUTH image ready, else...
         log "Create ${AUTH_SERVER}${_autodc_release} VM based on ${AUTH_SERVER}${_autodc_release} image"
         acli "vm.create ${AUTH_SERVER}${_autodc_release} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
         # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
@@ -125,7 +124,6 @@ function authentication_source() {
 
         while true ; do
           (( _loop++ ))
-          # TODO:130 Samba service reload better? vs. force-reload and restart
           remote_exec 'SSH' 'AUTH_SERVER' \
             "samba-tool dns zonecreate dc${_autodc_index} ${OCTET[2]}.${OCTET[1]}.${OCTET[0]}.in-addr.arpa ${_autodc_auth} && ${_autodc_restart}" \
             'OPTIONAL'
@@ -283,7 +281,7 @@ function pc_install() {
     fi
 
     log "Deploy Prism Central (typically takes 17+ minutes)..."
-    # TODO:120 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
+    # TODO:210 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     # Sizing suggestions, certified configurations:
     # https://portal.nutanix.com/#/page/docs/details?targetId=Release-Notes-Prism-Central-v591:sha-pc-scalability-r.html
 
