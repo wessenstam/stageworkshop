@@ -9,12 +9,12 @@
 . global.vars.sh
 begin
 
-CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
+args_required 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
 
-#Dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
+#dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
 log "Adding key to PE/CVMs..."
-SSH_PubKey & # non-blocking, parallel suitable
+ssh_pubkey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
@@ -22,19 +22,19 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
+    dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
     && pe_init \
     && network_configure \
     && files_install \
     && images \
     && pc_init \
-    && Check_Prism_API_Up 'PC'
+    && prism_check 'PC'
 
     if (( $? == 0 )) ; then
       pc_configure #\
-      # && Dependencies 'remove' 'sshpass' \
-      # && Dependencies 'remove' 'jq'
+      # && dependencies 'remove' 'sshpass' \
+      # && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"

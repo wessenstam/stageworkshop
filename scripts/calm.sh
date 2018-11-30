@@ -35,12 +35,12 @@ EOF
 . global.vars.sh
 begin
 
-CheckArgsExist 'MY_EMAIL PE_PASSWORD PC_VERSION'
+args_required 'MY_EMAIL PE_PASSWORD PC_VERSION'
 
-#Dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
+#dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
 log "Adding key to ${1} VMs..."
-SSH_PubKey & # non-blocking, parallel suitable
+ssh_pubkey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
@@ -48,9 +48,9 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    CheckArgsExist 'PE_HOST'
+    args_required 'PE_HOST'
 
-    Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
+    dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
     && pe_init \
     && network_configure \
@@ -61,10 +61,10 @@ case ${1} in
       files_install & # parallel test, optional?
 
       pc_init \
-      && Check_Prism_API_Up 'PC' \
+      && prism_check 'PC' \
       && pc_configure \
-      && Dependencies 'remove' 'sshpass' \
-      && Dependencies 'remove' 'jq'
+      && dependencies 'remove' 'sshpass' \
+      && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
@@ -79,10 +79,10 @@ case ${1} in
   ;;
   PC | pc )
     . lib.pc.sh
-    Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
+    dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13
 
     if [[ -z "${PE_HOST}" ]]; then
-      Determine_PE
+      determine_pe
       . global.vars.sh # re-populate PE_HOST dependencies
     fi
 
@@ -93,7 +93,7 @@ case ${1} in
     export NUCLEI_PASSWORD="${PE_PASSWORD}"
     # nuclei -debug -username admin -server localhost -password x vm.list
 
-    NTNX_cmd # check cli services available?
+    ntnx_cmd # check cli services available?
 
     if [[ ! -z "${2}" ]]; then
       # hidden bonus
@@ -115,18 +115,18 @@ case ${1} in
     && lcm \
     && images \
     && pc_cluster_img_import \
-    && Check_Prism_API_Up 'PC'
+    && prism_check 'PC'
 
     pc_project # TODO:50 pc_project is a new function, non-blocking at end.
     flow_enable
     pc_admin
 
-    # NTNX_Upload 'AOS' # function in lib.common.sh
+    # ntnx_download 'AOS' # function in lib.common.sh
 
     unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD
 
     if (( $? == 0 )); then
-      #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
+      #dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq' \
       #&&
       log "PC = https://${PC_HOST}:9440"
       finish

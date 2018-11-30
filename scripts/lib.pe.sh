@@ -11,7 +11,7 @@ function acli() {
 }
 
 function pe_init() {
-  CheckArgsExist 'DATA_SERVICE_IP MY_EMAIL \
+  args_required 'DATA_SERVICE_IP MY_EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
     MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
     SLEEP ATTEMPTS'
@@ -59,7 +59,7 @@ function network_configure() {
   if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
     log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
   else
-    CheckArgsExist 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
+    args_required 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
 
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
@@ -88,7 +88,7 @@ function authentication_source() {
   local       _test=0
   local         _vm
 
-  CheckArgsExist 'AUTH_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
+  args_required 'AUTH_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
 
   if [[ -z ${AUTH_SERVER} ]]; then
     log "Error ${_error}: please provide a choice for authentication server."
@@ -226,7 +226,7 @@ function authentication_source() {
 }
 
 function pe_auth() {
-  CheckArgsExist 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
+  args_required 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
 
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
     log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
@@ -249,10 +249,10 @@ function pe_auth() {
 }
 
 function pe_license() {
-  CheckArgsExist 'CURL_POST_OPTS PE_PASSWORD'
+  args_required 'CURL_POST_OPTS PE_PASSWORD'
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
-  Check_Prism_API_Up 'PC' 2 0
+  prism_check 'PC' 2 0
 
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip"
@@ -291,7 +291,7 @@ function pc_init() {
   local _version_id
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
-  Check_Prism_API_Up 'PC' 2 0
+  prism_check 'PC' 2 0
 
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
@@ -393,7 +393,7 @@ function files_install() {
   local _ncli_software_type='afs'
   local               _test
 
-  Dependencies 'install' 'jq' || exit 13
+  dependencies 'install' 'jq' || exit 13
 
   _test=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true software list \

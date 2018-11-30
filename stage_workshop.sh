@@ -30,7 +30,7 @@ function stage_clusters() {
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
-  # Metadata URLs MUST be specified in lib.common.sh function: NTNX_Download
+  # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc -l) > 0 )); then
     export PC_VERSION=5.10
   elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
@@ -62,7 +62,7 @@ function stage_clusters() {
      _pe_config='marketing.sh'
   fi
 
-  Dependencies 'install' 'sshpass'
+  dependencies 'install' 'sshpass'
 
   log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
   # Send configuration scripts to remote clusters and execute Prism Element script
@@ -85,7 +85,7 @@ function stage_clusters() {
 
       . scripts/global.vars.sh # re-import for relative settings
 
-      Check_Prism_API_Up 'PE' 60
+      prism_check 'PE' 60
 
       if [[ -d cache ]]; then
         #TODO:90 proper cache detection and downloads
@@ -184,7 +184,7 @@ function validate_clusters() {
         PE_HOST=${_fields[0]}
     PE_PASSWORD=${_fields[1]}
 
-    Check_Prism_API_Up 'PE'
+    prism_check 'PE'
     if (( $? == 0 )) ; then
       log "Success: execute PE API on ${PE_HOST}"
     else
@@ -308,7 +308,7 @@ while getopts "f:w:\?" opt; do
     f )
       if [[ ${OPTARG} == '-' ]]; then
         log "${_CLUSTER_FILE} override, checking environment variables..."
-        CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD'
+        args_required 'MY_EMAIL PE_HOST PE_PASSWORD'
         CLUSTER_LIST=${OPTARG}
       elif [[ -f ${OPTARG} ]]; then
         CLUSTER_LIST=${OPTARG}

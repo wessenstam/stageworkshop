@@ -11,9 +11,9 @@ export PATH=${PATH}:${HOME}
 . global.vars.sh
 begin
 
-Dependencies 'install' 'jq'
+dependencies 'install' 'jq'
 
-Determine_PE || log 'Error: cannot Determine_PE' && exit 13
+determine_pe || log 'Error: cannot determine_pe' && exit 13
 
 #  CLUSTER_NAME=Specialty02
 # PE_HOST=$(nuclei cluster.get ${CLUSTER_NAME} format=json \
@@ -97,7 +97,7 @@ we can use either of two methods to move VM disk images between clusters:
   - From the source cluster, download a VM disk via SFTP://PE:2222/NFSPATH
     using PC authentication (admin, etc.) or cluster lockdown SSH keys.
   - Convert the image to QCOW2
-    - TODO: Dependencies('qemu')
+    - TODO: dependencies('qemu')
     - qemu-img convert -c -p -f raw ./c7e11d23-5602-40b1-837e-229ac18270c6 -O qcow2 centos7-ml2.qcow2
       - man qemu-img # suggests a snapshot can be exported as well: -c = compress, -p = progress
       - can use nfs URLs for transport, formats support: ftp(s), http(s) URLs?

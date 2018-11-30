@@ -35,8 +35,8 @@ function calm_update() {
       fi
     done
 
-    Download ${_url}/epsilon.tar
-    Download ${_url}/nucacallm.tar
+    download ${_url}/epsilon.tar
+    download ${_url}/nucacallm.tar
   fi
 
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
@@ -224,7 +224,7 @@ function pc_smtp() {
   log "Configure SMTP@PC"
   local _sleep=5
 
-  CheckArgsExist 'SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT'
+  args_required 'SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT'
   ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
     address=${SMTP_SERVER_ADDRESS} from-email-address=${SMTP_SERVER_FROM}
   #log "sleep ${_sleep}..."; sleep ${_sleep}
@@ -238,7 +238,7 @@ function pc_smtp() {
 }
 
 function pc_passwd() {
-  CheckArgsExist 'PE_PASSWORD'
+  args_required 'PE_PASSWORD'
 
   log "Reset PC password to PE password, must be done by ncli@PC, not API or on PE"
   ncli user reset-password user-name=${PRISM_ADMIN} password=${PE_PASSWORD}
@@ -259,7 +259,7 @@ function pc_passwd() {
 }
 
 function ssp_auth() {
-  CheckArgsExist 'AUTH_SERVER AUTH_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+  args_required 'AUTH_SERVER AUTH_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
 
   local   _http_body
   local   _ldap_name

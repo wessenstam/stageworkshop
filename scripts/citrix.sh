@@ -9,12 +9,12 @@
 . global.vars.sh
 begin
 
-CheckArgsExist 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
+args_required 'MY_EMAIL PE_HOST PE_PASSWORD PC_VERSION'
 
-#Dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
+#dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
 log "Adding key to ${1} VMs..."
-SSH_PubKey & # non-blocking, parallel suitable
+ssh_pubkey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
@@ -80,18 +80,18 @@ EOF"
     log "Launching PC configuration script"
     pc_remote_exec "PE_PASSWORD=${PE_PASSWORD} nohup bash /home/nutanix/stage_citrixhow_pc.sh >> pcconfig.log 2>&1 &"
 
-    Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' \
+    dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
     && pe_init \
     && network_configure \
     && authentication_source \
     && pe_auth \
     && pc_init \
-    && Check_Prism_API_Up 'PC'
+    && prism_check 'PC'
 
     if (( $? == 0 )) ; then
       pc_configure \
-      && Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq'
+      && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
@@ -126,7 +126,7 @@ EOF"
 
     log "PC Configuration complete on `$date`"
 
-    Dependencies 'install' 'sshpass' && Dependencies 'install' 'jq' || exit 13
+    dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13
 
     pc_passwd
 
@@ -135,7 +135,7 @@ EOF"
     export NUCLEI_PASSWORD="${PE_PASSWORD}"
     # nuclei -debug -username admin -server localhost -password nx2Tech704\! vm.list
 
-    NTNX_cmd # check cli services available?
+    ntnx_cmd # check cli services available?
 
     if [[ ! -z "${2}" ]]; then
       # hidden bonus
@@ -155,15 +155,15 @@ EOF"
     && calm_enable \
     && images \
     && flow_enable \
-    && Check_Prism_API_Up 'PC'
+    && prism_check 'PC'
 
     pc_project # TODO:50 pc_project is a new function, non-blocking at end.
-    # NTNX_Upload 'AOS' # function in lib.common.sh
+    # ntnx_download 'AOS' # function in lib.common.sh
 
     unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD
 
     if (( $? == 0 )); then
-      #Dependencies 'remove' 'sshpass' && Dependencies 'remove' 'jq' \
+      #dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq' \
       #&&
       log "PC = https://${PC_HOST}:9440"
       finish
