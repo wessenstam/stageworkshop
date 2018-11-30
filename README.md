@@ -1,4 +1,4 @@
-This script supports staging HPoC clusters for [Nutanix Workshops](http://www.nutanixworkshops.com).
+This script supports staging HPoC clusters for [Nutanix Workshops](https://nutanix.handsonworkshops.com/).
 It automates the majority of the [Workshop Setup Guide](http://www.nutanixworkshops.com/en/latest/setup/).
 After HPoC Foundation, you can have push-button Calm in about half an hour!
 
@@ -21,7 +21,6 @@ After HPoC Foundation, you can have push-button Calm in about half an hour!
 
 Make your new reservation on https://rx.corp.nutanix.com/ with:
 
-- __Region:__ NX-US-West or US-East regions only
 - __AOS + Hypevisor:__ proper versions for your workshop, specified above
   - Recommended: AOS and AHV 5.8
   - Older or newer versions may not function as expected
@@ -104,4 +103,4 @@ OpenLDAP works fine for authentication, but Prism Central has a problem with any
 - https://jira.nutanix.com/browse/ENG-126217 openldap authentication difference in PC vs PE
   - fixed with PC 5.7.1
 
-In the meantime, one can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages [AutoDC](autodc/README.md).
+In the meantime, one can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages [AutoDC](documentation/autodc/README.md).
