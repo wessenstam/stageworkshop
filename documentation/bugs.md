@@ -4,6 +4,7 @@
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
     - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
       - deprecate AutoDC1 for 5.6+5.7+5.8?
+      - validate; Restart bug, then validate, no error detection
   - github 2FA
   - Move AFS deployment from PE to PC? Make it optional?
   - PC import PE images
@@ -39,6 +40,21 @@
 - FEATURE = Darksite/cache:
   - Ping derik.davenport@ for testing
   - See [Darksite](darksite.md)
+  - Tasks:
+    - focus on dependencies first, then images?
+    - local devstation (never purge), for each:
+      - check if in ./cache
+      - else, download to ./cache
+      - upload to PE:~/cache
+    - PE CVM, for each:
+      - check if in ~/cache
+        - BENEFIT: reusable cache for any use case
+      - else, download to ~/cache
+      - install dependencies from ~/cache to ~
+      - eventually, upload to PC:~/cache
+      - DEFER: purge
+    - PC VM: repeat above for images
+
 
 - Feature = improve MKTG+SRE cluster automation
   - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
@@ -54,10 +70,13 @@
   | grep -v -i -e localhost -e 127.0.0.1 -e _HOST -e _http_ \
     -e download.nutanix.com -e portal.nutanix.com -e python -e github -e '#' \
   > http.txt````
+  - TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
+  - detect HPOC networks to favor local URLs?
   - download 403 detection: authentication unauthorized
 
 # Backlog #
 
+- Azure LAMP demo
 - CI/CD pipeline demo
 - LAMP v2 application improvements (reboot nice to have)
 - Calm videos/spreadsheet
