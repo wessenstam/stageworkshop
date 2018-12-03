@@ -39,7 +39,7 @@ if [[ -f ${BRANCH}.zip ]]; then
   sh ${HOME}/${0} clean
 fi
 
-echo -e "\nFor details, please see: ${BASE_URL}"
+echo -e "\nFor details, please see: ${BASE_URL}/documentation/guidebook.md"
 
 _ERROR=0
 
