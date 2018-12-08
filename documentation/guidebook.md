@@ -56,6 +56,7 @@ Approximately 30 minutes later, you can login to PE to get to PC (or directly to
     - Estimate the count of your audience, reserve a HPOC cluster for every 25 attendees.
       - Budget for extra people to attend at the last moment and expect last minute attrition as well.
       - Confirm your dates.
+      - Think about bringing Nutanix schwag: stickers, t-shirts, etc. for giveaways.
     - Ask questions not covered here in Slack to the Global Sales Technical Enablement team, first see the pinned items in each channel:
       - __#technology-bootcamps:__ for customer and prospect bootcamps
       - __#hands-on-workshops:__ for Nutanix Partner and SE workshops
@@ -84,6 +85,7 @@ Approximately 30 minutes later, you can login to PE to get to PC (or directly to
     - The day(s) before the Bootcamp or as soon as push button Calm completes with any optional configuration, send a reminder notice in email with logistical details, and *ask people to test their VDI and/or VPN access.*
       - This reduces logistical problems encountered on the bootcamp day starting to access the cluster(s).
     - Send WiFi details for on-site network access.
+    - Run through the first lab to check everything works!
 
 6. __The Day of the Bootcamp__
 

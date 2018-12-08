@@ -18,6 +18,9 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
     DNS_SERVERS='8.8.8.8'
        NW1_NAME='Primary'
        NW1_VLAN=0
+     NW1_SUBNET="${IPV4_PREFIX}.1/25"
+ NW1_DHCP_START="${IPV4_PREFIX}.50"
+   NW1_DHCP_END="${IPV4_PREFIX}.125"
 
 # For Nutanix HPOC/Marketing clusters
 # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
@@ -28,15 +31,21 @@ case "${OCTET[0]}.${OCTET[1]}" in
     DNS_SERVERS='10.21.253.10'
     ;;
   10.21 )
-    DNS_SERVERS='10.21.253.10,10.21.253.11'
-    NW1_VLAN=$(( ${OCTET[2]} * 10 ))
-    NW2_NAME='Secondary'
-    NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+       DNS_SERVERS='10.21.253.10,10.21.253.11'
+          NW1_VLAN=$(( ${OCTET[2]} * 10 ))
+          NW2_NAME='Secondary'
+          NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+        NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_DHCP_START="${IPV4_PREFIX}.132"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.55 )
-    DNS_SERVERS='10.21.253.11'
-    NW2_NAME='Secondary'
-    NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+       DNS_SERVERS='10.21.253.11'
+          NW2_NAME='Secondary'
+          NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+        NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_DHCP_START="${IPV4_PREFIX}.132"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
 esac
 

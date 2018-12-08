@@ -188,16 +188,16 @@ function network_configure() {
     log "Remove Rx-Automation-Network if it exists..."
     acli "-y net.delete Rx-Automation-Network"
 
-    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${IPV4_PREFIX}.1/25, Domain: ${MY_DOMAIN_NAME}, Pool: ${IPV4_PREFIX}.50 to ${IPV4_PREFIX}.125"
-    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${IPV4_PREFIX}.1/25"
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${MY_DOMAIN_NAME}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
+    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
     acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
-    acli "net.add_dhcp_pool ${NW1_NAME} start=${IPV4_PREFIX}.50 end=${IPV4_PREFIX}.125" # TOFIX: 51-100?
+    acli "net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
 
     if [[ ! -z "${NW2_NAME}" ]]; then
-      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${IPV4_PREFIX}.129/25, Pool: ${IPV4_PREFIX}.132 to ${IPV4_PREFIX}.253"
-      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${IPV4_PREFIX}.129/25"
+      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
+      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
       acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
-      acli "net.add_dhcp_pool ${NW2_NAME} start=${IPV4_PREFIX}.132 end=${IPV4_PREFIX}.253" # TOFIX: 132-254?
+      acli "net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
     fi
   fi
 }
