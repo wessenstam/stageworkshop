@@ -97,7 +97,11 @@ Approximately 30 minutes later, you can login to PE to get to PC (or directly to
 
 See [the planning and working document](bugs.md).
 
-## Development: Feature Branches ##
+## Development ##
+
+### Feature Branches ###
+
+In order to keep the master branch stable, a developer should work on a feature branch when possible. Here's an example of how to change to a feature branch, it assumes you are working with the `mlavi` repository:
 
     cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 \
       | grep Cloning | awk -F\' '{print $2}') \
@@ -105,7 +109,41 @@ See [the planning and working document](bugs.md).
     # Create your cluster file, e.g.: echo "${PE}|${PE_PASSWORD}|${EMAIL}" > example_pocs.txt
     ./stage_workshop.sh -f example_pocs.txt
 
-### Timing ###
+### How to Update or Add a Workshop ###
+
+Everything takes place in `stage_workshop.sh`:
+1. line 5: Update the `WORKSHOPS` array with the title of your new workshop.
+    - Insure you use a keyword and a `MAJOR.MINOR` semantic version version.
+    These will be used for switching between workshops and versions.
+    You should not need to use precision past the .MINOR point release.
+        - *e.g.:* use "PC 5.9" (not "Prism Central 5.9.0.1")
+        - ````WORKSHOPS=(\
+        "Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
+        "Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
+        # "Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
+        # "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
+        "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
+        #"Tech Summit 2018" \
+        "Marketing Cluster with PC 5.9.x" \
+    )````
+2. Adjust/update function stage_clusters() (which immediately follows the
+  `WORKSHOPS` array) for mappings to latest version number and staging scripts,
+  as needed.
+
+### How to Update Nutanix Software Version Used in a Workshop ###
+
+1. See above, update `stage_workshop.sh` function stage_clusters() version number.
+2. Adjust `global.vars.sh` if appropriate for:
+  - `PC_VERSION_DEV` and/or `PC_VERSION_STABLE`
+  - `FILES_VERSION`
+3. Update `lib.common.sh`, function `ntnx_download()` with new version metadata.
+  - You will see Nutanix release management follows a pattern, but not a consistent
+  pattern across different minor releases.
+  - Find the metadata URL in the Nutanix support portal for the appropriate product
+  and update methodology, then deconstruct it by updating each stanza that
+  programmatically builds up the metadata URL.
+
+## Timing ##
 
 We'll round up to the nearest half minute.
 

@@ -1,6 +1,7 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - Braindump:
+  - AFS 3.2.0 update
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
     - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
       - deprecate AutoDC1 for 5.6+5.7+5.8?

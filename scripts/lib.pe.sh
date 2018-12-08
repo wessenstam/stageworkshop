@@ -154,6 +154,7 @@ function authentication_source() {
       ;;
   esac
 }
+
 function files_install() {
   local  _ncli_softwaretype='FILE_SERVER'
   local _ncli_software_type='afs'
@@ -161,6 +162,7 @@ function files_install() {
 
   dependencies 'install' 'jq' || exit 13
 
+  log 'IDEMPOTENCY: checking for ${_ncli_software_type} completed...'
   _test=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true software list \
     | ${HOME}/jq -r \
@@ -351,7 +353,7 @@ function pe_init() {
          awk -F: '{print $2}' | tr -d '[:space:]'` == "${DATA_SERVICE_IP}" ]]; then
     log "IDEMPOTENCY: Data Services IP set, skip."
   else
-    log "Configure SMTP: https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F"
+    log "Configure SMTP"
     ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
       from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
     ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
@@ -359,8 +361,7 @@ function pe_init() {
       && ${HOME}/serviceability/bin/send-email
 
     log "Configure NTP"
-    ncli cluster add-to-ntp-servers \
-      servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
+    ncli cluster add-to-ntp-servers servers=${NTP_SERVERS}
 
     log "Rename default container to ${MY_CONTAINER_NAME}"
     default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' \

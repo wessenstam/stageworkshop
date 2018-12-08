@@ -483,7 +483,7 @@ function ntnx_download() {
       _meta_url+="afs/${FILES_VERSION}/${_version}"
 
       case ${FILES_VERSION} in
-        2.2.3 | 3.1.0.1 )
+        2.2.3 | 3.1.0.1 | 3.2.0 )
           _meta_url+="afs-${FILES_VERSION}.json"
           ;;
         * )

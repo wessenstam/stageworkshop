@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
+
 # shellcheck disable=SC2034
           RELEASE='release.json'
+# update lib.common.sh::ntnx_download with new NTNX version metadata
    PC_VERSION_DEV='5.10'
 PC_VERSION_STABLE='5.8.2'
-    FILES_VERSION='3.1.0.1'
+    FILES_VERSION='3.1.0.1' # 3.2.0
 
           PRISM_ADMIN='admin'
            MY_SP_NAME='SP01'
@@ -16,11 +18,16 @@ MY_IMG_CONTAINER_NAME='Images'
 DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
         PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
     DNS_SERVERS='8.8.8.8'
+    NTP_SERVERS='0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org'
        NW1_NAME='Primary'
        NW1_VLAN=0
      NW1_SUBNET="${IPV4_PREFIX}.1/25"
  NW1_DHCP_START="${IPV4_PREFIX}.50"
    NW1_DHCP_END="${IPV4_PREFIX}.125"
+# https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F
+ SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+    SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
+    SMTP_SERVER_PORT=25
 
 # For Nutanix HPOC/Marketing clusters
 # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
@@ -110,13 +117,8 @@ MY_DOMAIN_ADMIN_GROUP='SSP Admins'
    'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 
-# https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F
-SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
-   SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
-   SMTP_SERVER_PORT=25
-
    ATTEMPTS=40
-      SLEEP=60
+      SLEEP=60 # pause (in seconds) between ATTEMPTS
 
      CURL_OPTS='--insecure --silent --show-error' # --verbose'
 CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json --header Accept:application/json --output /dev/null"
