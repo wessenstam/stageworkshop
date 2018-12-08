@@ -10,17 +10,20 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 
 ## For the Impatient ##
 
-You can get push button Calm in two ways:
+You can get push button Calm in two ways. It is best to decide by answering this question, do you need to set up a single or multiple Nutanix AHV clusters?
 
-1. To set up an individual Nutanix AHV cluster, the easiest manner is to SSH to Prism Element on the Cluster IP and run the bootstrap script:
+1. __Single:__ the easiest manner is to SSH to Prism Element on the Cluster IP and run the bootstrap script:
 
         curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && sh ${_##*/}
 
-2. To set up multiple clusters or do development, satisfy these requirements:
+      answer a few questions and watch the log progress.
+      - The `nutanixworkshops` repository places a premium on stability, not on the bleeding edge of the latest releases; use one of the forked repos for latest development.
 
-    - Tested on Ubuntu and Mac, but could work easily on other Linux distributions.
-      - Mac requires https://brew.sh installed.
-    - Terminal with command line git.
+2. __Multiple:__ or to perform/use development, satisfy these requirements:
+
+    1. Tested on Ubuntu and Mac, but could work easily on other Linux distributions.
+        - Mac requires https://brew.sh installed.
+    2. Terminal with command line git.
 
           echo "Start Foundation on your HPoC now, we'll wait 40 minutes..."
 
@@ -31,7 +34,7 @@ You can get push button Calm in two ways:
 
           sleep 60*30 && lynx https://admin:${PE_PASSWORD}@${PE}:9440/
 
-    - While Foundation typically takes *~30 minutes,* we'll:
+ While Foundation typically takes *~30 minutes,* we'll:
 
       1. Set the Prism Element (PE) IP address, password, and your email address
       2. Change directory into the cloned git repository
@@ -92,6 +95,68 @@ Approximately 30 minutes later, you can login to PE to get to PC (or directly to
     - Arrive early, re-survey the site, send any updates to the e-mail attendee list, and include this link:
       - [Nutanix Partner Workshop](https://nutanix.handsonworkshops.com/workshops/6070f10d-3aa0-4c7e-b727-dc554cbc2ddf/start/)
       - Alternatively, have them access http://nutanix.handsonworkshops.com and register/log in.
+
+7. __Extended Enablement:__ it is easy to do a full day of enablement on Calm, there are many topics:
+  1. Nutanix+Calm=DevOps
+     - DevOps enablement deck:
+       1. The Journey: move the mountain stone by stone
+       2. Business outcome = __agility__: DevOps Definition
+
+       3. Business outcome = __scalability__: Pets versus Cattle
+       4. Plan, implement, measure, repeat.
+       5. DevOps maturity diagram: journey up and to the right, evaluate vendors who imprison you in the lower left quadrant. Then bring down the silos.
+       6. The goal of DevOps is to become invisible,
+       we cattle DevOps across the organization and we all become DevOps.
+       7. Nutanix is on this journey, we are cattle architecture, infrastructure, and operations: this is how we disrupt and lead the industry.
+
+     1. The traditional Nutanix customer base is Ops,
+     now we have a new audience: the Dev.
+     2. What is a Developer?
+     3. Build-Test-Deploy pattern for a mature agile SDLC engineering organization > CI/CD
+     4. DevOps Automation Diagram illustrates CI/CD
+     4. Config Management for infrastructure developers: infrastructure as code.
+
+ 2. Calm Selling:
+    - How to do the first customer Calm presentation
+    - How to demo Calm in 5, 10, 20 minutes
+    - Qualification questions
+    - Competitive analysis
+    - Calm history and organization chart
+    - Calm roadmap
+    - Typical customer use cases and summary of business
+    - Deeper dives (later in the day, second day, etc.):
+      - Calm 2.50 Beam showback
+      - Calm 2.40 K8s integration
+      - Service Now bridge open sourced
+      - CI/CD blueprint
+    - Group Exercise:
+      - Pitch a slide or answer a Calm objection question
+      - Entire team offers positive criticism to improve member response, typical sidebar discussion
+      - Always make the pitch your own voice, not by wrote.
+      - Always add your your own story and experience to illustrate how we do it better and lay traps.
+      - Improve your strategy/tactics using XCommand.
+    - Calm anatomy of a sale with escalation points
+      - Platform, first customer pitch
+      - Discovery on qualification questions:
+        - Do you have automation, software devs, etc.
+      - Map out how they deploy a change to production,
+      get the metrics/silos, time to deploy value.
+      - Find use case(s) for Calm/automation/platform,
+      create SFDC opportunity with Calm SKUs,
+      schedule platform follow ups and/or Calm deep dive.
+      - Offer a bootcamp for engagement.
+      - Define a PoC, escalate to solutions arch if needed.
+          - Implement a PoC, exit PoC successfully for a technical close.
+      - Sales close.
+    - Continuously prospect: nurture Calm and  upsell platform
+      - Typical use case is SSP-IaaS deployment.
+        - Add apps
+        - Add app lifecycle operations
+        - Drive to CI/CD pipelines
+        - Drive to continuous operations
+        - Repeat for next app or business initiative
+      - Continuously prospect for other business teams and apps, integrations, marketplace blueprints, use cases which influence roadmap priority, and *for competition*: report back to the team in #calm.
+    - Profit!
 
 ## Bugs, Priorities, Notes ##
 

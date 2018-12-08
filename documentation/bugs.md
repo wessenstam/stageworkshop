@@ -1,13 +1,13 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - Braindump:
-  - AFS 3.2.0 update
+  - AFS 3.2.0 update: https://portal.nutanix.com/#/page/releases/afsDetails?targetId=3.2&targetVal=GA
+    - Move AFS deployment from PE to PC? Make it optional?
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
     - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
       - deprecate AutoDC1 for 5.6+5.7+5.8?
       - validate; Restart bug, then validate, no error detection
   - github 2FA
-  - Move AFS deployment from PE to PC? Make it optional?
   - PC import PE images
     - Move images from PE to PC? Make Karbon and Era optional?
       - JSON or YAML options? from bash/jq?
@@ -20,7 +20,7 @@
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
   - @Michael workaround: py-nuclei?
-    - ssh nutanix@10.21.78.39 'source /etc/profile; py-nuclei -u admin -p "nxLond2018!" image.list | grep acs'
+    - ssh nutanix@10.21.78.39 'source /etc/profile; py-nuclei -u admin -p "password" image.list | grep acs'
 
 - RFE: Marketing cluster
   - Test assert: only provision 2nd NW for HPOC
