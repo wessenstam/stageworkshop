@@ -172,7 +172,7 @@ function pe_determine_pe() {
   local     _hold
 
   # lib.pc.sh::pe_determine uses nuclei
-  dependencies 'jq'
+  dependencies 'install' 'jq'
   _hold=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true cluster info)
 

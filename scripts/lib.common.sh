@@ -44,13 +44,16 @@ function dependencies {
   local _sshpass_pkg=${SSHPASS_REPOS[0]##*/}
 
   if [[ -z ${1} ]]; then
-    # TODO: && "${1}" ne 'install'
     _error=20
     log "Error ${_error}: missing install or remove verb."
     exit ${_error}
   elif [[ -z ${2} ]]; then
     _error=21
     log "Error ${_error}: missing package name."
+    exit ${_error}
+  elif [[ "${1}" != 'install' ]] && [[ "${1}" != 'remove' ]]; then
+    _error=20
+    log "Error ${_error}: wrong install or remove verb (case sensitive)."
     exit ${_error}
   fi
 
