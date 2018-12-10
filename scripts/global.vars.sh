@@ -38,6 +38,11 @@ case "${OCTET[0]}.${OCTET[1]}" in
     DNS_SERVERS='10.21.253.10'
     ;;
   10.21 )
+    if (( ${OCTET[3]} == 60 )) || (( ${OCTET[3]} == 77 )); then
+      log 'GPU cluster, aborting! See https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#GPU_Clusters'
+      exit 0
+    fi
+
        DNS_SERVERS='10.21.253.10,10.21.253.11'
           NW1_VLAN=$(( ${OCTET[2]} * 10 ))
           NW2_NAME='Secondary'

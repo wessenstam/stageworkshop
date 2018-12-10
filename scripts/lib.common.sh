@@ -44,6 +44,7 @@ function dependencies {
   local _sshpass_pkg=${SSHPASS_REPOS[0]##*/}
 
   if [[ -z ${1} ]]; then
+    # TODO: && "${1}" ne 'install'
     _error=20
     log "Error ${_error}: missing install or remove verb."
     exit ${_error}
@@ -95,8 +96,13 @@ function dependencies {
                  download ${SOURCE_URL}
               fi
               chmod u+x ${_jq_pkg} && ln -s ${_jq_pkg} jq
-              PATH+=:`pwd`
-              export PATH
+
+              if [[ -d ${HOME}/bin ]]; then
+                mv jq* bin/
+              else
+                PATH+=:`pwd`
+                export PATH
+              fi
             elif [[ `uname -s` == "Darwin" ]]; then
               brew install jq
             fi
@@ -113,15 +119,21 @@ function dependencies {
       fi
       ;;
     'remove')
-      log "Warning: assuming on PC or PE VM, removing ${2}..."
       if [[ ${_os_found} == '"centos"' ]]; then
+        log "Warning: assuming on PC or PE VM, removing ${2}..."
         case "${2}" in
           sshpass | ${_sshpass_pkg})
             sudo rpm -e sshpass
-            ;;
+          ;;
           jq | ${_jq_pkg} )
-            rm -f jq ${_jq_pkg}
-            ;;
+            if [[ -d ${HOME}/bin ]]; then
+              pushd bin || true
+              rm -f jq ${_jq_pkg}
+              popd || true
+            else
+              rm -f jq ${_jq_pkg}
+            fi
+          ;;
         esac
       else
         log "Feature: don't remove dependencies on Mac OS Darwin, Ubuntu, or LinuxMint."

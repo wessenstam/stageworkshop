@@ -14,6 +14,7 @@
   - LCM inventory
     - Calm 2.4 containers
   - Banner: PC-X@HPOC #
+  - https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
@@ -31,6 +32,10 @@
   - Email when PC is ready
   - Create a data structure to specify an image name (or rename after uploading)
     - Change global.vars.sh to .json for new data structures
+      - https://github.com/kristopolous/TickTick
+      - https://github.com/dominictarr/JSON.sh
+      - https://medv.io/json-in-bash/
+        - https://github.com/sharkdp/hyperfine
 
 - BUG = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
@@ -55,7 +60,6 @@
       - eventually, upload to PC:~/cache
       - DEFER: purge
     - PC VM: repeat above for images
-
 
 - Feature = improve MKTG+SRE cluster automation
   - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
@@ -146,6 +150,14 @@
 - Add widget Deployed Applications to (default) dashboard
 
 - FEATURE: improved software engineering
+  - I’ve been wrestling with how to best make my bash scripts test driven. There are TDD Bash frameworks, however most of the systems leveraged/orchestrated are external and would require mocking, something I’m not sure how to approach.
+
+What I have done, in most functions, is try to make them [idempotent](https://en.wiktionary.org/wiki/idempotent) by "testing" for the desired outcome and skipping if accomplished. Of course, most of these tests are cheats: they only check for the final stage of a function being accomplished. Usually, this is good enough, because the final configuration is predicated on all preceding stages in the function. It would be ideal to test every operation, but as you can imagine, that’s quite a bit of work.
+
+This gives the ability to rerun the script from the beginning, skip all previously successful work, and rapidly begin work on the next, unaccomplished stage.
+
+I’ve looked into some server testing frameworks.
+
   - https://bors.tech/ "Bors is a GitHub bot that prevents merge skew / semantic merge conflicts, so when a developer checks out the main branch, they can expect all of the tests to pass out-of-the-box."
   - https://githooks.com/
     - https://github.com/nkantar/Autohook

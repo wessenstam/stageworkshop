@@ -269,7 +269,6 @@ function pe_determine() {
   local     _loop=0
   local    _sleep=2
 
-  rm -f /tmp/cluster.list.json
   # WORKAROUND: Entities non-JSON outputs by nuclei on lines 1-2...
   _hold=$(source /etc/profile.d/nutanix_env.sh \
     && export   NUCLEI_SERVER='localhost' \
@@ -290,7 +289,7 @@ function pe_determine() {
          PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .resources.network.external_ip)
 
     export CLUSTER_NAME PE_HOST
-    log "Success: ${CLUSTER_NAME} PE external IP=${PE_HOST}"
+    log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
   fi
 }
 

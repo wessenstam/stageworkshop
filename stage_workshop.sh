@@ -168,6 +168,27 @@ EOM
   exit
 }
 
+function pe_determine_pe() {
+  local     _hold
+
+  # lib.pc.sh::pe_determine uses nuclei
+  dependencies 'jq'
+  _hold=$(source /etc/profile.d/nutanix_env.sh \
+    && ncli --json=true cluster info)
+
+  if [[ -z "${_hold}" ]]; then
+    _error=12
+    log "Error ${_error}: couldn't resolve clusters ${_hold}"
+    exit ${_error}
+  else
+    CLUSTER_NAME=$(echo ${_hold} | ${HOME}/jq -r .data.name)
+         PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .data.clusterExternalIPAddress)
+
+    export CLUSTER_NAME PE_HOST
+    log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
+  fi
+}
+
 function get_configuration() {
   CONFIGURATION="MY_EMAIL=${MY_EMAIL} PE_HOST=${PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION}"
 }
@@ -308,6 +329,12 @@ while getopts "f:w:\?" opt; do
     f )
       if [[ ${OPTARG} == '-' ]]; then
         log "${_CLUSTER_FILE} override, checking environment variables..."
+
+        if [[ -z "${PE_HOST}" ]]; then
+          pe_determine_pe
+          . global.vars.sh # re-populate PE_HOST dependencies
+        fi
+
         args_required 'MY_EMAIL PE_HOST PE_PASSWORD'
         CLUSTER_LIST=${OPTARG}
       elif [[ -f ${OPTARG} ]]; then
