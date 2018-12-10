@@ -310,7 +310,7 @@ while getopts "f:w:\?" opt; do
         log "${_CLUSTER_FILE} override, checking environment variables..."
 
         if [[ -z "${PE_HOST}" ]]; then
-          pe_determine
+          pe_determine 'PE'
           . global.vars.sh # re-populate PE_HOST dependencies
         fi
 

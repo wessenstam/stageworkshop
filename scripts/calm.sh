@@ -89,7 +89,7 @@ case ${1} in
     # nuclei -debug -username admin -server localhost -password x vm.list
 
     if [[ -z "${PE_HOST}" ]]; then
-      pe_determine
+      pe_determine ${1}
       . global.vars.sh # re-populate PE_HOST dependencies
     fi
 

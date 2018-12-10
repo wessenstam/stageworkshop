@@ -65,9 +65,9 @@ function dependencies {
 
   case "${1}" in
     'install')
-      log "Install ${2}..."
 
       if [[ -z $(which ${2}) ]]; then
+        log "Install ${2}..."
         case "${2}" in
           sshpass | ${_sshpass_pkg})
             if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
@@ -552,20 +552,50 @@ function ntnx_download() {
 }
 
 function pe_determine() {
-  local     _hold
+  # ${1} REQUIRED: run on 'PE' or 'PC'
+  local _error
+  local  _hold
 
-  # lib.pc.sh::pe_determine uses nuclei
   dependencies 'install' 'jq'
-  _hold=$(source /etc/profile.d/nutanix_env.sh \
-    && ncli --json=true cluster info)
+
+  # ncli @PE and @PC yeild different info! So PC uses nuclei.
+  case ${1} in
+    PE | pe )
+      _hold=$(source /etc/profile.d/nutanix_env.sh \
+        && ncli --json=true cluster info)
+      ;;
+    PC | Pc | pc )
+      # WORKAROUND: Entities non-JSON outputs by nuclei on lines 1-2...
+      _hold=$(source /etc/profile.d/nutanix_env.sh \
+        && export   NUCLEI_SERVER='localhost' \
+        && export NUCLEI_USERNAME="${PRISM_ADMIN}" \
+        && export NUCLEI_PASSWORD="nutanix/4u" \
+        && nuclei cluster.list format=json 2>/dev/null \
+        | grep -v 'Entities :' \
+        | jq \
+        '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)'
+      )
+      ;;
+    *)
+      log 'Error: invoke with PC or PE argument.'
+      ;;
+  esac
 
   if [[ -z "${_hold}" ]]; then
     _error=12
     log "Error ${_error}: couldn't resolve clusters ${_hold}"
     exit ${_error}
   else
-    CLUSTER_NAME=$(echo ${_hold} | jq -r .data.name)
-         PE_HOST=$(echo ${_hold} | jq -r .data.clusterExternalIPAddress)
+    case ${1} in
+      PE | pe )
+        CLUSTER_NAME=$(echo ${_hold} | jq -r .name)
+             PE_HOST=$(echo ${_hold} | jq -r .resources.network.external_ip)
+        ;;
+      PC | Pc | pc )
+        CLUSTER_NAME=$(echo ${_hold} | jq -r .data.name)
+             PE_HOST=$(echo ${_hold} | jq -r .data.clusterExternalIPAddress)
+        ;;
+    esac
 
     export CLUSTER_NAME PE_HOST
     log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"

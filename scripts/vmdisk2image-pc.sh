@@ -13,7 +13,7 @@ begin
 
 dependencies 'install' 'jq'
 
-pe_determine || log 'Error: cannot pe_determine' && exit 13
+pe_determine 'PC' || log 'Error: cannot pe_determine' && exit 13
 
 #  CLUSTER_NAME=Specialty02
 # PE_HOST=$(nuclei cluster.get ${CLUSTER_NAME} format=json \
