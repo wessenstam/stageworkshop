@@ -1,8 +1,6 @@
 # Push Button Calm: Bugs, Priorities, Notes #
 
 - Braindump:
-  - AFS 3.2.0 update: https://portal.nutanix.com/#/page/releases/afsDetails?targetId=3.2&targetVal=GA
-    - Move AFS deployment from PE to PC? Make it optional?
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
     - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
       - deprecate AutoDC1 for 5.6+5.7+5.8?
@@ -11,10 +9,12 @@
   - PC import PE images
     - Move images from PE to PC? Make Karbon and Era optional?
       - JSON or YAML options? from bash/jq?
-  - LCM inventory
-    - Calm 2.4 containers
   - Banner: PC-X@HPOC #
   - https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
+  - Move AFS deployment from PE to PC? Make it optional?
+  - LCM inventory
+    - Calm 2.4 containers
+  - Remove backticks
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...

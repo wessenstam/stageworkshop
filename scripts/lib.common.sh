@@ -67,7 +67,7 @@ function dependencies {
     'install')
       log "Install ${2}..."
 
-      if [[ -z `which ${2}` ]]; then
+      if [[ -z $(which ${2}) ]]; then
         case "${2}" in
           sshpass | ${_sshpass_pkg})
             if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
