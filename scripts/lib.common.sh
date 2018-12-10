@@ -101,7 +101,7 @@ function dependencies {
               chmod u+x ${_jq_pkg} && ln -s ${_jq_pkg} jq
 
               if [[ -d ${HOME}/bin ]]; then
-                mv jq* bin/
+                mv jq* ${HOME}/bin/
               else
                 PATH+=:`pwd`
                 export PATH
