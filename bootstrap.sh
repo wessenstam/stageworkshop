@@ -123,8 +123,8 @@ fi
     PE_HOST=${PE_HOST} \
 PRISM_ADMIN=${PRISM_ADMIN} \
 PE_PASSWORD=${PE_PASSWORD} \
-./stage_workshop.sh -f - ${MY_WORKSHOP} \
-  && popd || exit
+./stage_workshop.sh -f - ${MY_WORKSHOP} # \
+#  && popd || exit
 
 echo -e "\n    DONE: ${0} ran for ${SECONDS} seconds."
 cat <<EOM
