@@ -187,8 +187,10 @@ function network_configure() {
   else
     args_required 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
 
-    log "Remove Rx-Automation-Network if it exists..."
-    acli "-y net.delete Rx-Automation-Network"
+    if [[ ! -z $(acli "net.list" | grep 'Rx-Automation-Network') ]]; then
+      log "Remove Rx-Automation-Network..."
+      acli "-y net.delete Rx-Automation-Network"
+    fi
 
     log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${MY_DOMAIN_NAME}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
     acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"

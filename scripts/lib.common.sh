@@ -495,12 +495,15 @@ function ntnx_download() {
           ;;
       esac
 
-      _meta_url+="afs/${FILES_VERSION}/${_version}"
+      _meta_url+="afs/"
 
       case ${FILES_VERSION} in
-        2.2.3 | 3.1.0.1 | 3.2.0 )
-          _meta_url+="afs-${FILES_VERSION}.json"
-          ;;
+        2.2.3 | 3.1.0.1 )
+          _meta_url+="${FILES_VERSION}/${_version}/afs-${FILES_VERSION}.json"
+        ;;
+        3.2.0 )
+          _meta_url+="7.3/nutanix-afs-el7.3-release-afs-${FILES_VERSION}-stable-metadata.json"
+        ;;
         * )
           _error=22
           log "Error ${_error}: unsupported FILES_VERSION=${FILES_VERSION}!"
