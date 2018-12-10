@@ -32,7 +32,7 @@ function stage_clusters() {
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc -l) > 0 )); then
-    export PC_VERSION=5.10
+    export PC_VERSION=5.10.0.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
     export PC_VERSION=5.9.2
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then

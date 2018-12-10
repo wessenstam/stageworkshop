@@ -411,8 +411,6 @@ function ntnx_download() {
       # When adding a new PC version, update BOTH case stanzas below...
       args_required 'PC_VERSION'
 
-      _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/"
-
       case ${PC_VERSION} in
         5.9 | 5.6.2 | 5.8.0.1 )
           _version=2
@@ -425,6 +423,8 @@ function ntnx_download() {
           ;;
       esac
 
+      _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/"
+
       if [[ ! -z $_version ]]; then
         _meta_url+="v${_version}/"
       fi
@@ -433,7 +433,7 @@ function ntnx_download() {
         5.9 )
           _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
           ;;
-        5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 | 5.9.2 | 5.10 )
+        5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 | 5.9.2 | 5.10 | 5.10.0.1 )
           _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
           ;;
         5.7.0.1 | 5.7.1 | 5.7.1.1 )
