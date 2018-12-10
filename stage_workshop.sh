@@ -70,9 +70,9 @@ function stage_clusters() {
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
     get_configuration
-    cd scripts && eval "${CONFIGURATION} ./${_pe_config}" >> ${HOME}/${_pe_config%%.sh}.log 2>&1 &
+    cd scripts && eval "${CONFIGURATION} ./${_pe_config} 'PE'" >> ${HOME}/${_pe_config%%.sh}.log 2>&1 &
   else
-    for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
+    for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^#)
     do
       set -f
       # shellcheck disable=2206
