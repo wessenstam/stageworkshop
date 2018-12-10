@@ -161,7 +161,7 @@ function pc_cluster_img_import() {
 
        _uuid=$(source /etc/profile.d/nutanix_env.sh \
               && ncli --json=true cluster info \
-              | ./jq -r .data.uuid)
+              | jq -r .data.uuid)
   _http_body=$(cat <<EOF
 {"action_on_failure":"CONTINUE",
  "execution_order":"SEQUENTIAL",
@@ -421,7 +421,7 @@ EOF
 }
 
 function pc_ui() {
-  # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/ PC UI customization
+  # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/
   local  _http_body
   local       _json
   local _pc_version
@@ -430,10 +430,10 @@ function pc_ui() {
   _json=$(cat <<EOF
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
-{"type":"custom_login_screen","key":"product_title","value":"${CLUSTER_NAME} PC-${PC_VERSION}"} \
+{"type":"custom_login_screen","key":"product_title","value":"${CLUSTER_NAME},PC-${PC_VERSION}"} \
 {"type":"custom_login_screen","key":"title","value":"Nutanix.HandsOnWorkshops.com,@${MY_DOMAIN_FQDN}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_status","value":true} \
-{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${CLUSTER_NAME} ${PE_PASSWORD}"} \
+{"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${PRISM_ADMIN}:${PE_PASSWORD}@${CLUSTER_NAME}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"disable_video","value":true} \
 {"type":"UI_CONFIG","username":"system_data","key":"disable_2048","value":true} \
 {"type":"UI_CONFIG","key":"autoLogoutGlobal","value":7200000} \

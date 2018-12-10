@@ -1,16 +1,6 @@
 #!/usr/bin/env bash
 # dependencies: dig
 
-function begin() {
-  local _release
-
-  if [[ -e ${RELEASE} ]]; then
-    _release=" release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
-  fi
-
-  log "$(basename ${0})${_release} start._____________________"
-}
-
 function args_required() {
   local _argument
   local    _error=88
@@ -31,6 +21,16 @@ function args_required() {
   if [[ ${DEBUG} ]]; then
     log 'Success: required arguments provided.'
   fi
+}
+
+function begin() {
+  local _release
+
+  if [[ -e ${RELEASE} ]]; then
+    _release=" release: $(grep FullSemVer ${RELEASE} | awk -F\" '{print $4}')"
+  fi
+
+  log "$(basename ${0})${_release} start._____________________"
 }
 
 function dependencies {
@@ -569,7 +569,7 @@ function pe_determine() {
       _hold=$(source /etc/profile.d/nutanix_env.sh \
         && export   NUCLEI_SERVER='localhost' \
         && export NUCLEI_USERNAME="${PRISM_ADMIN}" \
-        && export NUCLEI_PASSWORD="nutanix/4u" \
+        && export NUCLEI_PASSWORD="${PE_PASSWORD}" \
         && nuclei cluster.list format=json 2>/dev/null \
         | grep -v 'Entities :' \
         | jq \
@@ -581,19 +581,21 @@ function pe_determine() {
       ;;
   esac
 
+  #log "DEBUG: cluster info on ${1}. |${_hold}|"
+
   if [[ -z "${_hold}" ]]; then
     _error=12
-    log "Error ${_error}: couldn't resolve clusters ${_hold}"
+    log "Error ${_error}: couldn't resolve cluster info on ${1}. |${_hold}|"
     exit ${_error}
   else
     case ${1} in
       PE | pe )
-        CLUSTER_NAME=$(echo ${_hold} | jq -r .name)
-             PE_HOST=$(echo ${_hold} | jq -r .resources.network.external_ip)
-        ;;
-      PC | Pc | pc )
         CLUSTER_NAME=$(echo ${_hold} | jq -r .data.name)
              PE_HOST=$(echo ${_hold} | jq -r .data.clusterExternalIPAddress)
+        ;;
+      PC | Pc | pc )
+        CLUSTER_NAME=$(echo ${_hold} | jq -r .name)
+             PE_HOST=$(echo ${_hold} | jq -r .resources.network.external_ip)
         ;;
     esac
 

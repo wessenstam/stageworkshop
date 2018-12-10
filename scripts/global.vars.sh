@@ -5,7 +5,7 @@
 # update lib.common.sh::ntnx_download with new NTNX version metadata
    PC_VERSION_DEV='5.10'
 PC_VERSION_STABLE='5.8.2'
-    FILES_VERSION='3.1.0.1' #3.2.0' # was: 3.1.0.1
+    FILES_VERSION='3.2.0' # was: '3.1.0.1'
 
           PRISM_ADMIN='admin'
            MY_SP_NAME='SP01'
