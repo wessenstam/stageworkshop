@@ -262,36 +262,36 @@ function pc_passwd() {
   # log "cURL reset password _test=${_test}"
 }
 
-function pe_determine() {
-  local _attempts=5
-  local    _error=10
-  local     _hold
-  local     _loop=0
-  local    _sleep=2
-
-  # WORKAROUND: Entities non-JSON outputs by nuclei on lines 1-2...
-  _hold=$(source /etc/profile.d/nutanix_env.sh \
-    && export   NUCLEI_SERVER='localhost' \
-    && export NUCLEI_USERNAME="${PRISM_ADMIN}" \
-    && export NUCLEI_PASSWORD="nutanix/4u" \
-    && nuclei cluster.list format=json 2>/dev/null \
-    | grep -v 'Entities :' \
-    | jq \
-    '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)'
-  )
-
-  if [[ -z "${_hold}" ]]; then
-    _error=12
-    log "Error ${_error}: couldn't resolve clusters ${_hold}"
-    exit ${_error}
-  else
-    CLUSTER_NAME=$(echo ${_hold} | jq -r .name)
-         PE_HOST=$(echo ${_hold} | jq -r .resources.network.external_ip)
-
-    export CLUSTER_NAME PE_HOST
-    log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
-  fi
-}
+# function pe_determine() {
+#   local _attempts=5
+#   local    _error=10
+#   local     _hold
+#   local     _loop=0
+#   local    _sleep=2
+#
+#   # WORKAROUND: Entities non-JSON outputs by nuclei on lines 1-2...
+#   _hold=$(source /etc/profile.d/nutanix_env.sh \
+#     && export   NUCLEI_SERVER='localhost' \
+#     && export NUCLEI_USERNAME="${PRISM_ADMIN}" \
+#     && export NUCLEI_PASSWORD="nutanix/4u" \
+#     && nuclei cluster.list format=json 2>/dev/null \
+#     | grep -v 'Entities :' \
+#     | jq \
+#     '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)'
+#   )
+#
+#   if [[ -z "${_hold}" ]]; then
+#     _error=12
+#     log "Error ${_error}: couldn't resolve clusters ${_hold}"
+#     exit ${_error}
+#   else
+#     CLUSTER_NAME=$(echo ${_hold} | jq -r .name)
+#          PE_HOST=$(echo ${_hold} | jq -r .resources.network.external_ip)
+#
+#     export CLUSTER_NAME PE_HOST
+#     log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
+#   fi
+# }
 
 function ssp_auth() {
   args_required 'AUTH_SERVER AUTH_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'

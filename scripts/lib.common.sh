@@ -551,6 +551,27 @@ function ntnx_download() {
   export NTNX_SOURCE_URL=${_source_url}
 }
 
+function pe_determine() {
+  local     _hold
+
+  # lib.pc.sh::pe_determine uses nuclei
+  dependencies 'install' 'jq'
+  _hold=$(source /etc/profile.d/nutanix_env.sh \
+    && ncli --json=true cluster info)
+
+  if [[ -z "${_hold}" ]]; then
+    _error=12
+    log "Error ${_error}: couldn't resolve clusters ${_hold}"
+    exit ${_error}
+  else
+    CLUSTER_NAME=$(echo ${_hold} | jq -r .data.name)
+         PE_HOST=$(echo ${_hold} | jq -r .data.clusterExternalIPAddress)
+
+    export CLUSTER_NAME PE_HOST
+    log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
+  fi
+}
+
 function prism_check {
   # Argument ${1} = REQUIRED: PE or PC
   # Argument ${2} = OPTIONAL: number of attempts
