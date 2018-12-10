@@ -165,7 +165,7 @@ function files_install() {
   log 'IDEMPOTENCY: checking for ${_ncli_software_type} completed...'
   _test=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true software list \
-    | ${HOME}/jq -r \
+    | jq -r \
       '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | select(.status == "COMPLETED") | .version')
 
   if [[ ${_test} != "${FILES_VERSION}" ]]; then
@@ -265,7 +265,7 @@ function pc_install() {
 
     _test=$(source /etc/profile.d/nutanix_env.sh \
       && ncli --json=true software list \
-      | ${HOME}/jq -r \
+      | jq -r \
         '.data[] | select(.softwareType == "'${_ncli_softwaretype}'") | select(.status == "COMPLETED") | .version')
 
     if [[ ${_test} != "${PC_VERSION}" ]]; then

@@ -63,7 +63,7 @@ function dependencies {
   case "${1}" in
     'install')
       log "Install ${2}..."
-      export PATH=${PATH}:${HOME}
+
       if [[ -z `which ${2}` ]]; then
         case "${2}" in
           sshpass | ${_sshpass_pkg})

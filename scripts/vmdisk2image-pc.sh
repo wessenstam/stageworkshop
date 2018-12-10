@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-echo <<EoM
+cat <<EoM
   $. = Run on PC: provide a VM name@PE, will upload disk image.
 EoM
 
-export PATH=${PATH}:${HOME}
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
 . /etc/profile.d/nutanix_env.sh
 . lib.common.sh
@@ -68,6 +67,7 @@ log "TODO: nuclei image.list, state = COMPLETE; image.list Name UUID State"
 
 exit 0
 
+cat <<EoF
 NOTES:
 
 This makes an arbitrary VM disk on a cluster available as a Disk image
@@ -130,3 +130,5 @@ versus image download:
 - nuclei -output_format json image.get WindowsServer2016-Base.qcow2
 - https://10.21.5.39:9440/api/nutanix/v3/images/9367da60-157d-4e7f-9adb-e8e83f8f23e0/file
 - for PC, not PE
+
+EoF

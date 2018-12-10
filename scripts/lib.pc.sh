@@ -276,7 +276,7 @@ function pe_determine() {
     && export NUCLEI_PASSWORD="nutanix/4u" \
     && nuclei cluster.list format=json 2>/dev/null \
     | grep -v 'Entities :' \
-    | ${HOME}/jq \
+    | jq \
     '.entities[].status | select(.state == "COMPLETE") | select(.resources.network.external_ip != null)'
   )
 
@@ -285,8 +285,8 @@ function pe_determine() {
     log "Error ${_error}: couldn't resolve clusters ${_hold}"
     exit ${_error}
   else
-    CLUSTER_NAME=$(echo ${_hold} | ${HOME}/jq -r .name)
-         PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .resources.network.external_ip)
+    CLUSTER_NAME=$(echo ${_hold} | jq -r .name)
+         PE_HOST=$(echo ${_hold} | jq -r .resources.network.external_ip)
 
     export CLUSTER_NAME PE_HOST
     log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
@@ -525,7 +525,7 @@ function pc_project() {
   nuclei project.create name=${_name} description='test from NuCLeI!' 2>/dev/null
   _uuid=$(. /etc/profile.d/nutanix_env.sh \
     && nuclei project.get ${_name} format=json 2>/dev/null \
-    | ${HOME}/jq .metadata.project_reference.uuid | tr -d '"')
+    | jq .metadata.project_reference.uuid | tr -d '"')
   log "${_name}.uuid = ${_uuid}"
 
     # - project.get mark.lavi.test

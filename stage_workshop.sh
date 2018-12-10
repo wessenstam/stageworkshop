@@ -181,8 +181,8 @@ function pe_determine_pe() {
     log "Error ${_error}: couldn't resolve clusters ${_hold}"
     exit ${_error}
   else
-    CLUSTER_NAME=$(echo ${_hold} | ${HOME}/jq -r .data.name)
-         PE_HOST=$(echo ${_hold} | ${HOME}/jq -r .data.clusterExternalIPAddress)
+    CLUSTER_NAME=$(echo ${_hold} | jq -r .data.name)
+         PE_HOST=$(echo ${_hold} | jq -r .data.clusterExternalIPAddress)
 
     export CLUSTER_NAME PE_HOST
     log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
