@@ -29,13 +29,12 @@ function stageworkshop_cache_start() {
   local  _host
   local _hosts
   local  _file
-  local  _bits=( ) # \
+  local  _bits=( \
+  #https://github.com/mlavi/stageworkshop/archive/master.zip \
+  #http://download.nutanix.com/downloads/pc/one-click-pc-deployment/5.10.0.1/euphrates-5.10.0.1-stable-prism_central.tar \
   #   http://10.59.103.143:8000/autodc-2.0.qcow2 \
   #   http://download.nutanix.com/calm/CentOS-7-x86_64-GenericCloud-1801-01.qcow2 \
-  #   http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/v1/euphrates-5.9.1-stable-prism_central_metadata.json \
-  # )
-  #https://github.com/mlavi/stageworkshop/archive/master.zip
-  #http://download.nutanix.com/pc/one-click-pc-deployment/5.9.1/euphrates-5.9.1-stable-prism_central.tar
+  )
 
   if [[ ! -d cache ]]; then
     mkdir cache
@@ -47,7 +46,7 @@ function stageworkshop_cache_start() {
   echo "Setting up http://localhost:${HTTP_CACHE_PORT}/ on cache directory..."
   python -m SimpleHTTPServer ${HTTP_CACHE_PORT} || python -m http.server ${HTTP_CACHE_PORT} &
 
-  # populate cache files
+  echo "Populate cache files..."
   for _file in "${_bits[@]}"; do
     if [[ -e ${_file##*/} ]]; then
       echo "Cached: ${_file##*/}"

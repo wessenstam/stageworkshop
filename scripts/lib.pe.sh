@@ -323,7 +323,7 @@ EOF
 }
 
 function pe_auth() {
-  args_required 'MY_DOMAIN_NAME MY_DOMAIN_FQDN MY_DOMAIN_URL MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
+  args_required 'MY_DOMAIN_NAME MY_DOMAIN_FQDN AUTH_HOST MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
 
   if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
     log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
@@ -331,7 +331,7 @@ function pe_auth() {
     log "Configure PE external authentication"
     ncli authconfig add-directory \
       directory-type=ACTIVE_DIRECTORY \
-      connection-type=LDAP directory-url="${MY_DOMAIN_URL}" \
+      connection-type=LDAP directory-url="ldaps://${AUTH_HOST}/" \
       domain="${MY_DOMAIN_FQDN}" \
       name="${MY_DOMAIN_NAME}" \
       service-account-username="${MY_DOMAIN_USER}" \

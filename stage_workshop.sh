@@ -14,6 +14,7 @@ WORKSHOPS=(\
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Marketing Cluster with PC 5.9.x" \
+"Add Files ${FILES_VERSION} (AFS) to cluster" \
 ) # Adjust function stage_clusters for mappings as needed
 
 function stage_clusters() {
@@ -23,54 +24,57 @@ function stage_clusters() {
   local _dependencies
   local       _fields
   local    _libraries='global.vars.sh lib.common.sh'
-  local    _pe_config
-  local    _pc_config
+  local     _manifest # list of all staging scripts to deploy
   local      _release
+  local       _script # first file of the _manifest will be executed on PE
   local       _sshkey
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc -l) > 0 )); then
-    export PC_VERSION=5.10.0.1
+    export PC_VERSION="${PC_VERSION_DEV}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
     export PC_VERSION=5.9.2
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
-    export PC_VERSION=5.8.2
+    export PC_VERSION="${PC_VERSION_STABLE}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then
     export PC_VERSION=5.7.1.1
   elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc -l) > 0 )); then
     export PC_VERSION=5.6.2
   fi
 
-  # Map to staging scripts
+  # Map workshop to staging scripts and libraries
   if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
     _libraries+=' lib.pe.sh lib.pc.sh'
-     _pe_config='calm.sh'
-     _pc_config='calm.sh'
+      _manifest='calm.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
-    _pe_config=stage_citrixhow.sh
-    _pc_config=stage_citrixhow_pc.sh
+    _manifest='stage_citrixhow.sh stage_citrixhow_pc.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Summit | wc -l) > 0 )); then
-    _pe_config=stage_ts18.sh
-    _pc_config=stage_ts18_pc.sh
+    _manifest='stage_ts18.sh stage_ts18_pc.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Marketing | wc -l) > 0 )); then
     _libraries+=' lib.pe.sh'
-     _pe_config='marketing.sh'
+      _manifest='marketing.sh'
+  fi
+  if (( $(echo ${_workshop} | grep -i Files | wc -l) > 0 )); then
+    _libraries+=' lib.pe.sh'
+      _manifest='file-afs.sh'
   fi
 
   dependencies 'install' 'sshpass'
 
-  log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
+  if [[ -z ${PC_VERSION} ]]; then
+    log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
+  fi
   # Send configuration scripts to remote clusters and execute Prism Element script
 
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
     get_configuration
-    cd scripts && eval "${CONFIGURATION} ./${_pe_config} 'PE'" >> ${HOME}/${_pe_config%%.sh}.log 2>&1 &
+    cd scripts && eval "${CONFIGURATION} ./${_manifest} 'PE'" >> ${HOME}/${_manifest%%.sh}.log 2>&1 &
   else
     for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^#)
     do
@@ -110,7 +114,7 @@ function stage_clusters() {
       fi
 
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "${_libraries} ${_release} ${_pe_config} ${_pc_config}" \
+        && remote_exec 'SCP' 'PE' "${_libraries} ${_release} ${_manifest}" \
         && popd || exit
 
       # For Calm container updates...
@@ -134,8 +138,12 @@ function stage_clusters() {
         remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
+      # shellcheck disable=2206
+      _fields=(${_manifest})
+      _script="${_fields[0]}"
+
       log "Remote execution configuration script on PE@${PE_HOST}"
-      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_config} 'PE' >> ${_pe_config%%.sh}.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_script} 'PE' >> ${_script%%.sh}.log 2>&1 &"
 
       # shellcheck disable=SC2153
       cat <<EOM
@@ -146,16 +154,16 @@ function stage_clusters() {
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
   $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${PE_HOST} 'date; tail -f ${_pe_config%%.sh}.log'
+      nutanix@${PE_HOST} 'date; tail -f ${_manifest%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
 EOM
-      if [[ ! -z ${_pc_config} ]]; then
+      if (( "$(echo ${_libraries} | grep -i lib.pc | wc --lines)" > 0 )); then
         # shellcheck disable=2153
         cat <<EOM
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
+      nutanix@${PC_HOST} 'date; tail -f *.log'
     https://${PRISM_ADMIN}@${PC_HOST}:9440/
 
 EOM

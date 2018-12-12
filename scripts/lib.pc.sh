@@ -96,14 +96,7 @@ function pc_auth() {
   local _pc_version
   local       _test
 
-  # TODO:60 not passing arguments yet; disabling by appending v1
-  if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
-    # local  _autodc_conf='/etc/samba/smb.conf'
-    # local _autodc_patch='ldap server require strong auth = no'
-    remote_exec 'ssh' 'AUTH_SERVER' \
-    'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh && bash ${_##*/}' \
-    'OPTIONAL'
-  fi
+  # TODO:60 not passing AUTH_SERVER argument yet
 
   log "Add Directory ${AUTH_SERVER}"
   _http_body=$(cat <<EOF
@@ -121,7 +114,7 @@ EOF
 EOF
 )
   else
-    _http_body+=" \"directoryUrl\":\"${MY_DOMAIN_URL}\","
+    _http_body+=" \"directoryUrl\":\"ldaps://${AUTH_HOST}/\","
   fi
 
   _http_body+=$(cat <<EOF

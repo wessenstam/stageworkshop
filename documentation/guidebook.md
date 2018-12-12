@@ -164,9 +164,14 @@ See [the planning and working document](bugs.md).
 
 ## Development ##
 
+Shell scripting is not a complete computer language, but despite its drawbacks, it is capable.
+In the limited environment of the CVM, it is the easiest manner to orchestrate other command line tools, including Nutanix CLIs. You will also see API calls to access platform functionality.
+
+I refer to the [Advanced Bash-Scripting Guide](http://tldp.org/LDP/abs/html/index.html) every time I forget something or see strange syntax, it is a great way to learn and understand shell scripting!
+
 ### Feature Branches ###
 
-In order to keep the master branch stable, a developer should work on a feature branch when possible. Here's an example of how to change to a feature branch, it assumes you are working with the `mlavi` repository:
+In order to keep the master branch stable, a developer should work on a feature branch when possible. The following shows how to change to a feature branch, it assumes you are working with the `mlavi` repository and want to change to a branch named <BRANCH>:
 
     cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 \
       | grep Cloning | awk -F\' '{print $2}') \
@@ -207,6 +212,7 @@ Everything takes place in `stage_workshop.sh`:
   - Find the metadata URL in the Nutanix support portal for the appropriate product
   and update methodology, then deconstruct it by updating each stanza that
   programmatically builds up the metadata URL.
+  - TODO: In retrospect, metadata URL shouldn't be constructed: treat as global.var
 
 ## Timing ##
 
