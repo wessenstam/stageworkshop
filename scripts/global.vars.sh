@@ -65,7 +65,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
        DNS_SERVERS='10.132.71.40'
           NW2_NAME='Secondary'
           NW2_VLAN=0
-        NW2_SUBNET="${IPV4_PREFIX%.*}.128.0/17"
+        NW2_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
     NW2_DHCP_START="${IPV4_PREFIX}.100"
       NW2_DHCP_END="${IPV4_PREFIX}.250"
     ;;

@@ -28,11 +28,43 @@ EOF
   log "add.roles ${_http_body}=|${_test}|"
 }
 
+function network_configure_shcolo() {
+
+  if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
+    log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
+  else
+    args_required 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
+
+    if [[ ! -z $(acli "net.list" | grep 'Rx-Automation-Network') ]]; then
+      log "Remove Rx-Automation-Network..."
+      acli "-y net.delete Rx-Automation-Network"
+    fi
+
+          NW1_VLAN=${NW2_VLAN}
+        NW1_SUBNET=${NW2_SUBNET}
+    NW1_DHCP_START=${NW2_DHCP_START}
+      NW1_DHCP_END=${NW2_DHCP_END}
+
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${MY_DOMAIN_NAME}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
+    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+    acli "net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
+
+    #if [[ ! -z "${NW2_NAME}" ]]; then
+    #  log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
+    #  acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
+    #  acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+    #  acli "net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
+    #fi
+  fi
+}
+
 function pc_upload_manual() {
   # upload PC for sh-colo manually
-  PC_SHCOLO_URL=http://10.132.71.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
-  PC_META_SHCOLO_URL=http://10.132.71.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
-  wget --progress=dot:mega ${PC_SHCOLO_URL} ${PC_META_SHCOLO_URL}
+  PC_SHCOLO_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
+  PC_META_SHCOLO_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
+  wget -c -O pc-${PC_VERSION}-deploy.tar --progress=dot:mega ${PC_SHCOLO_URL} 
+  wget -q ${PC_META_SHCOLO_URL}
   ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
          file-path="`pwd`/${PC_SHCOLO_URL##*/}" \
     meta-file-path="`pwd`/${PC_META_SHCOLO_URL##*/}"
@@ -70,7 +102,7 @@ case ${1} in
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
     && pe_init \
-    && network_configure \
+    && network_configure_shcolo \
     && authentication_source \
     && pe_auth
 
