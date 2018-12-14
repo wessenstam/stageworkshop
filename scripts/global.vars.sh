@@ -59,6 +59,16 @@ case "${OCTET[0]}.${OCTET[1]}" in
     NW2_DHCP_START="${IPV4_PREFIX}.132"
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
+  10.132 )
+    # different ip schema in SH-COLO
+    # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
+       DNS_SERVERS='10.132.71.40'
+          NW2_NAME='Secondary'
+          NW2_VLAN=0
+        NW2_SUBNET="${IPV4_PREFIX%.*}.128.0/17"
+    NW2_DHCP_START="${IPV4_PREFIX}.100"
+      NW2_DHCP_END="${IPV4_PREFIX}.250"
+    ;;
 esac
 
 HTTP_CACHE_HOST='localhost'

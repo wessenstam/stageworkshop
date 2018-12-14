@@ -14,6 +14,7 @@ WORKSHOPS=(\
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Marketing Cluster with PC 5.9.x" \
+"SH-COLO Cluster with PC 5.9.x" \
 ) # Adjust function stage_clusters for mappings as needed
 
 function stage_clusters() {
@@ -60,6 +61,10 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i Marketing | wc -l) > 0 )); then
     _libraries+=' lib.pe.sh'
      _pe_config='marketing.sh'
+  fi
+  if (( $(echo ${_workshop} | grep -i SH-COLO | wc -l) > 0 )); then
+    _libraries+=' lib.pe.sh'
+     _pe_config='sh-colo.sh'
   fi
 
   dependencies 'install' 'sshpass'
