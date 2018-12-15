@@ -14,7 +14,7 @@ WORKSHOPS=(\
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Marketing Cluster with PC 5.9.x" \
-"SH-COLO Cluster with PC 5.9.x" \
+"SH-COLO Cluster with PC 5.10.x" \
 ) # Adjust function stage_clusters for mappings as needed
 
 function stage_clusters() {
