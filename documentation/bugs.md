@@ -362,6 +362,7 @@ or nuclei, only on PCVM or in container
   - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
   - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
   - smb://pocfs/    = \\pocfs\iso\ and \images\
+    - nutanixdc\username
   - smb://pocfs.nutanixdc.local use: auth
     - WIN> nslookup pocfs.nutanixdc.local
     - smbclient -I 10.21.249.12 \\\\pocfs\\images \

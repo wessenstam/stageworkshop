@@ -20,7 +20,7 @@ function authentication_source() {
   local       _test=0
   local         _vm
 
-  args_required 'AUTH_SERVER MY_DOMAIN_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
+  args_required 'AUTH_SERVER AUTH_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
 
   if [[ -z ${AUTH_SERVER} ]]; then
     log "Error ${_error}: please provide a choice for authentication server."
@@ -44,7 +44,7 @@ function authentication_source() {
 
       if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
         log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC-2.0..."
-           _autodc_auth=" --username=${MY_DOMAIN_USER} --password=${MY_DOMAIN_PASS}"
+           _autodc_auth=" --username=${AUTH_ADMIN_USER} --password=${AUTH_ADMIN_PASS}"
           _autodc_index=''
         _autodc_release=2
         _autodc_service=samba
@@ -60,13 +60,13 @@ function authentication_source() {
         )
       fi
 
-      dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+      dns_check "dc${_autodc_index}.${AUTH_FQDN}"
       _result=$?
 
       if (( ${_result} == 0 )); then
-        log "${AUTH_SERVER}${_autodc_release}.IDEMPOTENCY: dc${_autodc_index}.${MY_DOMAIN_FQDN} set, skip. ${_result}"
+        log "${AUTH_SERVER}${_autodc_release}.IDEMPOTENCY: dc${_autodc_index}.${AUTH_FQDN} set, skip. ${_result}"
       else
-        log "${AUTH_SERVER}${_autodc_release}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+        log "${AUTH_SERVER}${_autodc_release}.IDEMPOTENCY failed, no DNS record dc${_autodc_index}.${AUTH_FQDN}"
 
         _error=12
          _loop=0
@@ -129,11 +129,11 @@ function authentication_source() {
             'OPTIONAL'
           sleep ${_sleep}
 
-          dns_check "dc${_autodc_index}.${MY_DOMAIN_FQDN}"
+          dns_check "dc${_autodc_index}.${AUTH_FQDN}"
           _result=$?
 
           if (( ${_result} == 0 )); then
-            log "Success: DNS record dc${_autodc_index}.${MY_DOMAIN_FQDN} set."
+            log "Success: DNS record dc${_autodc_index}.${AUTH_FQDN} set."
             break
           elif (( ${_loop} > ${_attempts} )); then
             if (( ${_autodc_release} < 2 )); then
@@ -185,22 +185,22 @@ function network_configure() {
   if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
     log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
   else
-    args_required 'MY_DOMAIN_NAME IPV4_PREFIX AUTH_HOST'
+    args_required 'AUTH_DOMAIN IPV4_PREFIX AUTH_HOST'
 
     if [[ ! -z $(acli "net.list" | grep 'Rx-Automation-Network') ]]; then
       log "Remove Rx-Automation-Network..."
       acli "-y net.delete Rx-Automation-Network"
     fi
 
-    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${MY_DOMAIN_NAME}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${AUTH_DOMAIN}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
     acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
-    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_DOMAIN}"
     acli "net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
 
     if [[ ! -z "${NW2_NAME}" ]]; then
       log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
       acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
-      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${MY_DOMAIN_NAME}"
+      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_DOMAIN}"
       acli "net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
     fi
   fi
@@ -323,25 +323,40 @@ EOF
 }
 
 function pe_auth() {
-  args_required 'MY_DOMAIN_NAME MY_DOMAIN_FQDN AUTH_HOST MY_DOMAIN_USER MY_DOMAIN_PASS MY_DOMAIN_ADMIN_GROUP'
+  local           _aos
+  local   _aos_version
+  local _directory_url="ldaps://${AUTH_HOST}/"
 
-  if [[ -z `ncli authconfig list-directory name=${MY_DOMAIN_NAME} | grep Error` ]]; then
-    log "IDEMPOTENCY: ${MY_DOMAIN_NAME} directory set, skip."
+  args_required 'AUTH_DOMAIN AUTH_FQDN AUTH_HOST AUTH_ADMIN_USER AUTH_ADMIN_PASS AUTH_ADMIN_GROUP'
+
+  if [[ -z $(ncli authconfig list-directory name=${AUTH_DOMAIN} | grep Error) ]]; then
+    log "IDEMPOTENCY: ${AUTH_DOMAIN} directory set, skip."
   else
+    _aos=$(ncli --json=true cluster info | jq -r .data.version)
+
+    if [[ ! -z ${_aos} ]]; then
+      # shellcheck disable=2206
+      _aos_version=(${_aos//./ })
+      log "Checking if _aos ${_aos} >= 5.8"
+      if (( ${_aos_version[0]} >= 5 && ${_aos_version[1]} >= 8 )); then
+        log 'it is'
+      fi
+    fi
+
     log "Configure PE external authentication"
     ncli authconfig add-directory \
       directory-type=ACTIVE_DIRECTORY \
-      connection-type=LDAP directory-url="ldaps://${AUTH_HOST}/" \
-      domain="${MY_DOMAIN_FQDN}" \
-      name="${MY_DOMAIN_NAME}" \
-      service-account-username="${MY_DOMAIN_USER}" \
-      service-account-password="${MY_DOMAIN_PASS}"
+      connection-type=LDAP directory-url="${_directory_url}" \
+      domain="${AUTH_FQDN}" \
+      name="${AUTH_DOMAIN}" \
+      service-account-username="${AUTH_ADMIN_USER}" \
+      service-account-password="${AUTH_ADMIN_PASS}"
 
     log "Configure PE role map"
     ncli authconfig add-role-mapping \
       role=ROLE_CLUSTER_ADMIN \
-      entity-type=group name="${MY_DOMAIN_NAME}" \
-      entity-values="${MY_DOMAIN_ADMIN_GROUP}"
+      entity-type=group name="${AUTH_DOMAIN}" \
+      entity-values="${AUTH_ADMIN_GROUP}"
   fi
 }
 
