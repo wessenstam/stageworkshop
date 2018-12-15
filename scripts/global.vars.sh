@@ -78,8 +78,8 @@ HTTP_CACHE_PORT=8181
 # - trailing slash (which imples _IMAGES argument to function repo_source())
 # - or full package filename.
 
-#  MY_AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
-# MY_AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
+#  AFS_SRC_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable.qcow2'
+# AFS_META_URL='http://10.21.250.221/images/ahv/techsummit/nutanix-afs-el7.3-release-afs-3.0.0.1-stable-metadata.json'
 # http://download.nutanix.com/afs/2.2.3/v1/afs-2.2.3.json
 # http://download.nutanix.com/afs/3.1.0.1/afs-3.1.0.1.json
 # https://s3.amazonaws.com/get-ahv-images/afs-3.1.0.1.json
@@ -115,16 +115,15 @@ HTTP_CACHE_PORT=8181
    'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
 )
 
-   AUTH_SERVER='AutoDC'  # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
-     AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
-     LDAP_PORT=389
- MY_DOMAIN_URL="ldaps://${AUTH_HOST}/"
-MY_DOMAIN_FQDN='ntnxlab.local'
-MY_DOMAIN_NAME='NTNXLAB'
-MY_DOMAIN_USER='administrator@'${MY_DOMAIN_FQDN}
-MY_DOMAIN_PASS='nutanix/4u'
-MY_DOMAIN_ADMIN_GROUP='SSP Admins'
-  AUTODC_REPOS=(\
+     AUTH_SERVER='AutoDC' # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
+       AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
+       LDAP_PORT=389
+       AUTH_FQDN='ntnxlab.local'
+     AUTH_DOMAIN='NTNXLAB'
+ AUTH_ADMIN_USER='administrator@'${AUTH_FQDN}
+ AUTH_ADMIN_PASS='nutanix/4u'
+AUTH_ADMIN_GROUP='SSP Admins'
+    AUTODC_REPOS=(\
    'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
    'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
    'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \

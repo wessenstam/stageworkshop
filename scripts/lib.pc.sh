@@ -96,18 +96,11 @@ function pc_auth() {
   local _pc_version
   local       _test
 
-  # TODO:60 not passing arguments yet; disabling by appending v1
-  if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
-    # local  _autodc_conf='/etc/samba/smb.conf'
-    # local _autodc_patch='ldap server require strong auth = no'
-    remote_exec 'ssh' 'AUTH_SERVER' \
-    'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/scripts/autodc_patch.sh && bash ${_##*/}' \
-    'OPTIONAL'
-  fi
+  # TODO:60 not passing AUTH_SERVER argument yet
 
   log "Add Directory ${AUTH_SERVER}"
   _http_body=$(cat <<EOF
-{"name":"${AUTH_SERVER}","domain":"${MY_DOMAIN_FQDN}","directoryType":"ACTIVE_DIRECTORY","connectionType":"LDAP",
+{"name":"${AUTH_SERVER}","domain":"${AUTH_FQDN}","directoryType":"ACTIVE_DIRECTORY","connectionType":"LDAP",
 EOF
   )
 
@@ -121,12 +114,12 @@ EOF
 EOF
 )
   else
-    _http_body+=" \"directoryUrl\":\"${MY_DOMAIN_URL}\","
+    _http_body+=" \"directoryUrl\":\"ldaps://${AUTH_HOST}/\","
   fi
 
   _http_body+=$(cat <<EOF
-    "serviceAccountUsername":"${MY_DOMAIN_USER}",
-    "serviceAccountPassword":"${MY_DOMAIN_PASS}"
+    "serviceAccountUsername":"${AUTH_ADMIN_USER}",
+    "serviceAccountPassword":"${AUTH_ADMIN_PASS}"
   }
 EOF
   )
@@ -264,7 +257,7 @@ function pc_passwd() {
 }
 
 function ssp_auth() {
-  args_required 'AUTH_SERVER AUTH_HOST MY_DOMAIN_FQDN MY_DOMAIN_USER MY_DOMAIN_PASS'
+  args_required 'AUTH_SERVER AUTH_HOST AUTH_ADMIN_USER AUTH_ADMIN_PASS'
 
   local   _http_body
   local   _ldap_name
@@ -296,13 +289,13 @@ function ssp_auth() {
           }
         ],
         "service_account": {
-          "username": "${MY_DOMAIN_USER}",
-          "password": "${MY_DOMAIN_PASS}"
+          "username": "${AUTH_ADMIN_USER}",
+          "password": "${AUTH_ADMIN_PASS}"
         },
         "url": "ldaps://${AUTH_HOST}/",
         "directory_type": "ACTIVE_DIRECTORY",
         "admin_user_reference_list": [],
-        "domain_name": "${MY_DOMAIN_FQDN}"
+        "domain_name": "${AUTH_DOMAIN}"
       }
     },
     "metadata": {
@@ -330,12 +323,12 @@ EOF
       "name": "${_ldap_name}",
       "resources": {
         "service_account": {
-          "username": "${MY_DOMAIN_USER}@${MY_DOMAIN_FQDN}",
-          "password": "${MY_DOMAIN_PASS}"
+          "username": "${AUTH_ADMIN_USER}@${AUTH_FQDN}",
+          "password": "${AUTH_ADMIN_PASS}"
         },
         "url": "ldaps://${AUTH_HOST}/",
         "directory_type": "ACTIVE_DIRECTORY",
-        "domain_name": "${MY_DOMAIN_FQDN}"
+        "domain_name": "${AUTH_DOMAIN}"
       }
     },
     "metadata": {
@@ -361,12 +354,12 @@ EOF
       "name": "${_ldap_name}",
       "resources": {
         "service_account": {
-          "username": "${MY_DOMAIN_USER}@${MY_DOMAIN_FQDN}",
-          "password": "${MY_DOMAIN_PASS}"
+          "username": "${AUTH_ADMIN_USER}@${AUTH_DOMAIN}",
+          "password": "${AUTH_ADMIN_PASS}"
         },
         "url": "ldaps://${AUTH_HOST}/",
         "directory_type": "ACTIVE_DIRECTORY",
-        "domain_name": "${MY_DOMAIN_FQDN}"
+        "domain_name": "${AUTH_DOMAIN}"
         "admin_user_reference_list": [],
         "admin_group_reference_list": [
           {

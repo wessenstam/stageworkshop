@@ -17,6 +17,8 @@
   - LCM inventory
     - Calm 2.4 containers
   - Remove backticks
+  - TODO: Update `lib.common.sh`, function `ntnx_download()` with new version metadata.
+    In retrospect, metadata URL shouldn't be constructed: treat as global.var
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
@@ -99,7 +101,10 @@
     add user01@ntnxlab.local to role mapping, same error as above.
 - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
 
-- TODO: Add link: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
+- TODO: Add links: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
+  - acknowledge https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
+  "Drafted a first version. Then @Christophe Jauffret took over and polished it
+  Then we handed over the whole thing to Matt and Nathan during the prep for TS18"
 - TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
 - nuclei (run local from container?)
   - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
@@ -357,6 +362,7 @@ or nuclei, only on PCVM or in container
   - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
   - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
   - smb://pocfs/    = \\pocfs\iso\ and \images\
+    - nutanixdc\username
   - smb://pocfs.nutanixdc.local use: auth
     - WIN> nslookup pocfs.nutanixdc.local
     - smbclient -I 10.21.249.12 \\\\pocfs\\images \
