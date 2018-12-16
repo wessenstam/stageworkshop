@@ -21,7 +21,7 @@ After HPoC Foundation, you can have push-button Calm in about half an hour!
 
 Make your new reservation on https://rx.corp.nutanix.com/ with:
 
-- __AOS + Hypevisor:__ proper versions for your workshop, specified above
+- __AOS + Hypervisor:__ proper versions for your workshop, specified above
   - Recommended: AOS and AHV 5.8
   - Older or newer versions may not function as expected
 - __OS Images:__ *you do not* need to specify images (CentOS, Windows2012, etc.) for your reservation

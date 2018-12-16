@@ -10,38 +10,36 @@ The entire Global Technical Sales Enablement team has delivered an amazing amoun
 
 ## For the Impatient ##
 
-You can get push button Calm in two ways. It is best to decide by answering this question, do you need to set up a single or multiple Nutanix AHV clusters?
+You can get push button Calm in two ways. It is best to decide by answering this question:<br/> *do you need to set up a single or multiple Nutanix AHV clusters?*
 
-1. __Single:__ the easiest manner is to SSH to Prism Element on the Cluster IP and run the bootstrap script:
+- __Single:__ the easiest manner is to SSH to the cluster IP address and run the bootstrap script on a CVM:
 
         curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && sh ${_##*/}
 
-      answer a few questions and watch the log progress.
-      - The `nutanixworkshops` repository places a premium on stability, not on the bleeding edge of the latest releases; use one of the forked repos for latest development.
+    answer a few questions* and watch the log progress.
+    - The `nutanixworkshops` repository places a premium on stability, not on the bleeding edge of the latest releases; use one of the forked repos for latest development.
 
-2. __Multiple:__ or to perform/use development, satisfy these requirements:
+- __Multiple:__ or to use development branches, satisfy these requirements:
 
     1. Tested on Ubuntu and Mac, but could work easily on other Linux distributions.
         - Mac requires https://brew.sh installed.
     2. Terminal with command line git.
 
-          echo "Start Foundation on your HPoC now, we'll wait 40 minutes..."
+      echo "Start Foundation on your HPoC now, script retries for 60 minutes..."
 
-          export PE=10.21.X.37 && export PE_PASSWORD='nx2Tech###!' && EMAIL=first.last@nutanix.com \
-          && cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 | grep Cloning | awk -F\' '{print $2}') \
-          && echo "${PE}|${PE_PASSWORD}|${EMAIL}" > clusters.txt \
-          && ./stage_workshop.sh -f clusters.txt -w 1 #latest calm
+      export PE=10.21.X.37 && export PE_PASSWORD='nx2Tech###!' && EMAIL=first.last@nutanix.com \
+      && cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 | grep Cloning | awk -F\' '{print $2}') \
+      && echo "${PE}|${PE_PASSWORD}|${EMAIL}" > clusters.txt \
+      && ./stage_workshop.sh -f clusters.txt -w 1 #latest stable Calm workshop
 
-          sleep 60*30 && lynx https://admin:${PE_PASSWORD}@${PE}:9440/
+   Cluster Foundation typically takes *~30 minutes,* in the meantime, the above will:
 
- While Foundation typically takes *~30 minutes,* we'll:
+    1. Set the Prism Element (PE) IP address, password, and your email address
+    2. Change directory into the cloned git repository
+    3. Put settings into a configuration file
+    4. Retry for 60 minutes to stage the cluster with the configuration file and Workshop #1.
 
-      1. Set the Prism Element (PE) IP address, password, and your email address
-      2. Change directory into the cloned git repository
-      3. Put settings into a configuration file
-      4. Stage the cluster with the configuration file and the Workshop #1.
-
-Approximately 30 minutes later, you can login to PE to get to PC (or directly to PC) and follow step #7 below to finish push button Calm automation.
+  Approximately 30 minutes later, you can login to PE to get to PC (or directly to PC) and follow step #7 below to finish push button Calm automation.
 
 ## How to Do a Calm Bootcamp ##
 
@@ -65,7 +63,7 @@ Approximately 30 minutes later, you can login to PE to get to PC (or directly to
       - __#hands-on-workshops:__ for Nutanix Partner and SE workshops
    - Make a HPOC reservation(s) on https://rx.corp.nutanix.com/ with:
 
-      - __AOS + Hypevisor:__ proper versions for your workshop, specified in the Workshop title.
+      - __AOS + Hypervisor:__ proper versions for your workshop, specified in the Workshop title.
         - *Recommended:* AOS 5.8
         - Older or newer versions of AOS may not function as expected.
         - Use for the Calm development workshop to test with the latest Prism Central and Calm versions.

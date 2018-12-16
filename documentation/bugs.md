@@ -222,6 +222,16 @@ I’ve looked into some server testing frameworks.
     - userX login to PE, PC
     - userX new project, upload, run blueprint
     - GOOD: user01@ntnxlab.local auth test fine@PE, bats?
+  - Knowledge base/articles/documentation:
+    - https://github.com/orientation/orientation
+  - https://shields.io/
+    - https://github.com/badges/shields
+  - Changelog:
+    - https://github.com/olivierlacan/keep-a-changelog
+      - https://keepachangelog.com/en/1.0.0/
+      - Good discussions in the issues, tags such as: breaking, internal, etc.
+    - http://krlmlr.github.io/using-gitattributes-to-avoid-merge-conflicts/
+
 
 # AutoDC:
   - GOOD:
