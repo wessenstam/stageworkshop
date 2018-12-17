@@ -65,8 +65,8 @@ function stage_clusters() {
       _manifest='file-afs.sh'
   fi
   if (( $(echo ${_workshop} | grep -i SH-COLO | wc -l) > 0 )); then
-    _libraries+=' lib.pe.sh'
-     _pe_config='sh-colo.sh'
+    _libraries+=' lib.pe.sh lib.pc.sh'
+      _manifest='sh-colo.sh'
   fi
 
   dependencies 'install' 'sshpass'
