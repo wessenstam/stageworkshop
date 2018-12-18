@@ -1,5 +1,20 @@
 # HPoC Automation: Push Button Calm
+<!-- MDTOC maxdepth:6 firsth1:0 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
 
+- [Caveat](#caveat)   
+- [Acknowledgements](#acknowledgements)   
+- [For the Impatient](#for-the-impatient)   
+- [How to Do a Calm Bootcamp](#how-to-do-a-calm-bootcamp)   
+- [Bugs, Priorities, Notes](#bugs-priorities-notes)   
+- [Development](#development)   
+   - [Feature Branches](#feature-branches)   
+   - [How to Update or Add a Workshop](#how-to-update-or-add-a-workshop)   
+   - [How to Update Nutanix Software Version Used in a Workshop](#how-to-update-nutanix-software-version-used-in-a-workshop)   
+- [Timing](#timing)   
+- [Procedure](#procedure)   
+
+<!-- /MDTOC -->
+---
 ## Caveat ##
 
 This is a work in progress and your milage may vary!

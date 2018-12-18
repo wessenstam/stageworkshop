@@ -1,5 +1,23 @@
 # Push Button Calm: Bugs, Priorities, Notes #
+<!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
 
+- [Push Button Calm: Bugs, Priorities, Notes](#push-button-calm-bugs-priorities-notes)   
+- [Backlog](#backlog)   
+- [Bash test framework for unit tests and on blueprints?](#bash-test-framework-for-unit-tests-and-on-blueprints)   
+- [AutoDC:](#autodc)   
+- [DOCUMENTATION:](#documentation)   
+- [OPTIMIZATION:](#optimization)   
+- [Notes](#notes)   
+   - [Citations for other Calm automation](#citations-for-other-calm-automation)   
+   - [Push Button Calm](#push-button-calm)   
+   - [NuCLeI](#nuclei)   
+      - [nuclei authconfig (run local from container?)](#nuclei-authconfig-run-local-from-container)   
+   - [Image Uploading](#image-uploading)   
+   - [File servers for container updates](#file-servers-for-container-updates)   
+- [Git Notes](#git-notes)   
+
+<!-- /MDTOC -->
+---
 - Braindump:
   - bug reported in #nutanix-files, ACK'd.
     http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json isn't like afs-3.1.0.1.json
