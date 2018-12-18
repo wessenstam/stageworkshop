@@ -64,7 +64,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
     # no secondary network needed, and different mask for primary network
     # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
-          NW1_NAME='Secondary'
+          NW1_NAME='Primary'
           NW1_VLAN=0
         NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
     NW1_DHCP_START="${IPV4_PREFIX}.100"

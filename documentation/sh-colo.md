@@ -2,7 +2,7 @@
 
 ## Overview
 
-Rebuild AHV-2 cluster in 1 hour. need more automation.
+Rebuild AHV-2 cluster no more than 1 hour. 
 
 
 ## Foundation

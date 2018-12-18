@@ -76,11 +76,16 @@ case ${1} in
     && pe_auth
 
     if (( $? == 0 )) ; then
-      pc_upload_manual
+
+      # upload image and download pc deploy file
+      images &
+      pc_upload_manual &
+      wait
 
       pc_install \
       && prism_check 'PC' \
       && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
+      ## pc_configure
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
@@ -129,6 +134,7 @@ case ${1} in
 
     QCOW2_IMAGES=(\
       Centos7-Base.qcow2 \
+      Centos7-Update.qcow2 \
       Windows2012R2.qcow2 \
       panlm-img-52.qcow2 \
     )
