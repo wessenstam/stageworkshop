@@ -61,13 +61,14 @@ case "${OCTET[0]}.${OCTET[1]}" in
     ;;
   10.132 )
     # different ip schema in SH-COLO
+    # no secondary network needed, and different mask for primary network
     # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
-          NW2_NAME='Secondary'
-          NW2_VLAN=0
-        NW2_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
-    NW2_DHCP_START="${IPV4_PREFIX}.100"
-      NW2_DHCP_END="${IPV4_PREFIX}.250"
+          NW1_NAME='Primary'
+          NW1_VLAN=0
+        NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
+    NW1_DHCP_START="${IPV4_PREFIX}.100"
+      NW1_DHCP_END="${IPV4_PREFIX}.250"
     ;;
 esac
 
@@ -91,6 +92,7 @@ HTTP_CACHE_PORT=8181
   QCOW2_REPOS=(\
    'http://10.21.250.221/images/tech-enablement/' \
    'http://10.21.250.221/images/ahv/techsummit/' \
+   'http://10.132.128.50:81/share/saved-images/' \
    'https://s3.amazonaws.com/get-ahv-images/' \
 ) # talk to Nathan Cox to populate S3, Sharon to populate Daisy File Share
  QCOW2_IMAGES=(\

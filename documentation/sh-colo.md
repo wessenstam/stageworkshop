@@ -2,10 +2,10 @@
 
 ## Overview
 
-Rebuild AHV-2 cluster in 1 hour. need more automation.
+Rebuild AHV-2 cluster no more than 1 hour. 
 
 
-##Foundation
+## Foundation
 
 - ssh to foundation VM ``10.132.128.10``
     - double check the environemnt you will foundation
@@ -24,7 +24,10 @@ Rebuild AHV-2 cluster in 1 hour. need more automation.
         ncli user add last-name=nutanix first-name=nutanix user-name=nutanix user-password='nutanix/4u' email-id=nutanix@nutanix.sh
         ncli user grant-cluster-admin-role user-name=nutanix
         ncli user grant-user-admin-role user-name=nutanix
+        ncli cluster edit-info new-name=AHV-2
+        ncli cluster set-timezone timezone=Asia/Shanghai
         ncli cluster edit-info external-ip-address=10.132.129.37
+        ncli cluster add-to-name-servers servers=10.132.71.40
         echo -e 'nx2Tech432!\nnx2Tech432!' | sudo passwd nutanix
         ```
 
