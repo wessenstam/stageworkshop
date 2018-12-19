@@ -1,5 +1,23 @@
 # Push Button Calm: Bugs, Priorities, Notes #
+<!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
 
+- [Push Button Calm: Bugs, Priorities, Notes](#push-button-calm-bugs-priorities-notes)   
+- [Backlog](#backlog)   
+- [Bash test framework for unit tests and on blueprints?](#bash-test-framework-for-unit-tests-and-on-blueprints)   
+- [AutoDC:](#autodc)   
+- [DOCUMENTATION:](#documentation)   
+- [OPTIMIZATION:](#optimization)   
+- [Notes](#notes)   
+   - [Citations for other Calm automation](#citations-for-other-calm-automation)   
+   - [Push Button Calm](#push-button-calm)   
+   - [NuCLeI](#nuclei)   
+      - [nuclei authconfig (run local from container?)](#nuclei-authconfig-run-local-from-container)   
+   - [Image Uploading](#image-uploading)   
+   - [File servers for container updates](#file-servers-for-container-updates)   
+- [Git Notes](#git-notes)   
+
+<!-- /MDTOC -->
+---
 - Braindump:
   - bug reported in #nutanix-files, ACK'd.
     http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json isn't like afs-3.1.0.1.json
@@ -222,6 +240,16 @@ I’ve looked into some server testing frameworks.
     - userX login to PE, PC
     - userX new project, upload, run blueprint
     - GOOD: user01@ntnxlab.local auth test fine@PE, bats?
+  - Knowledge base/articles/documentation:
+    - https://github.com/orientation/orientation
+  - https://shields.io/
+    - https://github.com/badges/shields
+  - Changelog:
+    - https://github.com/olivierlacan/keep-a-changelog
+      - https://keepachangelog.com/en/1.0.0/
+      - Good discussions in the issues, tags such as: breaking, internal, etc.
+    - http://krlmlr.github.io/using-gitattributes-to-avoid-merge-conflicts/
+
 
 # AutoDC:
   - GOOD:

@@ -29,6 +29,7 @@ function stage_clusters() {
   local      _release
   local       _script # first file of the _manifest will be executed on PE
   local       _sshkey
+  local       _wc_arg='--lines'
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
@@ -164,7 +165,11 @@ function stage_clusters() {
     https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
 EOM
-      if (( "$(echo ${_libraries} | grep -i lib.pc | wc --lines)" > 0 )); then
+      if [[ `uname -s` == "Darwin" ]]; then
+        _wc_arg='-l'
+      fi
+
+      if (( "$(echo ${_libraries} | grep -i lib.pc | wc ${_wc_arg})" > 0 )); then
         # shellcheck disable=2153
         cat <<EOM
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
