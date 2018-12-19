@@ -110,66 +110,84 @@ You can get push button Calm in two ways. It is best to decide by answering this
       - Alternatively, have them access http://nutanix.handsonworkshops.com and register/log in.
 
 7. __Extended Enablement:__ it is easy to do a full day of enablement on Calm, there are many topics:
-  1. Nutanix+Calm=DevOps
-     - DevOps enablement deck:
-       1. The Journey: move the mountain stone by stone
-       2. Business outcome = __agility__: DevOps Definition
+    1. Overview of Enablement
+        - Nutanix+Calm=DevOps
+          - What is DevOps? [Enablement deck](https://drive.google.com/open?id=1f0o9YSHy6BW_5cHS_7n716zNtKuPXTXu) [[article](https://mlavi.github.io/post/calm.io-recap/calm.io-i-dream-of-devops-but-what-is-devops/)]
+            - How does a developer look at the world?
+            [The DevOps Automation Diagram](http://mlavi.github.io/post/devops_automation.pu.svg) [[article](https://mlavi.github.io/post/devops-automation/)].
+            - [B-T-D pattern](https://mlavi.github.io/post/devops-btd-pattern/) and [CI/CD](https://mlavi.github.io/post/calm.io-recap/calm.io-demystifying-continuous-integration-delivery-and-deployment/)
+            - [Configuration Management](https://mlavi.github.io/post/calm.io-recap/calm.io-configuration-management-in-the-devops-world/)
+            - [DevOps Maturity Diagram](https://mlavi.github.io/post/devops-maturity-diagram/)
+        - Calm Selling
+          - SKO2018 Selling the Enterprise Cloud with Calm:, [Video](https://drive.google.com/open?id=0B05FlI1TwLEzTHFyUzdxUnp6a3M) [Slides](https://drive.google.com/a/nutanix.com/file/d/0B57gwWrKd9AVQjVaVFdRS1VnSEk/view?usp=sharing)
+          - Calm Use Cases
+          - Calm Customer Preso (Seismic)
+          - Calm Demonstration (demo vs expo.nutanix.com)
+          - Competitive/Objection Handling (see SKO deck)
+          - Calm Releases and Roadmap
+          - [Calm History, OrgChart, Resources](https://sites.google.com/a/nutanix.com/corp/calm)
+          - State of the business and Customer Success
 
-       3. Business outcome = __scalability__: Pets versus Cattle
-       4. Plan, implement, measure, repeat.
-       5. DevOps maturity diagram: journey up and to the right, evaluate vendors who imprison you in the lower left quadrant. Then bring down the silos.
-       6. The goal of DevOps is to become invisible,
-       we cattle DevOps across the organization and we all become DevOps.
-       7. Nutanix is on this journey, we are cattle architecture, infrastructure, and operations: this is how we disrupt and lead the industry.
+    1. Nutanix+Calm=DevOps
+       - DevOps enablement deck:
+         1. The Journey: move the mountain stone by stone
+         2. Business outcome = __agility__: DevOps Definition
 
-     1. The traditional Nutanix customer base is Ops,
-     now we have a new audience: the Dev.
-     2. What is a Developer?
-     3. Build-Test-Deploy pattern for a mature agile SDLC engineering organization > CI/CD
-     4. DevOps Automation Diagram illustrates CI/CD
-     4. Config Management for infrastructure developers: infrastructure as code.
+         3. Business outcome = __scalability__: Pets versus Cattle
+         4. Plan, implement, measure, repeat.
+         5. DevOps maturity diagram: journey up and to the right, evaluate vendors who imprison you in the lower left quadrant. Then bring down the silos.
+         6. The goal of DevOps is to become invisible,
+         we cattle DevOps across the organization and we all become DevOps.
+         7. Nutanix is on this journey, we are cattle architecture, infrastructure, and operations: this is how we disrupt and lead the industry.
 
- 2. Calm Selling:
-    - How to do the first customer Calm presentation
-    - How to demo Calm in 5, 10, 20 minutes
-    - Qualification questions
-    - Competitive analysis
-    - Calm history and organization chart
-    - Calm roadmap
-    - Typical customer use cases and summary of business
-    - Deeper dives (later in the day, second day, etc.):
-      - Calm 2.50 Beam showback
-      - Calm 2.40 K8s integration
-      - Service Now bridge open sourced
-      - CI/CD blueprint
-    - Group Exercise:
-      - Pitch a slide or answer a Calm objection question
-      - Entire team offers positive criticism to improve member response, typical sidebar discussion
-      - Always make the pitch your own voice, not by wrote.
-      - Always add your your own story and experience to illustrate how we do it better and lay traps.
-      - Improve your strategy/tactics using XCommand.
-    - Calm anatomy of a sale with escalation points
-      - Platform, first customer pitch
-      - Discovery on qualification questions:
-        - Do you have automation, software devs, etc.
-      - Map out how they deploy a change to production,
-      get the metrics/silos, time to deploy value.
-      - Find use case(s) for Calm/automation/platform,
-      create SFDC opportunity with Calm SKUs,
-      schedule platform follow ups and/or Calm deep dive.
-      - Offer a bootcamp for engagement.
-      - Define a PoC, escalate to solutions arch if needed.
-          - Implement a PoC, exit PoC successfully for a technical close.
-      - Sales close.
-    - Continuously prospect: nurture Calm and  upsell platform
-      - Typical use case is SSP-IaaS deployment.
-        - Add apps
-        - Add app lifecycle operations
-        - Drive to CI/CD pipelines
-        - Drive to continuous operations
-        - Repeat for next app or business initiative
-      - Continuously prospect for other business teams and apps, integrations, marketplace blueprints, use cases which influence roadmap priority, and *for competition*: report back to the team in #calm.
-    - Profit!
+       1. The traditional Nutanix customer base is Ops,
+       now we have a new audience: the Dev.
+       2. What is a Developer?
+       3. Build-Test-Deploy pattern for a mature agile SDLC engineering organization > CI/CD
+       4. DevOps Automation Diagram illustrates CI/CD
+       4. Config Management for infrastructure developers: infrastructure as code.
+
+   2. Calm Selling:
+      - How to do the first customer Calm presentation
+      - How to demo Calm in 5, 10, 20 minutes
+      - Qualification questions
+      - Competitive analysis
+      - Calm history and organization chart
+      - Calm roadmap
+      - Typical customer use cases and summary of business
+      - Deeper dives (later in the day, second day, etc.):
+        - Calm 2.50 Beam showback
+        - Calm 2.40 K8s integration
+        - [Service Now](https://github.com/nutanix/ServiceNow) bridge open sourced
+        - CI/CD blueprint
+      - Group Exercise:
+        - Pitch a slide or answer a Calm objection question
+        - Entire team offers positive criticism to improve member response, typical sidebar discussion
+        - Always make the pitch your own voice, not by wrote.
+        - Always add your your own story and experience to illustrate how we do it better and lay traps.
+        - Improve your strategy/tactics using XCommand.
+      - Calm anatomy of a sale with escalation points
+        - Platform, first customer pitch
+        - Discovery on qualification questions:
+          - Do you have automation, software devs, etc.
+        - Map out how they deploy a change to production,
+        get the metrics/silos, time to deploy value.
+        - Find use case(s) for Calm/automation/platform,
+        create SFDC opportunity with Calm SKUs,
+        schedule platform follow ups and/or Calm deep dive.
+        - Offer a bootcamp for engagement.
+        - Define a PoC, escalate to solutions arch if needed.
+            - Implement a PoC, exit PoC successfully for a technical close.
+        - Sales close.
+      - Continuously prospect: nurture Calm and  upsell platform
+        - Typical use case is SSP-IaaS deployment.
+          - Add apps
+          - Add app lifecycle operations
+          - Drive to CI/CD pipelines
+          - Drive to continuous operations
+          - Repeat for next app or business initiative
+        - Continuously prospect for other business teams and apps, integrations, marketplace blueprints, use cases which influence roadmap priority, and *for competition*: report back to the team in #calm.
+      - Profit!
 
 ## Bugs, Priorities, Notes ##
 
