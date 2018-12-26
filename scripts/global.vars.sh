@@ -44,7 +44,6 @@ case "${OCTET[0]}.${OCTET[1]}" in
     fi
 
        DNS_SERVERS='10.21.253.10,10.21.253.11'
-          NW1_VLAN=$(( ${OCTET[2]} * 10 ))
           NW2_NAME='Secondary'
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
