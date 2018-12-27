@@ -23,10 +23,10 @@ case ${1} in
     . lib.pe.sh
 
     log "Configure PE role mapping"
-    ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name="${MY_DOMAIN_NAME}" entity-values="${MY_DOMAIN_ADMIN_GROUP}"
+    ncli authconfig add-role-mapping role=ROLE_CLUSTER_ADMIN entity-type=group name="${DOMAIN_NAME}" entity-values="${DOMAIN_ADMIN_GROUP}"
 
-    my_log "Creating Reverse Lookup Zone on DC VM"
-    remote_exec 'ssh' 'AUTH_SERVER' "samba-tool dns zonecreate dc1 ${MY_HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
+    log "Creating Reverse Lookup Zone on DC VM"
+    remote_exec 'ssh' 'AUTH_SERVER' "samba-tool dns zonecreate dc1 ${HPOC_NUMBER}.21.10.in-addr.arpa; service samba-ad-dc restart"
     log 'Create custom OUs...'
     remote_exec 'ssh' 'AUTH_SERVER' "apt install ldb-tools -y -q"
     remote_exec 'ssh' 'AUTH_SERVER' "cat << EOF > ous.ldif
@@ -56,21 +56,21 @@ EOF"
     ncli user grant-cluster-admin-role user-name=xd
 
     log "Get UUIDs from cluster:"
-    MY_NET_UUID=$(acli net.get ${NW1_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
-    log "${NW1_NAME} UUID is ${MY_NET_UUID}"
-    MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-    log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+    NET_UUID=$(acli net.get ${NW1_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
+    log "${NW1_NAME} UUID is ${NET_UUID}"
+    CONTAINER_UUID=$(ncli container ls name=${STORAGE_DEFAULT} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+    log "${STORAGE_DEFAULT} UUID is ${CONTAINER_UUID}"
 
-    log "Download AFS image from ${MY_AFS_SRC_URL}"
-    wget -nv ${MY_AFS_SRC_URL}
-    log "Download AFS metadata JSON from ${MY_AFS_META_URL}"
-    wget -nv ${MY_AFS_META_URL}
+    log "Download AFS image from ${AFS_SRC_URL}"
+    wget -nv ${AFS_SRC_URL}
+    log "Download AFS metadata JSON from ${AFS_META_URL}"
+    wget -nv ${AFS_META_URL}
     log "Stage AFS"
-    ncli software upload file-path=/home/nutanix/${MY_AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${MY_AFS_META_URL##*/} software-type=FILE_SERVER
+    ncli software upload file-path=/home/nutanix/${AFS_SRC_URL##*/} meta-file-path=/home/nutanix/${AFS_META_URL##*/} software-type=FILE_SERVER
     log "Delete AFS sources to free some space"
-    rm ${MY_AFS_SRC_URL##*/} ${MY_AFS_META_URL##*/}
+    rm ${AFS_SRC_URL##*/} ${AFS_META_URL##*/}
 
-    curl -u admin:${PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST https://127.0.0.1:9440/api/nutanix/v3/prism_central -d "${MY_DEPLOY_BODY}"
+    curl -u admin:${PE_PASSWORD} -k -H 'Content-Type: application/json' -X POST https://127.0.0.1:9440/api/nutanix/v3/prism_central -d "${DEPLOY_BODY}"
     log "Waiting for PC deployment to complete (Sleeping 15m)"
     sleep 900
     log "Sending PC configuration script"
@@ -107,24 +107,24 @@ EOF"
   PC | pc )
     . lib.pc.sh
 
-    #MY_PC_UPGRADE_URL='http://10.21.250.221/images/ahv/techsummit/nutanix_installer_package_pc-release-euphrates-5.5.0.6-stable-14bd63735db09b1c9babdaaf48d062723137fc46.tar.gz'
+    #PC_UPGRADE_URL='http://10.21.250.221/images/ahv/techsummit/nutanix_installer_package_pc-release-euphrates-5.5.0.6-stable-14bd63735db09b1c9babdaaf48d062723137fc46.tar.gz'
 
     # Set Prism Central Password to Prism Element Password
-    # my_log "Setting PC password to PE password"
+    # log "Setting PC password to PE password"
     # ncli user reset-password user-name="admin" password="${PE_PASSWORD}"
 
     # Prism Central upgrade
-    #my_log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
-    #wget -nv ${MY_PC_UPGRADE_URL}
+    #log "Download PC upgrade image: ${PC_UPGRADE_URL##*/}"
+    #wget -nv ${PC_UPGRADE_URL}
 
-    #my_log "Prepare PC upgrade image"
-    #tar -xzf ${MY_PC_UPGRADE_URL##*/}
-    #rm ${MY_PC_UPGRADE_URL##*/}
+    #log "Prepare PC upgrade image"
+    #tar -xzf ${PC_UPGRADE_URL##*/}
+    #rm ${PC_UPGRADE_URL##*/}
 
-    #my_log "Upgrade PC"
+    #log "Upgrade PC"
     #cd /home/nutanix/install ; ./bin/cluster -i . -p upgrade
 
-    log "PC Configuration complete on `$date`"
+    log "PC Configuration complete on $(date)"
 
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13
 

@@ -321,7 +321,7 @@ function images() {
         fi
 
         _command+=" ${_name} annotation=${_image} image_type=${_image_type} \
-          container=${MY_IMG_CONTAINER_NAME} architecture=kX86_64 wait=true"
+          container=${STORAGE_IMAGES} architecture=kX86_64 wait=true"
       else
         _command+=" name=${_name} description=\"${_image}\""
       fi

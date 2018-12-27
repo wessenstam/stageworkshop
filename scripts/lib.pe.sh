@@ -20,7 +20,7 @@ function authentication_source() {
   local       _test=0
   local         _vm
 
-  args_required 'AUTH_SERVER AUTH_FQDN SLEEP MY_IMG_CONTAINER_NAME PC_VERSION'
+  args_required 'AUTH_SERVER AUTH_FQDN SLEEP STORAGE_IMAGES PC_VERSION'
 
   if [[ -z ${AUTH_SERVER} ]]; then
     log "Error ${_error}: please provide a choice for authentication server."
@@ -79,7 +79,7 @@ function authentication_source() {
           log "Import ${AUTH_SERVER}${_autodc_release} image from ${SOURCE_URL}..."
           acli image.create ${AUTH_SERVER}${_autodc_release} \
             image_type=kDiskImage wait=true \
-            container=${MY_IMG_CONTAINER_NAME} source_url=${SOURCE_URL}
+            container=${STORAGE_IMAGES} source_url=${SOURCE_URL}
         else
           log "Image found, assuming ready. Skipping ${AUTH_SERVER}${_autodc_release} import."
         fi
@@ -163,7 +163,7 @@ function files_install() {
 
   dependencies 'install' 'jq' || exit 13
 
-  log 'IDEMPOTENCY: checking for ${_ncli_software_type} completed...'
+  log "IDEMPOTENCY: checking for ${_ncli_software_type} completed..."
   _test=$(source /etc/profile.d/nutanix_env.sh \
     && ncli --json=true software list \
     | jq -r \
@@ -174,8 +174,8 @@ function files_install() {
     ntnx_download "${_ncli_software_type}"
 
     ncli software upload software-type=${_ncli_software_type} \
-      meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
-      file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+      meta-file-path="$(pwd)/${NTNX_META_URL##*/}" \
+      file-path="$(pwd)/${NTNX_SOURCE_URL##*/}"
   else
     log "IDEMPOTENCY: Files ${FILES_VERSION} already completed."
   fi
@@ -212,8 +212,8 @@ function nos_upgrade() {
   ntnx_download 'nos'
 
   ncli software upload software-type=nos \
-    meta-file-path="`pwd`/${NTNX_META_URL##*/}" \
-    file-path="`pwd`/${NTNX_SOURCE_URL##*/}"
+    meta-file-path="$(pwd)/${NTNX_META_URL##*/}" \
+    file-path="$(pwd)/${NTNX_SOURCE_URL##*/}"
 }
 
 function pc_configure() {
@@ -251,8 +251,10 @@ function pc_configure() {
 }
 
 function pc_install() {
-  local _ncli_softwaretype='PRISM_CENTRAL_DEPLOY'
-  local              _test
+  local             _nw1_uuid
+  local    _ncli_softwaretype='PRISM_CENTRAL_DEPLOY'
+  local _storage_default_uuid
+  local                 _test
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
   prism_check 'PC' 2 0
@@ -260,11 +262,13 @@ function pc_install() {
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else
-    log "Get NET_UUID,MY_CONTAINER_UUID from cluster: pc_install dependency."
-    MY_NET_UUID=$(acli "net.get ${NW1_NAME}" | grep "uuid" | cut -f 2 -d ':' | xargs)
-    log "${NW1_NAME} network UUID is ${MY_NET_UUID}"
-    MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-    log "${MY_CONTAINER_NAME} storage container UUID is ${MY_CONTAINER_UUID}"
+    log "Get NW1, Storage Container UUIDs from cluster..."
+    _nw1_uuid=$(acli "net.get ${NW1_NAME}" \
+      | grep "uuid" | cut -f 2 -d ':' | xargs)
+    _storage_default_uuid=$(ncli container ls name=${STORAGE_DEFAULT} \
+      | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+    log "${NW1_NAME} network UUID is ${_nw1_uuid}"
+    log "${STORAGE_DEFAULT} storage container UUID is ${_storage_default_uuid}"
 
     _test=$(source /etc/profile.d/nutanix_env.sh \
       && ncli --json=true software list \
@@ -276,8 +280,8 @@ function pc_install() {
       ntnx_download "${_ncli_softwaretype}"
 
       ncli software upload software-type=${_ncli_softwaretype} \
-             file-path="`pwd`/${NTNX_SOURCE_URL##*/}" \
-        meta-file-path="`pwd`/${NTNX_META_URL##*/}"
+             file-path="$(pwd)/${NTNX_SOURCE_URL##*/}" \
+        meta-file-path="$(pwd)/${NTNX_META_URL##*/}"
 
       log "Delete PC sources to free CVM space..."
       rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
@@ -300,13 +304,13 @@ function pc_install() {
       "nic_list":[{
         "network_configuration":{
           "subnet_mask":"255.255.255.128",
-          "network_uuid":"${MY_NET_UUID}",
+          "network_uuid":"${_nw1_uuid}",
           "default_gateway":"${IPV4_PREFIX}.1"
         },
         "ip_list":["${PC_HOST}"]
       }],
       "dns_server_ip_list":["${AUTH_HOST}"],
-      "container_uuid":"${MY_CONTAINER_UUID}",
+      "container_uuid":"${_storage_default_uuid}",
       "num_sockets":8,
       "memory_size_bytes":42949672960,
       "vm_name":"Prism Central ${PC_VERSION}"
@@ -364,7 +368,7 @@ function pe_auth() {
 function pe_init() {
   args_required 'DATA_SERVICE_IP MY_EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
-    MY_CONTAINER_NAME MY_SP_NAME MY_IMG_CONTAINER_NAME \
+    STORAGE_DEFAULT STORAGE_POOL STORAGE_IMAGES \
     SLEEP ATTEMPTS'
 
   if [[ `ncli cluster get-params | grep 'External Data' | \
@@ -381,20 +385,20 @@ function pe_init() {
     log "Configure NTP"
     ncli cluster add-to-ntp-servers servers=${NTP_SERVERS}
 
-    log "Rename default container to ${MY_CONTAINER_NAME}"
+    log "Rename default container to ${STORAGE_DEFAULT}"
     default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
       | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
-    ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
+    ncli container edit name="${default_container}" new-name="${STORAGE_DEFAULT}"
 
-    log "Rename default storage pool to ${MY_SP_NAME}"
+    log "Rename default storage pool to ${STORAGE_POOL}"
     default_sp=$(ncli storagepool ls | grep 'Name' | cut -d ':' -f 2 | sed s/' '//g)
-    ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
+    ncli sp edit name="${default_sp}" new-name="${STORAGE_POOL}"
 
-    log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
+    log "Check if there is a container named ${STORAGE_IMAGES}, if not create one"
     (ncli container ls | grep -P '^(?!.*VStore Name).*Name' \
-      | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" > /dev/null 2>&1) \
-      && log "Container ${MY_IMG_CONTAINER_NAME} exists" \
-      || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
+      | cut -d ':' -f 2 | sed s/' '//g | grep "^${STORAGE_IMAGES}" > /dev/null 2>&1) \
+      && log "Container ${STORAGE_IMAGES} exists" \
+      || ncli container create name="${STORAGE_IMAGES}" sp-name="${STORAGE_POOL}"
 
     # Set external IP address:
     #ncli cluster edit-params external-ip-address=${PE_HOST}

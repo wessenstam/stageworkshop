@@ -95,7 +95,12 @@ function stage_clusters() {
 
       . scripts/global.vars.sh # re-import for relative settings
 
-      log "Warning: curl time outs probably indicate you're not on VPN!"
+      cat <<EoM
+      Warning -- curl time out indicates either:
+      - a network routing issue (perhaps you're not on VPN?),
+      - cluster Foundation+Initialization hasn't completed.
+EoM
+
       prism_check 'PE' 60
 
       if [[ -d cache ]]; then
