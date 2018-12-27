@@ -95,6 +95,7 @@ function stage_clusters() {
 
       . scripts/global.vars.sh # re-import for relative settings
 
+      log "Warning: curl time outs probably indicate you're not on VPN!"
       prism_check 'PE' 60
 
       if [[ -d cache ]]; then

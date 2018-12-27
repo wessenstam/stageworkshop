@@ -19,7 +19,6 @@
 <!-- /MDTOC -->
 ---
 - Braindump:
-  - github 2FA
   - bug reported in #nutanix-files, ACK'd.
     http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json isn't like afs-3.1.0.1.json
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
@@ -37,7 +36,7 @@
   - https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
   - Move AFS deployment from PE to PC? Make it optional?
   - LCM inventory
-    - Calm 2.4 containers
+    - Calm 2.6 containers
   - Remove backticks
   - TODO: Update `lib.common.sh`, function `ntnx_download()` with new version metadata.
     In retrospect, metadata URL shouldn't be constructed: treat as global.var
@@ -254,7 +253,6 @@ I’ve looked into some server testing frameworks.
       - Good discussions in the issues, tags such as: breaking, internal, etc.
     - http://krlmlr.github.io/using-gitattributes-to-avoid-merge-conflicts/
 
-
 # AutoDC
   - GOOD:
     - NTNXLAB, ntnxlab.local, root:nutanix/4u
@@ -266,13 +264,13 @@ I’ve looked into some server testing frameworks.
   - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 
 # Documentation
-  - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
+  - review, refactor & migrate to bugs.md: TODO, TOFIX comments
   - Insure exit codes unique/consistent, error messages consistent
 
 # Optimization
   - Upload AutoDC image in parallel with PC.tar
   - restore http_resume check/attempt
-  - create cache, use cache, propagate cache to PC, fall back to global
+  - create,use cache, fall back to global, next: propagate cache to PC
 
 # Notes #
 
@@ -431,7 +429,6 @@ origin
 
 # https://gitversion.readthedocs.io/en/stable/reference/git-setup/
 $ git remote add upstream https://github.com/nutanixworkshops/stageworkshop.git
-
 $ git remote show
 upstream
 origin
@@ -439,13 +436,12 @@ origin
 $ git fetch upstream
 $ git merge upstream/master
 
-$ git checkout master && git merge [branch]
-
 $ git tag
-$ git tag -a 2.0.1 [hash]
+$ git tag -a 2.0.1 [optional_hash]
 $ git push origin --tags
 
 git remote show origin
-git branch --delete [branch]
-git push origin --delete [branch|tag]
+git checkout master && git merge [topic_branch]
+git branch --delete [topic_branch]
+git push origin --delete [topic_branch|tag]
 ````
