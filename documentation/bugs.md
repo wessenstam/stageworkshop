@@ -4,9 +4,9 @@
 - [Push Button Calm: Bugs, Priorities, Notes](#push-button-calm-bugs-priorities-notes)   
 - [Backlog](#backlog)   
 - [Bash test framework for unit tests and on blueprints?](#bash-test-framework-for-unit-tests-and-on-blueprints)   
-- [AutoDC:](#autodc)   
-- [DOCUMENTATION:](#documentation)   
-- [OPTIMIZATION:](#optimization)   
+- [AutoDC](#autodc)   
+- [Documentation](#documentation)   
+- [Optimization](#optimization)   
 - [Notes](#notes)   
    - [Citations for other Calm automation](#citations-for-other-calm-automation)   
    - [Push Button Calm](#push-button-calm)   
@@ -18,9 +18,7 @@
 
 <!-- /MDTOC -->
 ---
-- Braindump:
-  - bug reported in #nutanix-files, ACK'd.
-    http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json isn't like afs-3.1.0.1.json
+- Braindump
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
     - ```2018-12-26 16:05:25|96508|calm_enable|Enable Nutanix Calm...
 2018-12-26 16:05:26|96508|calm_enable|_test=||
@@ -34,12 +32,9 @@
       - JSON or YAML options? from bash/jq?
   - Banner: PC-X@HPOC #
   - https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
-  - Move AFS deployment from PE to PC? Make it optional?
   - LCM inventory
     - Calm 2.6 containers
   - Remove backticks
-  - TODO: Update `lib.common.sh`, function `ntnx_download()` with new version metadata.
-    In retrospect, metadata URL shouldn't be constructed: treat as global.var
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
@@ -254,6 +249,7 @@ I’ve looked into some server testing frameworks.
     - http://krlmlr.github.io/using-gitattributes-to-avoid-merge-conflicts/
 
 # AutoDC
+  - See also: [AutoDC](autodc/README.md)
   - GOOD:
     - NTNXLAB, ntnxlab.local, root:nutanix/4u
     - samba --version Version 4.2.14-Debian
@@ -444,4 +440,5 @@ git remote show origin
 git checkout master && git merge [topic_branch]
 git branch --delete [topic_branch]
 git push origin --delete [topic_branch|tag]
+git remote set-url origin git@github.com:mlavi/stageworkshop.git #change transport
 ````

@@ -13,7 +13,7 @@ else
 fi
 
 mv ${RELEASE} original.${RELEASE} && cat ${_} \
-| jq ". + {\"PrismCentralStable\":\"${PC_VERSION_STABLE}\"} + {\"PrismCentralDev\":\"${PC_VERSION_DEV}\"}" \
+| jq ". + {\"PrismCentralStable\":\"${PC_STABLE_VERSION}\"} + {\"PrismCentralDev\":\"${PC_DEV_VERSION}\"}" \
 > ${RELEASE} && rm -f original.${RELEASE}
 
 git add ${RELEASE}

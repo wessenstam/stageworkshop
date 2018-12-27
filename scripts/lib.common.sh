@@ -408,50 +408,23 @@ function ntnx_download() {
 
   case "${1}" in
     PC | pc | PRISM_CENTRAL_DEPLOY )
-      # When adding a new PC version, update BOTH case stanzas below...
       args_required 'PC_VERSION'
 
-      case ${PC_VERSION} in
-        5.9 | 5.6.2 | 5.8.0.1 )
-          _version=2
-          ;;
-        5.9.2 )
-          _version=''
-          ;;
-        * )
-          _version=1
-          ;;
-      esac
-
-      _meta_url+="pc/one-click-pc-deployment/${PC_VERSION}/"
-
-      if [[ ! -z $_version ]]; then
-        _meta_url+="v${_version}/"
+      if [[ "${PC_VERSION}" == "${PC_DEV_VERSION}" ]]; then
+        _meta_url="${PC_DEV_METAURL}"
+      else
+        _meta_url="${PC_STABLE_METAURL}"
       fi
 
-      case ${PC_VERSION} in
-        5.9 )
-          _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_one_click_deployment_metadata.json"
-          ;;
-        5.6.1 | 5.6.2 | 5.9.0.1 | 5.9.1 | 5.9.2 | 5.10 | 5.10.0.1 )
-          _meta_url+="euphrates-${PC_VERSION}-stable-prism_central_metadata.json"
-          ;;
-        5.7.0.1 | 5.7.1 | 5.7.1.1 )
-          _meta_url+="pc-${PC_VERSION}-stable-prism_central_metadata.json"
-          ;;
-        5.8.0.1 | 5.8.1 | 5.8.2 )
-          _meta_url+="pc_deploy-${PC_VERSION}.json"
-          ;;
-        * )
-          _error=22
-          log "Error ${_error}: unsupported PC_VERSION=${PC_VERSION}!"
-          log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
-          log " - Find ${PC_VERSION} in the Additional Releases section on the lower right side"
-          log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
-          exit ${_error}
-        ;;
-      esac
-    ;;
+      if [[ -z ${_meta_url} ]]; then
+        _error=22
+        log "Error ${_error}: unsupported PC_VERSION=${PC_VERSION}!"
+        log 'Browse to https://portal.nutanix.com/#/page/releases/prismDetails'
+        log " - Find ${PC_VERSION} in the Additional Releases section on the lower right side"
+        log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
+        exit ${_error}
+      fi
+      ;;
     'NOS' | 'nos' | 'AOS' | 'aos')
       args_required 'AOS_VERSION AOS_UPGRADE'
 
@@ -483,36 +456,17 @@ function ntnx_download() {
       esac
     ;;
     FILES | files | AFS | afs )
-      # When adding a new FILES version, update BOTH case stanzas below...
       args_required 'FILES_VERSION'
+      _meta_url="${FILES_METAURL}"
 
-      case ${FILES_VERSION} in
-        TBD )
-          _version='v2/'
-          ;;
-        2.2.3 )
-          _version='v1/'
-          ;;
-      esac
-
-      _meta_url+="afs/"
-
-      case ${FILES_VERSION} in
-        2.2.3 | 3.1.0.1 )
-          _meta_url+="${FILES_VERSION}/${_version}/afs-${FILES_VERSION}.json"
-        ;;
-        3.2.0 )
-          _meta_url+="7.3/nutanix-afs-el7.3-release-afs-${FILES_VERSION}-stable-metadata.json"
-        ;;
-        * )
+      if [[ -z ${_meta_url} ]]; then
           _error=22
           log "Error ${_error}: unsupported FILES_VERSION=${FILES_VERSION}!"
           log 'Browse to https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA'
           log " - Find ${FILES_VERSION} in the Additional Releases section on the lower right side"
           log ' - Provide the metadata URL option to this function, both case stanzas.'
           exit ${_error}
-        ;;
-      esac
+      fi
     ;;
     * )
       _error=88

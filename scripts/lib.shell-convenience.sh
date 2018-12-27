@@ -8,11 +8,11 @@
 
 if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   echo -e "Sourced lib.shell-convenience.sh, release: $(jq -r '.FullSemVer' ${RELEASE})\n \
-    \tPrismCentralStable=${PC_VERSION_STABLE}\n \
-    \t   PrismCentralDev=${PC_VERSION_DEV}"
+    \tPrismCentralStable=${PC_STABLE_VERSION}\n \
+    \t   PrismCentralDev=${PC_DEV_VERSION}"
 
   if [[ -z ${PC_VERSION} ]]; then
-    export PC_VERSION="${PC_VERSION_DEV}"
+    export PC_VERSION="${PC_DEV_VERSION}"
   fi
 fi
 
@@ -175,7 +175,7 @@ EOF
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
       echo '  && tail -f ~/calm*.log'
-      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD='${_password}' PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
+      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD='${_password}' PC_VERSION=${PC_DEV_VERSION} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
       ;;
     AUTH | auth | ldap)
           _host=${AUTH_HOST}

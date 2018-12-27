@@ -235,15 +235,9 @@ Everything takes place in `stage_workshop.sh`:
 
 1. See above, update `stage_workshop.sh` function stage_clusters() version number.
 2. Adjust `global.vars.sh` if appropriate for:
-  - `PC_VERSION_DEV` and/or `PC_VERSION_STABLE`
+  - `PC_DEV_VERSION` and/or `PC_STABLE_VERSION`
   - `FILES_VERSION`
-3. Update `lib.common.sh`, function `ntnx_download()` with new version metadata.
-  - You will see Nutanix release management follows a pattern, but not a consistent
-  pattern across different minor releases.
-  - Find the metadata URL in the Nutanix support portal for the appropriate product
-  and update methodology, then deconstruct it by updating each stanza that
-  programmatically builds up the metadata URL.
-  - TODO: In retrospect, metadata URL shouldn't be constructed: treat as global.var
+  and update the corresponding metadata URLs.
 
 ## Timing ##
 
