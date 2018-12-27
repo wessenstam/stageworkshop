@@ -25,9 +25,9 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
  NW1_DHCP_START="${IPV4_PREFIX}.50"
    NW1_DHCP_END="${IPV4_PREFIX}.125"
 # https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F
- SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
-    SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
-    SMTP_SERVER_PORT=25
+SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+   SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
+   SMTP_SERVER_PORT=25
 
     AUTH_SERVER='AutoDC' # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
       AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
@@ -45,10 +45,8 @@ AUTH_ADMIN_GROUP='SSP Admins'
   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 
-# For Nutanix HPOC/Marketing clusters
+# For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55)
 # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
-# IP Range: ${IPV4_PREFIX}.0/25
-# DHCP Pool: ${IPV4_PREFIX}.50 - ${IPV4_PREFIX}.120
 case "${OCTET[0]}.${OCTET[1]}" in
   10.20 )
     DNS_SERVERS='10.21.253.10'
@@ -66,10 +64,6 @@ case "${OCTET[0]}.${OCTET[1]}" in
     fi
 
        DNS_SERVERS='10.21.253.10,10.21.253.11'
-<<<<<<< HEAD
-=======
-#          NW1_VLAN=$(( ${OCTET[2]} * 10 ))
->>>>>>> Confirm NW1 VLAN=0 with Wade.P in rx-and-hpoc, prepare for Leiming's PR
           NW2_NAME='Secondary'
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
@@ -85,12 +79,8 @@ case "${OCTET[0]}.${OCTET[1]}" in
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.132 )
-    # different ip schema in SH-COLO
-    # no secondary network needed, and different mask for primary network
     # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
-          NW1_NAME='Primary'
-          NW1_VLAN=0
         NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
     NW1_DHCP_START="${IPV4_PREFIX}.100"
       NW1_DHCP_END="${IPV4_PREFIX}.250"
