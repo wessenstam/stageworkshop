@@ -19,13 +19,17 @@
 <!-- /MDTOC -->
 ---
 - Braindump:
+  - github 2FA
   - bug reported in #nutanix-files, ACK'd.
     http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json isn't like afs-3.1.0.1.json
   - dev :: PC-5.10 bugs: activate Calm, auth, import images
+    - ```2018-12-26 16:05:25|96508|calm_enable|Enable Nutanix Calm...
+2018-12-26 16:05:26|96508|calm_enable|_test=||
+2018-12-26 16:05:26|96508|lcm|PC_VERSION 5.10.0.1 >= 5.9, starting LCM inventory...
+2018-12-26 16:05:26|96508|lcm|inventory _test=|500|```
     - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
       - deprecate AutoDC1 for 5.6+5.7+5.8?
       - validate; Restart bug, then validate, no error detection
-  - github 2FA
   - PC import PE images
     - Move images from PE to PC? Make Karbon and Era optional?
       - JSON or YAML options? from bash/jq?
@@ -251,7 +255,7 @@ I’ve looked into some server testing frameworks.
     - http://krlmlr.github.io/using-gitattributes-to-avoid-merge-conflicts/
 
 
-# AutoDC:
+# AutoDC
   - GOOD:
     - NTNXLAB, ntnxlab.local, root:nutanix/4u
     - samba --version Version 4.2.14-Debian
@@ -261,11 +265,11 @@ I’ve looked into some server testing frameworks.
     - https://help.ubuntu.com/lts/serverguide/samba-ldap.html.en
   - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
 
-# DOCUMENTATION:
+# Documentation
   - review, refactor & migrate to bugs.txt: TODO, TOFIX comments
   - Insure exit codes unique/consistent, error messages consistent
 
-# OPTIMIZATION:
+# Optimization
   - Upload AutoDC image in parallel with PC.tar
   - restore http_resume check/attempt
   - create cache, use cache, propagate cache to PC, fall back to global
