@@ -7,10 +7,10 @@
 PC_VERSION_STABLE='5.8.2'
     FILES_VERSION='3.2.0' # was: '3.1.0.1'
 
-          PRISM_ADMIN='admin'
-           MY_SP_NAME='SP01'
-    MY_CONTAINER_NAME='Default'
-MY_IMG_CONTAINER_NAME='Images'
+    PRISM_ADMIN='admin'
+   STORAGE_POOL='SP01'
+STORAGE_DEFAULT='Default'
+ STORAGE_IMAGES='Images'
 
 # shellcheck disable=2206
           OCTET=(${PE_HOST//./ }) # zero index
@@ -59,13 +59,17 @@ case "${OCTET[0]}.${OCTET[1]}" in
       exit 0
     fi
 
-    # backup cluster
+    # backup cluster; override relative IP addressing
     if (( ${OCTET[2]} == 249 )); then
       AUTH_HOST="${IPV4_PREFIX}.118"
         PC_HOST="${IPV4_PREFIX}.119"
     fi
 
        DNS_SERVERS='10.21.253.10,10.21.253.11'
+<<<<<<< HEAD
+=======
+#          NW1_VLAN=$(( ${OCTET[2]} * 10 ))
+>>>>>>> Confirm NW1 VLAN=0 with Wade.P in rx-and-hpoc, prepare for Leiming's PR
           NW2_NAME='Secondary'
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
