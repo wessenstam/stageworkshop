@@ -586,6 +586,7 @@ function pe_determine() {
   if [[ -z "${_hold}" ]]; then
     _error=12
     log "Error ${_error}: couldn't resolve cluster info on ${1}. |${_hold}|"
+    args_required 'PE_HOST'
     exit ${_error}
   else
     case ${1} in

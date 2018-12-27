@@ -29,6 +29,22 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
     SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
     SMTP_SERVER_PORT=25
 
+    AUTH_SERVER='AutoDC' # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
+      AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
+      LDAP_PORT=389
+      AUTH_FQDN='ntnxlab.local'
+    AUTH_DOMAIN='NTNXLAB'
+AUTH_ADMIN_USER='administrator@'${AUTH_FQDN}
+AUTH_ADMIN_PASS='nutanix/4u'
+AUTH_ADMIN_GROUP='SSP Admins'
+   AUTODC_REPOS=(\
+  'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
+  'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
+  'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+ # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+  'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+)
+
 # For Nutanix HPOC/Marketing clusters
 # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
 # IP Range: ${IPV4_PREFIX}.0/25
@@ -38,9 +54,15 @@ case "${OCTET[0]}.${OCTET[1]}" in
     DNS_SERVERS='10.21.253.10'
     ;;
   10.21 )
-    if (( ${OCTET[3]} == 60 )) || (( ${OCTET[3]} == 77 )); then
+    if (( ${OCTET[2]} == 60 )) || (( ${OCTET[2]} == 77 )); then
       log 'GPU cluster, aborting! See https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#GPU_Clusters'
       exit 0
+    fi
+
+    # backup cluster
+    if (( ${OCTET[2]} == 249 )); then
+      AUTH_HOST="${IPV4_PREFIX}.118"
+        PC_HOST="${IPV4_PREFIX}.119"
     fi
 
        DNS_SERVERS='10.21.253.10,10.21.253.11'
@@ -115,22 +137,6 @@ HTTP_CACHE_PORT=8181
 # https://sourceforge.net/projects/sshpass/files/sshpass/
   SSHPASS_REPOS=(\
    'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
-)
-
-     AUTH_SERVER='AutoDC' # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
-       AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
-       LDAP_PORT=389
-       AUTH_FQDN='ntnxlab.local'
-     AUTH_DOMAIN='NTNXLAB'
- AUTH_ADMIN_USER='administrator@'${AUTH_FQDN}
- AUTH_ADMIN_PASS='nutanix/4u'
-AUTH_ADMIN_GROUP='SSP Admins'
-    AUTODC_REPOS=(\
-   'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
-   'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
-   'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-  # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 
    ATTEMPTS=40

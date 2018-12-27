@@ -21,6 +21,7 @@ alias stageworkshop_pc-chrome='stageworkshop_chrome PC'
 alias         stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
 
 function stageworkshop_auth() {
+  . scripts/global.vars.sh
   stageworkshop_ssh 'AUTH' "${1}"
 }
 
@@ -89,19 +90,18 @@ function stageworkshop_cache_stop() {
 
 function stageworkshop_chrome() {
   stageworkshop_cluster ''
-  # shellcheck disable=2206
-  local _octet=(${PE_HOST//./ }) # zero index
   local   _url="${1}"
 
   case "${1}" in
     PC | pc)
-      _url=https://${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2)):9440
+      # shellcheck disable=2153
+      _url=https://${PC_HOST}:9440
       ;;
     PE | pe)
       _url=https://${PE_HOST}:9440
       ;;
   esac
-  unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
+  unset NTNX_USER PE_HOST PE_PASSWORD PC_HOST SSHPASS
 
   if [[ `uname -s` == "Darwin" ]]; then
     open -a 'Google Chrome' ${_url}
@@ -134,6 +134,8 @@ function stageworkshop_cluster() {
   export PE_PASSWORD=${_fields[1]}
   export    MY_EMAIL=${_fields[2]}
   echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
+
+  . scripts/global.vars.sh
 }
 
 function stageworkshop_pe() {
@@ -149,16 +151,14 @@ function stageworkshop_ssh() {
 
   local  _command
   local     _host
-  # shellcheck disable=2206
-  local    _octet=(${PE_HOST//./ }) # zero index
   local _password=${PE_PASSWORD}
   local     _user=${NTNX_USER}
 
   case "${1}" in
     PC | pc)
       echo 'pkill -f calm ; tail -f calm*log'
-      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password} ./calm.sh 'PC'"
-          _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 2))
+      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} PE_PASSWORD='${_password}' ./calm.sh 'PC'"
+          _host=${PC_HOST}
       _password='nutanix/4u'
       ;;
     PE | pe)
@@ -175,11 +175,11 @@ EOF
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
       echo '  && tail -f ~/calm*.log'
-      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD=${_password} PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
+      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD='${_password}' PC_VERSION=${PC_VERSION_DEV} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
       ;;
     AUTH | auth | ldap)
+          _host=${AUTH_HOST}
       _password='nutanix/4u'
-          _host=${_octet[0]}.${_octet[1]}.${_octet[2]}.$((_octet[3] + 3))
           _user=root
   esac
   #echo "INFO|stageworkshop_ssh|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
@@ -206,5 +206,5 @@ EOF
     -o UserKnownHostsFile=/dev/null \
     ${_user}@"${_host}" "${_command}"
 
-  unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
+  unset NTNX_USER PE_HOST PE_PASSWORD PC_HOST SSHPASS
 }
