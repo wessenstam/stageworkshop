@@ -76,7 +76,9 @@ Each staging option will deploy:
 - Prism Central
 - configuring AHV networks for your Primary and Secondary VLANs.
 
-If you encounter issues reach out to @matt on Slack.
+Ask questions not covered here in Slack to the Global Sales Technical Enablement team, first see the pinned items in each channel:
+- __#technology-bootcamps:__ for customer and prospect bootcamps
+- __#hands-on-workshops:__ for Nutanix Partner and SE workshops
 
 ## Validate Staged Clusters ##
 
@@ -99,8 +101,4 @@ Select an option: 4
 
 ## Authentication ##
 
-OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.
-- https://jira.nutanix.com/browse/ENG-126217 openldap authentication difference in PC vs PE
-  - fixed with PC 5.7.1
-
-In the meantime, one can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages [AutoDC](documentation/autodc/README.md).
+One can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages [AutoDC](documentation/autodc/README.md).

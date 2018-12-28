@@ -48,6 +48,9 @@ Bugs, Priorities, and Notes
   - Email when PC is ready, point to next steps in guidebook
 - Auth + role mappings
   - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
+  - OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.
+    - https://jira.nutanix.com/browse/ENG-126217 openldap authentication difference in PC vs PE
+      - fixed with PC 5.7.1
   - SSP Admins
   - PE, PC: clear our warnings: resolve/ack issues for cleanliness?
   - Create adminuser2, assign privs, use it instead of base admin user (drop privs/delete at end?)
