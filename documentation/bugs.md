@@ -1,40 +1,30 @@
-# Push Button Calm: Bugs, Priorities, Notes #
+Bugs, Priorities, and Notes
+
+---
 <!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
 
-- [Push Button Calm: Bugs, Priorities, Notes](#push-button-calm-bugs-priorities-notes)   
-- [Backlog](#backlog)   
-- [Bash test framework for unit tests and on blueprints?](#bash-test-framework-for-unit-tests-and-on-blueprints)   
-- [AutoDC](#autodc)   
-- [Documentation](#documentation)   
-- [Optimization](#optimization)   
+- [Bugs](#bugs)   
+- [Semi-prioritized Backlog with Technical Debt](#semi-prioritized-backlog-with-technical-debt)   
+   - [Improved Software Engineering](#improved-software-engineering)   
 - [Notes](#notes)   
-   - [Citations for other Calm automation](#citations-for-other-calm-automation)   
    - [Push Button Calm](#push-button-calm)   
+   - [Citations for other Calm automation](#citations-for-other-calm-automation)   
+   - [AutoDC](#autodc)   
    - [NuCLeI](#nuclei)   
       - [nuclei authconfig (run local from container?)](#nuclei-authconfig-run-local-from-container)   
    - [Image Uploading](#image-uploading)   
    - [File servers for container updates](#file-servers-for-container-updates)   
-- [Git Notes](#git-notes)   
+   - [Git](#git)   
 
 <!-- /MDTOC -->
 ---
-- Braindump
-  - dev :: PC-5.10 bugs: activate Calm, auth, import images
+
+# Bugs #
+- dev :: PC-5.10 bugs: activate Calm, auth, import images
     - ```2018-12-26 16:05:25|96508|calm_enable|Enable Nutanix Calm...
 2018-12-26 16:05:26|96508|calm_enable|_test=||
 2018-12-26 16:05:26|96508|lcm|PC_VERSION 5.10.0.1 >= 5.9, starting LCM inventory...
 2018-12-26 16:05:26|96508|lcm|inventory _test=|500|```
-    - Confirm AutoDC2 consistent deploy+config, marketing 2nd network, PC deploy+config
-      - deprecate AutoDC1 for 5.6+5.7+5.8?
-      - validate; Restart bug, then validate, no error detection
-  - PC import PE images
-    - Move images from PE to PC? Make Karbon and Era optional?
-      - JSON or YAML options? from bash/jq?
-  - Banner: PC-X@HPOC #
-  - https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
-  - LCM inventory
-    - Calm 2.6 containers
-  - Remove backticks
 
 - BUG = all calm.sh PC service timeout detect/retry
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
@@ -43,34 +33,102 @@
   - @Michael workaround: py-nuclei?
     - ssh nutanix@10.21.78.39 'source /etc/profile; py-nuclei -u admin -p "password" image.list | grep acs'
 
-- RFE: Marketing cluster
-  - Check if on VPN!!!
+- RFE:
+  - FIXED = PC 5.9 authentication regression
+    - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
+      - Fix scheduled for PC 5.10.1
+    - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
+    - deprecate AutoDC1 for 5.6+5.7+5.8?
+
+# Semi-prioritized Backlog with Technical Debt #
+
+- Small improvements/bugs:
+  - Banner: PC-X@HPOC #
   - tail -f $Branch/workshop.log?
-  - migrate/import image catalog on PC:
-  {"action_on_failure":"CONTINUE","execution_order":"SEQUENTIAL","api_request_list":[{"operation":"POST","path_and_params":"/api/nutanix/v3/images/migrate","body":{"image_reference_list":[],"cluster_reference":{"uuid":"00057b0a-2472-da09-0000-0000000086b7","kind":"cluster","name":"string"}}}],"api_version":"3.0"}
-  - Email when PC is ready
+  - Email when PC is ready, point to next steps in guidebook
+- Auth + role mappings
+  - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
+  - SSP Admins
+  - PE, PC: clear our warnings: resolve/ack issues for cleanliness?
+  - Create adminuser2, assign privs, use it instead of base admin user (drop privs/delete at end?)
+  - Fix role mappings, logins on PE, PC
+    - PE, PC: use RBAC user for APIs, etc.: cluster Admin
+    - improve/run autodc/add_group_and_users.sh
+    - adminuser01@ntnxlab.local (password = nutanix/4u) can’t login to PE.
+      “You are not authorized to access Prism. Please contact the Nutanix administrator.”
+      add user01@ntnxlab.local to role mapping, same error as above.
+    - PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
+      Error: Password requirements: Should be at least 8 characters long. Should have at least 1 lowercase character(s). Should have at least 1 uppercase character(s). Should have at least 1 digit(s). Should have at least 1 special character(s). Should differ by at least 4 characters from previous password. Should not be from last 5 passwords. Should not have more than 2 same consecutive character(s). Should not be a dictionary word or too simplistic/systematic. Should should have at least one character belonging to 4 out of the 4 supported classes (lowercase, uppercase, digits, special characters).
+      2018-10-02 10:56:27|92834|PC_Init|Warning: password not reset: 0.#
+- LCM inventory
+  - Calm 2.6 containers
+- Test Calm 5.8 bootcamp labs and 5.5-6 bugs
+  - https://github.com/nutanixworkshops/introcalm
+  vs. https://github.com/mlavi/calm_workshop
+  - file Calm bugs from guide
+- Calm configuration:
+  - Projects:
+    - update default or create new project
+  - nuclei (run local from container?)
+    - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
+      - vs: cat /etc/nutanix/release_version
+    - project.create name=mark.lavi.test \
+      description='test_from NuClei!'
+    - project.get mark.lavi.test
+    - project.update mark.lavi.test
+        spec.resources.account_reference_list.kind= or .uuid
+        spec.resources.default_subnet_reference.kind=
+        spec.resources.environment_reference_list.kind=
+        spec.resources.external_user_group_reference_list.kind=
+        spec.resources.subnet_reference_list.kind=
+        spec.resources.user_reference_list.kind=
+
+        resources:
+          account_reference_list: []
+          environment_reference_list: []
+          external_user_group_reference_list: []
+          is_default: false
+          resource_domain:
+            resources: []
+          subnet_reference_list: []
+          user_reference_list: []
+    - nuclei authconfig (run local from container?) See notes#nuceli section, below.
+  - (localize?) and upload blueprint via nuclei (see unit tests)?
+  - Default project environment set, enable marketplace item, launch!
+  - Enable multiple cloud account settings, then environments, then marketplace launch
+  - Add widget Deployed Applications to (default) dashboard
+- SRE cluster automation
+  - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
+- Refactor URLs into global.vars.sh via test/url_hardcoded.sh
+  - refactor out all passwords, hardcoded values to variables
+  - Remove backticks
+  - ncli rsyslog
+  - Improve log output to be syslog compatible?
+    - syslog format: INFO|DEBUG|etc.
+    - https://en.wikipedia.org/wiki/Syslog#Severity_level
+  - Documentation:
+    - review, refactor & migrate to bugs.md: TODO, TOFIX comments
+    - Insure exit codes unique/consistent, error messages consistent
+    - release notes/Changelog?
+  - JSON or YAML options? from bash/jq?
   - Create a data structure to specify an image name (or rename after uploading)
     - Change global.vars.sh to .json for new data structures
       - https://github.com/kristopolous/TickTick
       - https://github.com/dominictarr/JSON.sh
       - https://medv.io/json-in-bash/
         - https://github.com/sharkdp/hyperfine
-
-- BUG = PC 5.9 authentication regression
-  - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
-    - Fix scheduled for PC 5.10.1
-  - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
-    - TODO: Validate
-
-- FEATURE = Darksite/cache:
+- FEATURE = [Darksite](darksite.md): cache+ordering+detection
   - Ping derik.davenport@ for testing
-  - See [Darksite](darksite.md)
   - Tasks:
-    - focus on dependencies first, then images?
+    - focus on dependencies first (check $HOME/bin), then images?
     - local devstation (never purge), for each:
       - check if in ./cache
       - else, download to ./cache
       - upload to PE:~/cache
+      - IMPROVEMENT: array of directories to check:
+        - $HOME
+        - $HOME/cache
+        - $HOME/stageworkshop*/cache
     - PE CVM, for each:
       - check if in ~/cache
         - BENEFIT: reusable cache for any use case
@@ -79,100 +137,25 @@
       - eventually, upload to PC:~/cache
       - DEFER: purge
     - PC VM: repeat above for images
+    - detect HPOC networks to favor local URLs?
+    - Check remote file for cache, containers, images before uploading and skip when OPTIONAL
+    - download 403 detection: authentication unauthorized
+    - restore http_resume check/attempt
+    - create,use cache, fall back to global, next: propagate cache to PC
+    - PC import PE images
+      - Move images from PE to PC? Make Karbon and Era optional?
+      - migrate/import image catalog on PC:
+      {"action_on_failure":"CONTINUE","execution_order":"SEQUENTIAL","api_request_list":[{"operation":"POST","path_and_params":"/api/nutanix/v3/images/migrate","body":{"image_reference_list":[],"cluster_reference":{"uuid":"00057b0a-2472-da09-0000-0000000086b7","kind":"cluster","name":"string"}}}],"api_version":"3.0"}
+    - Optimization: Upload AutoDC image in parallel with PC.tar
+- Demos:
+  - Azure LAMP demo
+  - CI/CD pipeline demo
+  - LAMP v2 application improvements (reboot nice to have)
+  - Calm videos/spreadsheet
+  - Multi product demo
 
-- Feature = improve MKTG+SRE cluster automation
-  - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
-  - detect HPOC networks to favor local URLs?
-  - Marketing cluster = 10.20
-  - us-west HPOC=10.21:
-  - us-east HPOC=10.55:
-
-- Ongoing = refactor URLs into global.vars.sh?
-  - ````egrep http *sh */*sh \
-    --exclude autodc*sh --exclude hooks*sh --exclude stage_citrixhow* \
-    --exclude vmdisk2image-pc.sh --exclude global.vars.sh \
-  | grep -v -i -e localhost -e 127.0.0.1 -e _HOST -e _http_ \
-    -e download.nutanix.com -e portal.nutanix.com -e python -e github -e '#' \
-  > http.txt````
-  - TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
-  - detect HPOC networks to favor local URLs?
-  - download 403 detection: authentication unauthorized
-
-# Backlog #
-
-- Azure LAMP demo
-- CI/CD pipeline demo
-- LAMP v2 application improvements (reboot nice to have)
-- Calm videos/spreadsheet
-- Multi product demo
-- Projects: update default or create new project
-- PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
-  Error: Password requirements: Should be at least 8 characters long. Should have at least 1 lowercase character(s). Should have at least 1 uppercase character(s). Should have at least 1 digit(s). Should have at least 1 special character(s). Should differ by at least 4 characters from previous password. Should not be from last 5 passwords. Should not have more than 2 same consecutive character(s). Should not be a dictionary word or too simplistic/systematic. Should should have at least one character belonging to 4 out of the 4 supported classes (lowercase, uppercase, digits, special characters).
-  2018-10-02 10:56:27|92834|PC_Init|Warning: password not reset: 0.#
-- Fix role mappings, logins on PE, PC
-  - PE, PC: use RBAC user for APIs, etc.: cluster Admin
-  - improve/run autodc/add_group_and_users.sh
-  - adminuser01@ntnxlab.local (password = nutanix/4u) can’t login to PE.
-    “You are not authorized to access Prism. Please contact the Nutanix administrator.”
-    add user01@ntnxlab.local to role mapping, same error as above.
-- OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
-
-- TODO: Add links: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
-  - acknowledge https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
-  "Drafted a first version. Then @Christophe Jauffret took over and polished it
-  Then we handed over the whole thing to Matt and Nathan during the prep for TS18"
-- TODO: check remote file for cache, containers, images before uploading and skip when OPTIONAL
-- nuclei (run local from container?)
-  - version.get # gives API 3.1 and AOS 5.7.0.1 (bug!)
-    - vs: cat /etc/nutanix/release_version
-  - project.create name=mark.lavi.test \
-    description='test_from NuClei!'
-  - project.get mark.lavi.test
-  - project.update mark.lavi.test
-      spec.resources.account_reference_list.kind= or .uuid
-      spec.resources.default_subnet_reference.kind=
-      spec.resources.environment_reference_list.kind=
-      spec.resources.external_user_group_reference_list.kind=
-      spec.resources.subnet_reference_list.kind=
-      spec.resources.user_reference_list.kind=
-
-      resources:
-        account_reference_list: []
-        environment_reference_list: []
-        external_user_group_reference_list: []
-        is_default: false
-        resource_domain:
-          resources: []
-        subnet_reference_list: []
-        user_reference_list: []
-  - nuclei authconfig (run local from container?) See notes#nuceli section, below.
-- TODO: (localize?) and upload blueprint via nuclei (see unit tests)?
-- TODO: Default project environment set, enable marketplace item, launch!
-- TODO: Enable multiple cloud account settings, then environments, then marketplace launch
-- TODO: PE, PC: clear our warnings: resolve/ack issues for cleanliness?
-
-- TODO: Calm 5.8 bootcamp labs and 5.5-6 bugs
-  - https://github.com/nutanixworkshops/introcalm
-  vs. https://github.com/mlavi/calm_workshop
-  - file Calm bugs from guide
-- Boxcutter for AHV:
-  - extend scripts/vmdisk2image-pc.sh to
-    - https://qemu.weilnetz.de/doc/qemu-doc.html#disk_005fimages_005fssh
-      qemu-system-x86_64 -drive file=ssh://[user@]server[:port]/path[?host_key_check=host_key_check]
-    - download (NFS?)/export image
-    - upload/import image
-  - drive into Jenkinsfile pipeline job
-    - periodic runs: weekly?
-  - Base images/boxes: https://github.com/chef/bento
-- Refactor 10.21 out further: mostly done! move to bats?
-- refactor out all passwords, hardcoded values to variables
-  - SSP Admins
-- Create adminuser2, assign privs, use it instead of base admin user (drop privs/delete at end?)
-- ncli rsyslog
-- Add widget Deployed Applications to (default) dashboard
-
-- FEATURE: improved software engineering
-  - I’ve been wrestling with how to best make my bash scripts test driven. There are TDD Bash frameworks, however most of the systems leveraged/orchestrated are external and would require mocking, something I’m not sure how to approach.
+## Improved Software Engineering ##
+- I’ve been wrestling with how to best make my bash scripts test driven. There are TDD Bash frameworks, however most of the systems leveraged/orchestrated are external and would require mocking, something I’m not sure how to approach.
 
 What I have done, in most functions, is try to make them [idempotent](https://en.wiktionary.org/wiki/idempotent) by "testing" for the desired outcome and skipping if accomplished. Of course, most of these tests are cheats: they only check for the final stage of a function being accomplished. Usually, this is good enough, because the final configuration is predicated on all preceding stages in the function. It would be ideal to test every operation, but as you can imagine, that’s quite a bit of work.
 
@@ -180,42 +163,40 @@ This gives the ability to rerun the script from the beginning, skip all previous
 
 I’ve looked into some server testing frameworks.
 
-  - https://bors.tech/ "Bors is a GitHub bot that prevents merge skew / semantic merge conflicts, so when a developer checks out the main branch, they can expect all of the tests to pass out-of-the-box."
-  - https://githooks.com/
-    - https://github.com/nkantar/Autohook
-    - https://pre-commit.com/
-      - brew install pre-commit
-    - https://github.com/rycus86/githooks
-  - Add (git)version/release to each script (assembly?) for github archive cache
-    - https://semver.org/
-      - https://guides.github.com/introduction/flow/index.html
-      - https://github.com/GitTools/GitVersion
-        - https://gitversion.readthedocs.io/en/stable/usage/command-line/
-        - brew install gitversion
-        - GitVersion /showConfig
-      - sudo apt-get install mono-complete
-        - do not: sudo apt-get install libcurl3 # removes curl libcurl4
-      - Download dotnet4 zip archive
-      - put on mono-path?
-      - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
-        - docker pull gittools/gitversion-fullfx:linux
-        - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
-      - gitversion | tee gitversion.json | jq -r .FullSemVer
-      - ````ls -l *json && echo _GV=${_GV}````
-      - ````_GV=gitversion.json ; rm -f ${_GV} \
-      && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
-      - https://blog.ngeor.com/2017/12/19/semantic-versioning-with-gitversion.html
-    - versus https://github.com/markchalloner/git-semver
-  - ~/Documents/github.com/ideadevice/calm/src/calm/tests/qa/docs
-    = https://github.com/ideadevice/calm/tree/master/src/calm/tests/qa/docs
-  - start a feature branch
-  - syslog format: INFO|DEBUG|etc.
-    - https://en.wikipedia.org/wiki/Syslog#Severity_level
-  - Per Google shell style guide:
-    - refactor function names to lowercase: https://google.github.io/styleguide/shell.xml?showone=Function_Names#Function_Names
-  - http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
-    - https://github.com/GitTools/GitReleaseNotes
-# Bash test framework for unit tests and on blueprints?
+- https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
+- https://bors.tech/ "Bors is a GitHub bot that prevents merge skew / semantic merge conflicts, so when a developer checks out the main branch, they can expect all of the tests to pass out-of-the-box."
+- https://githooks.com/
+  - https://github.com/nkantar/Autohook
+  - https://pre-commit.com/
+    - brew install pre-commit
+  - https://github.com/rycus86/githooks
+- Add (git)version/release to each script (assembly?) for github archive cache
+  - https://semver.org/
+    - https://guides.github.com/introduction/flow/index.html
+    - https://github.com/GitTools/GitVersion
+      - https://gitversion.readthedocs.io/en/stable/usage/command-line/
+      - brew install gitversion
+      - GitVersion /showConfig
+    - sudo apt-get install mono-complete
+      - do not: sudo apt-get install libcurl3 # removes curl libcurl4
+    - Download dotnet4 zip archive
+    - put on mono-path?
+    - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
+      - docker pull gittools/gitversion-fullfx:linux
+      - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
+    - gitversion | tee gitversion.json | jq -r .FullSemVer
+    - ````ls -l *json && echo _GV=${_GV}````
+    - ````_GV=gitversion.json ; rm -f ${_GV} \
+    && gitversion | tee ${_GV} | grep FullSemVer | awk -F\" '{print $4}' && unset _GV````
+    - https://blog.ngeor.com/2017/12/19/semantic-versioning-with-gitversion.html
+  - versus https://github.com/markchalloner/git-semver
+- ~/Documents/github.com/ideadevice/calm/src/calm/tests/qa/docs
+  = https://github.com/ideadevice/calm/tree/master/src/calm/tests/qa/docs
+- Per Google shell style guide:
+  - refactor function names to lowercase: https://google.github.io/styleguide/shell.xml?showone=Function_Names#Function_Names
+- http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
+  - https://github.com/GitTools/GitReleaseNotes
+- Bash test framework for unit tests and on blueprints?
   - https://kitchen.ci/ which can do spec, BATS, etc. = https://github.com/test-kitchen/test-kitchen
     - https://kitchen.ci/docs/getting-started/writing-test
     - https://serverspec.org/ DSL Spec TDD
@@ -247,38 +228,17 @@ I’ve looked into some server testing frameworks.
       - https://keepachangelog.com/en/1.0.0/
       - Good discussions in the issues, tags such as: breaking, internal, etc.
     - http://krlmlr.github.io/using-gitattributes-to-avoid-merge-conflicts/
-
-# AutoDC
-  - See also: [AutoDC](autodc/README.md)
-  - GOOD:
-    - NTNXLAB, ntnxlab.local, root:nutanix/4u
-    - samba --version Version 4.2.14-Debian
-    - https://wiki.archlinux.org/index.php/samba
-    - https://gitlab.com/mlavi/alpine-dc (fork)
-  - yum install samba-ldap
-    - https://help.ubuntu.com/lts/serverguide/samba-ldap.html.en
-  - Move AutoDC to DHCP? and adjust DNS for SRE HPOC subnets?
-
-# Documentation
-  - review, refactor & migrate to bugs.md: TODO, TOFIX comments
-  - Insure exit codes unique/consistent, error messages consistent
-
-# Optimization
-  - Upload AutoDC image in parallel with PC.tar
-  - restore http_resume check/attempt
-  - create,use cache, fall back to global, next: propagate cache to PC
+  - Boxcutter for AHV:
+    - extend scripts/vmdisk2image-pc.sh to
+      - https://qemu.weilnetz.de/doc/qemu-doc.html#disk_005fimages_005fssh
+        qemu-system-x86_64 -drive file=ssh://[user@]server[:port]/path[?host_key_check=host_key_check]
+      - download (NFS?)/export image
+      - upload/import image
+    - drive into Jenkinsfile pipeline job
+      - periodic runs: weekly?
+    - Base images/boxes: https://github.com/chef/bento
 
 # Notes #
-
-## Citations for other Calm automation ##
-
-- https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
-- One more: @anthony.c?
-- https://gitlab.com/Chandru.tkc/Serviceability_shared/
-  - pc-automate/installpc.py
-  - 24:     "heartbeat":    "/PrismGateway/services/rest/v1/heartbeat",
-  - 326: def validate_cluster(entity):
-  - 500: def add_network_to_project(name,directory_uuid):
 
 ## Push Button Calm #
 
@@ -291,6 +251,30 @@ I’ve looked into some server testing frameworks.
   - finding a HPOC
   - second biggest pain: keeping it for more than a few hours except on the weekend.
   - third biggest pain: coding in Bash :slightly_smiling_face: it makes you miss even script kiddie programming languages!
+
+## Citations for other Calm automation ##
+
+- Acknowledge https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
+  - "Drafted a first version. Then @Christophe Jauffret took over and polished it
+    Then we handed over the whole thing to Matt and Nathan during the prep for TS18"
+- One more: @anthony.c?
+- Add links: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
+- https://gitlab.com/Chandru.tkc/Serviceability_shared/
+  - pc-automate/installpc.py
+  - 24:     "heartbeat":    "/PrismGateway/services/rest/v1/heartbeat",
+  - 326: def validate_cluster(entity):
+  - 500: def add_network_to_project(name,directory_uuid):
+
+## AutoDC ##
+  - See also: [AutoDC](autodc/README.md)
+  - GOOD:
+    - NTNXLAB, ntnxlab.local, root:nutanix/4u
+    - samba --version Version 4.2.14-Debian
+    - https://wiki.archlinux.org/index.php/samba
+    - https://gitlab.com/mlavi/alpine-dc (fork)
+  - yum install samba-ldap
+    - https://help.ubuntu.com/lts/serverguide/samba-ldap.html.en
+  - Move AutoDC to DHCP?
 
 ## NuCLeI ##
 
@@ -415,7 +399,7 @@ or nuclei, only on PCVM or in container
 - mount AFS and then put a web/S/FTP server on top
 - python -m SimpleHTTPServer 8080 || python -m http.server 8080
 
-# Git Notes #
+## Git ##
 
 https://git-scm.com/book/en/v2/Distributed-Git-Contributing-to-a-Project
 
