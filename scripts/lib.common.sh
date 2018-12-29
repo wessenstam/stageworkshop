@@ -378,7 +378,7 @@ function ntnx_cmd() {
 
   while [[ true ]]; do
     (( _loop++ ))
-      _hold=$(nuclei cluster.list 2>&1)
+      _hold=$(source /etc/profile ; nuclei cluster.list 2>&1)
     _status=$?
 
     if (( $(echo "${_hold}" | grep websocket | wc --lines) > 0 )); then
@@ -386,7 +386,7 @@ function ntnx_cmd() {
     elif (( ${_status} > 0 )); then
        log "${_status} = ${_hold}, uh oh!"
     else
-      log "Cluster info via nuceli seems good: ${_status}, moving on!"
+      log "Cluster info via nuclei seems good: ${_status}, moving on!"
       break
     fi
 

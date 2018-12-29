@@ -62,7 +62,7 @@ case ${1} in
 
       pc_install \
       && prism_check 'PC' \
-      && pc_configure \
+      && pc_configure ${0##*/} \
       && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
