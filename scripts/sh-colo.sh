@@ -111,7 +111,7 @@ case ${1} in
     export NUCLEI_PASSWORD="${PE_PASSWORD}"
     # nuclei -debug -username admin -server localhost -password x vm.list
 
-    if [[ -z "${PE_HOST}" ]]; then
+    if [[ -z ${CLUSTER_NAME} || -z "${PE_HOST}" ]]; then
       pe_determine ${1}
       . global.vars.sh # re-populate PE_HOST dependencies
     fi
@@ -132,13 +132,13 @@ case ${1} in
     && pc_smtp
 
     QCOW2_IMAGES=(\
-      kx_k8s_01.qcow2 \
-      kx_k8s_02.qcow2 \
-      kx_k8s_03.qcow2 \
-      panlm-img-52.qcow2 \
       Centos7-Base.qcow2 \
       Centos7-Update.qcow2 \
       Windows2012R2.qcow2 \
+      panlm-img-52.qcow2 \
+      kx_k8s_01.qcow2 \
+      kx_k8s_02.qcow2 \
+      kx_k8s_03.qcow2 \
     )
 
     ssp_auth \

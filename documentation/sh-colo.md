@@ -24,9 +24,8 @@ Rebuild AHV-2 cluster no more than 1 hour.
         ncli user add last-name=nutanix first-name=nutanix user-name=nutanix user-password='nutanix/4u' email-id=nutanix@nutanix.sh
         ncli user grant-cluster-admin-role user-name=nutanix
         ncli user grant-user-admin-role user-name=nutanix
-        ncli cluster edit-info new-name=AHV-2
+        ncli cluster edit-info new-name=AHV-2 external-ip-address=10.132.129.37
         ncli cluster set-timezone timezone=Asia/Shanghai
-        ncli cluster edit-info external-ip-address=10.132.129.37
         ncli cluster add-to-name-servers servers=10.132.71.40
         echo -e 'nx2Tech432!\nnx2Tech432!' | sudo passwd nutanix
         ```
@@ -51,7 +50,7 @@ Rebuild AHV-2 cluster no more than 1 hour.
     ./stage_workshop.sh -f ../clusters.txt -w 5
     ```
 
-- see log
+- see log on pe and pc
     ```
     tail -f ~/sh-colo.log
     ```
@@ -63,20 +62,6 @@ Rebuild AHV-2 cluster no more than 1 hour.
     ncli user grant-cluster-admin-role user-name=nutanix
     ncli user grant-user-admin-role user-name=nutanix
     echo -e 'nx2Tech432!\nnx2Tech432!' | sudo passwd nutanix
-    MY_DOMAIN_NAME=NTNXLAB
-    MY_DOMAIN_FQDN=ntnxlab.local
-    MY_DOMAIN_URL=ldap://10.132.129.40:389
-    MY_DOMAIN_USER=administrator@ntnxlab.local
-    MY_DOMAIN_PASS=nutanix/4u
-    ncli authconfig add-directory \
-        directory-type=ACTIVE_DIRECTORY \
-        connection-type=LDAP directory-url="${MY_DOMAIN_URL}" \
-        domain="${MY_DOMAIN_FQDN}" \
-        name="${MY_DOMAIN_NAME}" \
-        service-account-username="${MY_DOMAIN_USER}" \
-        service-account-password="${MY_DOMAIN_PASS}"
-    nuclei image.create name=test image_type=DISK_IMAGE \
-        source_uri=http://10.132.128.50:81/share/saved-images/panlm-img-52.qcow2 wait=false
     ```
 
 ## Login
