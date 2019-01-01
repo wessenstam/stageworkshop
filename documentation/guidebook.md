@@ -272,9 +272,7 @@ Typical download and install of Prism Central is 17 minutes of waiting!
 ## Procedure ##
 
 0. Crank some tunes and record the start time!
-1. __Browse (tab1)__ to this page = https://github.com/mlavi/stageworkshop/blob/master/guidebook.md
-
-    - I have submitted [a pull request](https://github.com/nutanixworkshops/stageworkshop/pull/1) to merge my work.
+1. __Browse (tab1)__ to this page = https://github.com/mlavi/stageworkshop/blob/master/documentation/guidebook.md
 2. __Browse (tab2)__ to review HPoC reservation details in https://rx.corp.nutanix.com:8443/
 
     1. Find the __Cluster External IP__ and the __PE admin password__:
@@ -323,21 +321,19 @@ Typical download and install of Prism Central is 17 minutes of waiting!
 
 1. Push button Calm!
 
-    1. __PC> Apps:__ click lower left ? to show Calm 5.7
-
-        * *BUG* why a ? in the UI?
+    1. __PC> Apps (or Services > Calm):__ click lower left ? to show Calm version
     2. __Projects:__ Default: add the following:
 
-      - Description: "Freedom to Cloud",
-      - Roles: assign and save,
-      - Local and Cloud,
-      - choose PoC AHV cluster,
-      - Network: enable VLANs,
-      - and Save.
-    3. __Blueprints:__ Upload blueprint: ````beachhead-centos7-calm5.7.0.1.json```` in default project.
+        - Description: "Freedom to Cloud",
+        - Roles: assign and save,
+        - Local and Cloud,
+        - choose PoC AHV cluster,
+        - Network: enable VLANs,
+        - and Save.
+    3. __Blueprints:__ Upload blueprint: ````test/beachhead-centos7-calm5.7.0.1.json```` in default project.
 
-      - Resize icon
-      - Pull left tab open, note public key in AHVCluster application profile, zoom to show end of the value.
+        - Resize icon
+        - Pull left tab open, note public key in AHVCluster application profile, zoom to show end of the value.
       - __Credentials:__ upload private key, note user centos, save, back.
       - __Service = Webtier:__
 
@@ -351,9 +347,9 @@ Typical download and install of Prism Central is 17 minutes of waiting!
         - Save, Launch!
     4. __Application Launch:__
 
-      - Name application deployment: marklavi-beachhead-took-X-minutes
-      - Terminal: find start time, find end time.
+        - Name application deployment: marklavi-beachhead-took-X-minutes
+        - Terminal: find start time, find end time.
 
-        - *BUG:* time zones of server, cloud-init?
+          - *BUG:* time zones of server, cloud-init?
 
-      - Show logical deployment, open terminal, audit logs
+        - Show logical deployment, open terminal, audit logs
