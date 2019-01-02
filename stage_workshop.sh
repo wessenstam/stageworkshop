@@ -7,16 +7,13 @@ DEBUG=
 # - PC #.#
 WORKSHOPS=(\
 "Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
-#"Calm Workshop (AOS 5.5+/AHV PC 5.9.x) = Development (AutoDC2)" \
 "Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
-# "Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
-# "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "Marketing Cluster with PC 5.9.x" \
 "SH-COLO Cluster with PC 5.10.x" \
 "Add Files ${FILES_VERSION} (AFS) to cluster" \
-) # Adjust function stage_clusters for mappings as needed
+) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
   # Adjust map below as needed with $WORKSHOPS
@@ -24,50 +21,54 @@ function stage_clusters() {
   local    _container
   local _dependencies
   local       _fields
-  local    _libraries='global.vars.sh lib.common.sh'
-  local     _manifest # list of all staging scripts to deploy
-  local      _release
-  local       _script # first file of the _manifest will be executed on PE
-  local       _sshkey
+  local    _libraries='global.vars.sh lib.common.sh '
+  local  _pe_manifest # will be transferred and executed on PE
+  local  _pc_manifest # will be transferred and executed on PC
+  local       _sshkey="${HOME}/.ssh/id_rsa.pub"
   local       _wc_arg='--lines'
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
-  if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc -l) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
-    export PC_VERSION=5.9.2
-  elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_STABLE_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc ${WC_ARG}) > 0 )); then
+    export PC_VERSION=5.9.2
+  elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION=5.7.1.1
-  elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION=5.6.2
   fi
 
-  # Map workshop to staging scripts and libraries
-  if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-    _libraries+=' lib.pe.sh lib.pc.sh'
-      _manifest='calm.sh'
+  # Map workshop to staging script(s) and libraries,
+  # _pe_manifest will be executed on PE
+  if (( $(echo ${_workshop} | grep -i Calm | wc ${WC_ARG}) > 0 )); then
+     _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_manifest='calm.sh'
+    _pc_manifest=${_pe_manifest}
   fi
-  if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
-    _manifest='stage_citrixhow.sh stage_citrixhow_pc.sh'
+  if (( $(echo ${_workshop} | grep -i Citrix | wc ${WC_ARG}) > 0 )); then
+    _pe_manifest='stage_citrixhow.sh'
+    _pc_manifest='stage_citrixhow_pc.sh'
   fi
-  if (( $(echo ${_workshop} | grep -i Summit | wc -l) > 0 )); then
-    _manifest='stage_ts18.sh stage_ts18_pc.sh'
+  if (( $(echo ${_workshop} | grep -i Summit | wc ${WC_ARG}) > 0 )); then
+    _pe_manifest='stage_ts18.sh'
+    _pc_manifest='stage_ts18_pc.sh'
   fi
-  if (( $(echo ${_workshop} | grep -i Marketing | wc -l) > 0 )); then
-    _libraries+=' lib.pe.sh'
-      _manifest='marketing.sh'
+  if (( $(echo ${_workshop} | grep -i Marketing | wc ${WC_ARG}) > 0 )); then
+     _libraries+='lib.pe.sh'
+    _pe_manifest='marketing.sh'
   fi
-  if (( $(echo ${_workshop} | grep -i Files | wc -l) > 0 )); then
-    _libraries+=' lib.pe.sh'
-      _manifest='file-afs.sh'
+  if (( $(echo ${_workshop} | grep -i Files | wc ${WC_ARG}) > 0 )); then
+     _libraries+='lib.pe.sh'
+    _pe_manifest='file-afs.sh'
   fi
-  if (( $(echo ${_workshop} | grep -i SH-COLO | wc -l) > 0 )); then
-    _libraries+=' lib.pe.sh lib.pc.sh'
-      _manifest='sh-colo.sh'
+  if (( $(echo ${_workshop} | grep -i SH-COLO | wc ${WC_ARG}) > 0 )); then
+     _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_manifest='sh-colo.sh'
+    _pc_manifest=${_pe_manifest}
   fi
 
   dependencies 'install' 'sshpass'
@@ -75,12 +76,14 @@ function stage_clusters() {
   if [[ -z ${PC_VERSION} ]]; then
     log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
   fi
-  # Send configuration scripts to remote clusters and execute Prism Element script
 
+  # Send configuration scripts to remote clusters and execute Prism Element script
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
     get_configuration
-    cd scripts && eval "${CONFIGURATION} ./${_manifest} 'PE'" >> ${HOME}/${_manifest%%.sh}.log 2>&1 &
+    pushd scripts || true
+    eval "${CONFIGURATION} ./${_pe_manifest} 'PE'" >> ${HOME}/${_pe_manifest%%.sh}.log 2>&1 &
+    popd || true
   else
     for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^#)
     do
@@ -98,7 +101,7 @@ function stage_clusters() {
       cat <<EoM
       Warning -- curl time out indicates either:
       - a network routing issue (perhaps you're not on VPN?),
-      - cluster Foundation+Initialization hasn't completed.
+      - cluster Foundation and initialization hasn't completed.
 EoM
 
       prism_check 'PE' 60
@@ -116,27 +119,27 @@ EoM
         log "Sending configuration script(s) to PE@${PE_HOST}"
       else
         _error=15
-        log "Error ${_error}: Can't reach PE@${PE_HOST}, are you on VPN?"
+        log "Error ${_error}: Can't reach PE@${PE_HOST}"
         exit ${_error}
       fi
 
       if [[ -e ${RELEASE} ]]; then
-        log "Adding release version file to manifest."
-        _release="../${RELEASE}"
+        log "Adding release version file..."
+        _libraries+=" ../${RELEASE}"
       fi
 
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "${_libraries} ${_release} ${_manifest}" \
+        && remote_exec 'SCP' 'PE' "${_libraries} ${_pe_manifest} ${_pc_manifest}" \
         && popd || exit
 
       # For Calm container updates...
       if [[ -d cache/pc-${PC_VERSION}/ ]]; then
         log "Uploading PC updates in background..."
         pushd cache/pc-${PC_VERSION} \
-        && pkill scp || true
-        for _container in epsilon nucalm ; do \
-          if [[ -f ${_container}.tar ]]; then \
-            remote_exec 'SCP' 'PE' ${_container}.tar 'OPTIONAL' & \
+          && pkill scp || true
+        for _container in epsilon nucalm ; do
+          if [[ -f ${_container}.tar ]]; then
+            remote_exec 'SCP' 'PE' ${_container}.tar 'OPTIONAL' &
           fi
         done
         popd || exit
@@ -144,18 +147,13 @@ EoM
         log "No PC updates found in cache/pc-${PC_VERSION}/"
       fi
 
-      _sshkey=${HOME}/.ssh/id_rsa.pub
       if [[ -f ${_sshkey} ]]; then
         log "Sending ${_sshkey} for addition to cluster..."
         remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
-      # shellcheck disable=2206
-      _fields=(${_manifest})
-      _script="${_fields[0]}"
-
-      log "Remote execution configuration script on PE@${PE_HOST}"
-      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_script} 'PE' >> ${_script%%.sh}.log 2>&1 &"
+      log "Remote execution configuration script ${_pe_manifest} on PE@${PE_HOST}"
+      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_manifest} 'PE' >> ${_pe_manifest%%.sh}.log 2>&1 &"
 
       # shellcheck disable=SC2153
       cat <<EOM
@@ -166,20 +164,17 @@ EoM
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
   $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${PE_HOST} 'date; tail -f ${_manifest%%.sh}.log'
+      nutanix@${PE_HOST} 'date; tail -f pe_manifest.log'
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
 EOM
-      if [[ `uname -s` == "Darwin" ]]; then
-        _wc_arg='-l'
-      fi
 
       if (( "$(echo ${_libraries} | grep -i lib.pc | wc ${_wc_arg})" > 0 )); then
         # shellcheck disable=2153
         cat <<EOM
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${PC_HOST} 'date; tail -f *.log'
+      nutanix@${PC_HOST} 'date; tail -f ${_pc_manifest}.log'
     https://${PRISM_ADMIN}@${PC_HOST}:9440/
 
 EOM

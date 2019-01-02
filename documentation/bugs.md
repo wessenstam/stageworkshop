@@ -46,6 +46,9 @@ Bugs, Priorities, and Notes
   - Banner: PC-X@HPOC #
   - tail -f $Branch/workshop.log?
   - Email when PC is ready, point to next steps in guidebook
+  - Finish PR#6 implications to {calm|sh-colo}.sh
+    - Ask Leiming about AOS for ntnx_download?
+  - Refactor files+PC ntnx_download
 - Auth + role mappings
   - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
   - OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.

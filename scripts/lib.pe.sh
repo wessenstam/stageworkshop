@@ -220,9 +220,7 @@ function pc_configure() {
   local      _command
   local    _container
   local     _manifest=$1
-  local _dependencies="lib.common.sh global.vars.sh lib.pc.sh ${_manifest}"
-  #TODO: TOFIX: hardcoded lib.pc.sh calm.sh above
-  #@mark: I use $1 to solve it, please have a check
+  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${_manifest}"
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -285,7 +283,9 @@ function pc_install() {
              file-path="$(pwd)/${NTNX_SOURCE_URL##*/}" \
         meta-file-path="$(pwd)/${NTNX_META_URL##*/}"
 
-      log "Delete PC sources to free CVM space..."
+      # TODO: check successful execution above, then...
+      # perhaps move above+this to ntnx_download, also refactor files_install?
+      log "Delete ${_ncli_softwaretype} sources to free CVM space..."
       rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
     else
       log "IDEMPOTENCY: PC-${PC_VERSION} upload already completed."

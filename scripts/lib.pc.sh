@@ -89,6 +89,33 @@ function lcm() {
   fi
 }
 
+function pc_admin() {
+  local  _http_body
+  local       _test
+  local _admin_user='marklavi'
+
+  _http_body=$(cat <<EOF
+  {"profile":{
+    "username":"${_admin_user}",
+    "firstName":"Mark",
+    "lastName":"Lavi",
+    "emailId":"${MY_EMAIL}",
+    "password":"${PE_PASSWORD}",
+    "locale":"en-US"},"enabled":false,"roles":[]}
+EOF
+  )
+  _test=$(curl ${CURL_HTTP_OPTS} \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/PrismGateway/services/rest/v1/users)
+  log "create.user=${_admin_user}=|${_test}|"
+
+  _http_body='["ROLE_USER_ADMIN","ROLE_MULTICLUSTER_ADMIN"]'
+       _test=$(curl ${CURL_HTTP_OPTS} \
+    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+    https://localhost:9440/PrismGateway/services/rest/v1/users/${_admin_user}/roles)
+  log "add.roles ${_http_body}=|${_test}|"
+}
+
 function pc_auth() {
   # TODO:250 configure case for each authentication server type?
   local      _group

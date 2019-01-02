@@ -1,38 +1,11 @@
 #!/usr/bin/env bash
 # -x
 
-function pc_admin() {
-  local  _http_body
-  local       _test
-  local _admin_user='marklavi'
-
-  _http_body=$(cat <<EOF
-  {"profile":{
-    "username":"${_admin_user}",
-    "firstName":"Mark",
-    "lastName":"Lavi",
-    "emailId":"${MY_EMAIL}",
-    "password":"${PE_PASSWORD}",
-    "locale":"en-US"},"enabled":false,"roles":[]}
-EOF
-  )
-  _test=$(curl ${CURL_HTTP_OPTS} \
-    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/users)
-  log "create.user=${_admin_user}=|${_test}|"
-
-  _http_body='["ROLE_USER_ADMIN","ROLE_MULTICLUSTER_ADMIN"]'
-       _test=$(curl ${CURL_HTTP_OPTS} \
-    --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/users/${_admin_user}/roles)
-  log "add.roles ${_http_body}=|${_test}|"
-}
-
 function pc_upload_manual() {
   # upload PC for sh-colo manually
   PC_SHCOLO_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
   PC_META_SHCOLO_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
-  wget -c -O pc-${PC_VERSION}-deploy.tar --progress=dot:mega ${PC_SHCOLO_URL} 
+  wget -c -O pc-${PC_VERSION}-deploy.tar --progress=dot:mega ${PC_SHCOLO_URL}
   wget -q ${PC_META_SHCOLO_URL}
   ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
          file-path="`pwd`/${PC_SHCOLO_URL##*/}" \
@@ -89,7 +62,7 @@ case ${1} in
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
       log "PC = https://${PC_HOST}:9440"
-      
+
       pc_clean_manual
 
       finish
