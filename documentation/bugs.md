@@ -43,12 +43,11 @@ Bugs, Priorities, and Notes
 # Semi-prioritized Backlog with Technical Debt #
 
 - Small improvements/bugs:
+  - Finish PR#6 implications to {calm|sh-colo}.sh
+  - Refactor ntnx_download URLs to global.vars, PC_URL to be an array?
   - Banner: PC-X@HPOC #
   - tail -f $Branch/workshop.log?
   - Email when PC is ready, point to next steps in guidebook
-  - Finish PR#6 implications to {calm|sh-colo}.sh
-    - Ask Leiming about AOS for ntnx_download?
-  - Refactor files+PC ntnx_download
 - Auth + role mappings
   - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
   - OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.
@@ -148,6 +147,7 @@ Bugs, Priorities, and Notes
     - download 403 detection: authentication unauthorized
     - restore http_resume check/attempt
     - create,use cache, fall back to global, next: propagate cache to PC
+      - Refactor all functions to use ${HOME}/cache : ntnx_download, etc.
     - PC import PE images
       - Move images from PE to PC? Make Karbon and Era optional?
       - migrate/import image catalog on PC:

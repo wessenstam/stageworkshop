@@ -1,23 +1,6 @@
 #!/usr/bin/env bash
 # -x
 
-function pc_upload_manual() {
-  # upload PC for sh-colo manually
-  PC_SHCOLO_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
-  PC_META_SHCOLO_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
-  wget -c -O pc-${PC_VERSION}-deploy.tar --progress=dot:mega ${PC_SHCOLO_URL}
-  wget -q ${PC_META_SHCOLO_URL}
-  ncli software upload software-type=PRISM_CENTRAL_DEPLOY \
-         file-path="`pwd`/${PC_SHCOLO_URL##*/}" \
-    meta-file-path="`pwd`/${PC_META_SHCOLO_URL##*/}"
-
-}
-
-function pc_clean_manual() {
-  rm -f ${PC_SHCOLO_URL##*/} ${PC_META_SHCOLO_URL##*/}
-
-}
-
 #__main()__________
 
 # Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
@@ -50,8 +33,10 @@ case ${1} in
 
     if (( $? == 0 )) ; then
 
-      # download pc deploy file in sh-colo
-      pc_upload_manual
+      # local override: pc deploy file in sh-colo, TODO: make an array of URLs
+                 PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
+         PC_DEV_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
+      PC_STABLE_METAURL=${PC_DEV_METAURL}
 
       pc_install \
       && prism_check 'PC' \
@@ -62,8 +47,6 @@ case ${1} in
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
       log "PC = https://${PC_HOST}:9440"
-
-      pc_clean_manual
 
       finish
     else

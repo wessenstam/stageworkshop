@@ -172,10 +172,6 @@ function files_install() {
   if [[ ${_test} != "${FILES_VERSION}" ]]; then
     log "Files ${FILES_VERSION} not completed. ${_test}"
     ntnx_download "${_ncli_software_type}"
-
-    ncli software upload software-type=${_ncli_software_type} \
-      meta-file-path="$(pwd)/${NTNX_META_URL##*/}" \
-      file-path="$(pwd)/${NTNX_SOURCE_URL##*/}"
   else
     log "IDEMPOTENCY: Files ${FILES_VERSION} already completed."
   fi
@@ -205,15 +201,6 @@ function network_configure() {
       acli "net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
     fi
   fi
-}
-
-function nos_upgrade() {
-  #this is a prototype, untried
-  ntnx_download 'nos'
-
-  ncli software upload software-type=nos \
-    meta-file-path="$(pwd)/${NTNX_META_URL##*/}" \
-    file-path="$(pwd)/${NTNX_SOURCE_URL##*/}"
 }
 
 function pc_configure() {
@@ -278,15 +265,6 @@ function pc_install() {
     if [[ ${_test} != "${PC_VERSION}" ]]; then
       log "PC-${PC_VERSION} not completed. ${_test}"
       ntnx_download "${_ncli_softwaretype}"
-
-      ncli software upload software-type=${_ncli_softwaretype} \
-             file-path="$(pwd)/${NTNX_SOURCE_URL##*/}" \
-        meta-file-path="$(pwd)/${NTNX_META_URL##*/}"
-
-      # TODO: check successful execution above, then...
-      # perhaps move above+this to ntnx_download, also refactor files_install?
-      log "Delete ${_ncli_softwaretype} sources to free CVM space..."
-      rm -f ${NTNX_SOURCE_URL##*/} ${NTNX_META_URL##*/}
     else
       log "IDEMPOTENCY: PC-${PC_VERSION} upload already completed."
     fi

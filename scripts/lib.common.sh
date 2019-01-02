@@ -401,12 +401,13 @@ function ntnx_cmd() {
 }
 
 function ntnx_download() {
-  local   _checksum
-  local   _meta_url='http://download.nutanix.com/'
-  local _source_url
-  local    _version
+  local          _checksum
+  local             _error
+  local          _meta_url
+  local _ncli_softwaretype="${1}"
+  local        _source_url
 
-  case "${1}" in
+  case "${_ncli_softwaretype}" in
     PC | pc | PRISM_CENTRAL_DEPLOY )
       args_required 'PC_VERSION'
 
@@ -426,51 +427,35 @@ function ntnx_download() {
       fi
       ;;
     'NOS' | 'nos' | 'AOS' | 'aos')
+      # TODO: nos is a prototype
       args_required 'AOS_VERSION AOS_UPGRADE'
+      _meta_url="${AOS_METAURL}"
 
-      # When adding a new AOS version, update BOTH case stanzas below...
-      case ${AOS_UPGRADE} in
-        5.8.0.1 )
-          _version=2
-          ;;
-      esac
-
-      _meta_url+="/releases/euphrates-${AOS_UPGRADE}-metadata/"
-
-      if (( ${_version} > 0 )); then
-        _meta_url+="v${_version}/"
+      if [[ -z ${_meta_url} ]]; then
+        _error=23
+        log "Error ${_error}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
+        log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
+        log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
+        log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
+        exit ${_error}
       fi
-
-      case ${AOS_UPGRADE} in
-        5.8.0.1 | 5.9 )
-          _meta_url+="euphrates-${AOS_UPGRADE}-metadata.json"
-          ;;
-        * )
-          _error=23
-          log "Error ${_error}: unsupported AOS_UPGRADE=${AOS_UPGRADE}!"
-          log 'Browse to https://portal.nutanix.com/#/page/releases/nosDetails'
-          log " - Find ${AOS_UPGRADE} in the Additional Releases section on the lower right side"
-          log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
-          exit ${_error}
-          ;;
-      esac
     ;;
     FILES | files | AFS | afs )
       args_required 'FILES_VERSION'
       _meta_url="${FILES_METAURL}"
 
       if [[ -z ${_meta_url} ]]; then
-          _error=22
-          log "Error ${_error}: unsupported FILES_VERSION=${FILES_VERSION}!"
-          log 'Browse to https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA'
-          log " - Find ${FILES_VERSION} in the Additional Releases section on the lower right side"
-          log ' - Provide the metadata URL option to this function, both case stanzas.'
-          exit ${_error}
+        _error=22
+        log "Error ${_error}: unsupported FILES_VERSION=${FILES_VERSION}!"
+        log 'Browse to https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA'
+        log " - Find ${FILES_VERSION} in the Additional Releases section on the lower right side"
+        log ' - Provide the metadata URL option to this function, both case stanzas.'
+        exit ${_error}
       fi
     ;;
     * )
       _error=88
-      log "Error: couldn't determine software-type ${1}!"
+      log "Error ${_error}:: couldn't determine software-type ${_ncli_softwaretype}!"
       exit ${_error}
     ;;
   esac
@@ -482,27 +467,42 @@ function ntnx_download() {
     log "Warning: using cached download ${_meta_url##*/}"
   fi
 
-  dependencies 'install' 'jq' || exit 13
-  _source_url=$(cat ${_meta_url##*/} | jq -r .download_url_cdn)
+  if [[ -z ${PC_URL} ]]; then
+    dependencies 'install' 'jq' || exit 13
+    _source_url=$(cat ${_meta_url##*/} | jq -r .download_url_cdn)
+  else
+    _source_url="${PC_URL}"
+  fi
 
   if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
     pkill curl
   fi
-  log "Retrieving Nutanix ${1} bits..."
+  log "Retrieving Nutanix ${_ncli_softwaretype} bits..."
   download "${_source_url}"
 
   _checksum=$(md5sum ${_source_url##*/} | awk '{print $1}')
-  if [[ `cat ${_meta_url##*/} | jq -r .hex_md5` != "${_checksum}" ]]; then
-    log "Error: md5sum ${_checksum} doesn't match on: ${_source_url##*/} removing and exit!"
+  if [[ $(cat ${_meta_url##*/} | jq -r .hex_md5) != "${_checksum}" ]]; then
+
+    _error=2
+    log "Error ${_error}: md5sum ${_checksum} doesn't match on: ${_source_url##*/} removing and exit!"
     rm -f ${_source_url##*/}
-    exit 2
+    exit ${_error}
   else
-    log "Success: ${1} bits downloaded and passed MD5 checksum!"
+    log "Success: ${_ncli_softwaretype} bits downloaded and passed MD5 checksum!"
   fi
 
-  # Set globals for next step handoff
-  export   NTNX_META_URL=${_meta_url}
-  export NTNX_SOURCE_URL=${_source_url}
+  ncli software upload software-type=${_ncli_softwaretype} \
+         file-path="$(pwd)/${_source_url##*/}" \
+    meta-file-path="$(pwd)/${_meta_url##*/}"
+
+  if (( $? == 0 )) ; then
+    log "Success! Delete ${_ncli_softwaretype} sources to free CVM space..."
+    rm -f ${_source_url##*/} ${_meta_url##*/}
+  else
+    _error=3
+    log "Error ${_error}: failed ncli upload of ${_ncli_softwaretype}."
+    exit ${_error}
+  fi
 }
 
 function pe_determine() {
