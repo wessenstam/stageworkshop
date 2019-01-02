@@ -20,34 +20,33 @@ Bugs, Priorities, and Notes
 ---
 
 # Bugs #
-- dev :: PC-5.10 bugs: activate Calm, auth, import images
-    - ```2018-12-26 16:05:25|96508|calm_enable|Enable Nutanix Calm...
-2018-12-26 16:05:26|96508|calm_enable|_test=||
-2018-12-26 16:05:26|96508|lcm|PC_VERSION 5.10.0.1 >= 5.9, starting LCM inventory...
-2018-12-26 16:05:26|96508|lcm|inventory _test=|500|```
 
 - BUG = all calm.sh PC service timeout detect/retry
+  - FIX: AOS 5.8+?
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
   - @Michael workaround: py-nuclei?
     - ssh nutanix@10.21.78.39 'source /etc/profile; py-nuclei -u admin -p "password" image.list | grep acs'
+  - dev :: PC-5.10 bugs: activate Calm, auth, import images
+    - ```2018-12-26 16:05:25|96508|calm_enable|Enable Nutanix Calm...
+    2018-12-26 16:05:26|96508|calm_enable|_test=||
+    2018-12-26 16:05:26|96508|lcm|PC_VERSION 5.10.0.1 >= 5.9, starting LCM inventory...
+    2018-12-26 16:05:26|96508|lcm|inventory _test=|500|```
 
-- RFE:
-  - FIXED = PC 5.9 authentication regression
-    - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
-      - Fix scheduled for PC 5.10.1
-    - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
-    - deprecate AutoDC1 for 5.6+5.7+5.8?
+- FIXED = PC 5.9 authentication regression
+  - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
+    - Fix scheduled for PC 5.10.1
+  - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
+  - deprecate AutoDC1 for 5.6+5.7+5.8?
 
 # Semi-prioritized Backlog with Technical Debt #
 
 - Small improvements/bugs:
-  - Finish PR#6 implications to {calm|sh-colo}.sh
-  - Refactor ntnx_download URLs to global.vars, PC_URL to be an array?
   - Banner: PC-X@HPOC #
   - tail -f $Branch/workshop.log?
   - Email when PC is ready, point to next steps in guidebook
+  - Refactor PC_URL to be an array?
 - Auth + role mappings
   - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
   - OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.
@@ -104,9 +103,9 @@ Bugs, Priorities, and Notes
   - Add widget Deployed Applications to (default) dashboard
 - SRE cluster automation
   - Louie: https://confluence.eng.nutanix.com:8443/display/LABS/Internal+Networks
-- Refactor URLs into global.vars.sh via test/url_hardcoded.sh
+- Refactor URLs into global.vars.sh via: test/url_hardcoded.sh
   - refactor out all passwords, hardcoded values to variables
-  - Remove backticks
+  - Remove backticks: scripts/lib.pe.sh:354 remains outside of *md
   - ncli rsyslog
   - Improve log output to be syslog compatible?
     - syslog format: INFO|DEBUG|etc.

@@ -61,6 +61,8 @@ function dependencies {
     _os_found="$(grep DISTRIB_ID ${_lsb} | awk -F= '{print $2}')"
   elif [[ -e ${_cpe} ]]; then
     _os_found="$(grep '^ID=' ${_cpe} | awk -F= '{print $2}')"
+  elif [[ $(uname -s) == 'Darwin' ]]; then
+    _os_found='Darwin'
   fi
 
   case "${1}" in
@@ -84,7 +86,7 @@ function dependencies {
                 log "Error ${_error}: cannot install ${2}."
                 exit ${_error}
               fi
-            elif [[ `uname -s` == "Darwin" ]]; then
+            elif [[ ${_os_found} == 'Darwin' ]]; then
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
             fi
             ;;
@@ -103,10 +105,10 @@ function dependencies {
               if [[ -d ${HOME}/bin ]]; then
                 mv jq* ${HOME}/bin/
               else
-                PATH+=:`pwd`
+                PATH+=:$(pwd)
                 export PATH
               fi
-            elif [[ `uname -s` == "Darwin" ]]; then
+            elif [[ ${_os_found} == 'Darwin' ]]; then
               brew install jq
             fi
             ;;
@@ -364,8 +366,8 @@ EOF
 function log() {
   local _caller
 
-  _caller=$(echo -n "`caller 0 | awk '{print $2}'`")
-  echo "`date '+%Y-%m-%d %H:%M:%S'`|$$|${_caller}|${1}"
+  _caller=$(echo -n "$(caller 0 | awk '{print $2}')")
+  echo "$(date '+%Y-%m-%d %H:%M:%S')|$$|${_caller}|${1}"
 }
 
 function ntnx_cmd() {
@@ -474,7 +476,7 @@ function ntnx_download() {
     _source_url="${PC_URL}"
   fi
 
-  if (( `pgrep curl | wc --lines | tr -d '[:space:]'` > 0 )); then
+  if (( $(pgrep curl | wc --lines | tr -d '[:space:]') > 0 )); then
     pkill curl
   fi
   log "Retrieving Nutanix ${_ncli_softwaretype} bits..."
@@ -683,7 +685,7 @@ function remote_exec() {
 
     if (( ${_test} > 0 )) && [[ -z ${4} ]]; then
       _error=22
-      log "Error ${_error}: pwd=`pwd`, _test=${_test}, _host=${_host}"
+      log "Error ${_error}: pwd=$(pwd), _test=${_test}, _host=${_host}"
       exit ${_error}
     fi
 

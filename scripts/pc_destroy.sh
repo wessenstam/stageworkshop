@@ -28,7 +28,7 @@ function pe_unregister {
   # Troubleshooting
   cat ~/data/logs/unregistration_cleanup.log
 
-  for _vm in `acli -o json vm.list | ~/jq -r '.data[] | select(.name | contains("Prism Central")) | .uuid'`; do
+  for _vm in $(acli -o json vm.list | ~/jq -r '.data[] | select(.name | contains("Prism Central")) | .uuid'); do
     log "PC vm.uuid=${_vm}"
     acli vm.off ${_vm} && acli -y vm.delete ${_vm}
   done

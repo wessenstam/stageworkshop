@@ -150,6 +150,6 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
      SSH_OPTS+=' -q' # -v'
 
 WC_ARG='--lines'
-if [[ `uname -s` == "Darwin" ]]; then
+if [[ $(uname -s) == 'Darwin' ]]; then
   WC_ARG='-l'
 fi

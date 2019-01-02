@@ -221,8 +221,6 @@ Everything takes place in `stage_workshop.sh`:
         - ````WORKSHOPS=(\
         "Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
         "Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
-        # "Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
-        # "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
         "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
         #"Tech Summit 2018" \
         "Marketing Cluster with PC 5.9.x" \

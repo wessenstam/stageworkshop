@@ -80,9 +80,10 @@ function stage_clusters() {
   # Send configuration scripts to remote clusters and execute Prism Element script
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
-    get_configuration
+    pe_configuration_args "${_pc_manifest}"
     pushd scripts || true
     eval "${CONFIGURATION} ./${_pe_manifest} 'PE'" >> ${HOME}/${_pe_manifest%%.sh}.log 2>&1 &
+    unset CONFIGURATION
     popd || true
   else
     for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^#)
@@ -94,7 +95,7 @@ function stage_clusters() {
       PE_PASSWORD=${_fields[1]}
          MY_EMAIL=${_fields[2]}
 
-      get_configuration
+      pe_configuration_args "${_pc_manifest}"
 
       . scripts/global.vars.sh # re-import for relative settings
 
@@ -154,6 +155,7 @@ EoM
 
       log "Remote execution configuration script ${_pe_manifest} on PE@${PE_HOST}"
       remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_manifest} 'PE' >> ${_pe_manifest%%.sh}.log 2>&1 &"
+      unset CONFIGURATION
 
       # shellcheck disable=SC2153
       cat <<EOM
@@ -187,8 +189,10 @@ EOM
   exit
 }
 
-function get_configuration() {
-  CONFIGURATION="MY_EMAIL=${MY_EMAIL} PE_HOST=${PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION}"
+function pe_configuration_args() {
+  local _pc_manifest="${1}"
+
+  CONFIGURATION="MY_EMAIL=${MY_EMAIL} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PE_HOST=${PE_HOST} PC_MANIFEST=${_pc_manifest} PC_VERSION=${PC_VERSION}"
 }
 
 function validate_clusters() {

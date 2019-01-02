@@ -103,7 +103,7 @@ function stageworkshop_chrome() {
   esac
   unset NTNX_USER PE_HOST PE_PASSWORD PC_HOST SSHPASS
 
-  if [[ `uname -s` == "Darwin" ]]; then
+  if [[ $(uname -s) == 'Darwin' ]]; then
     open -a 'Google Chrome' ${_url}
   fi
 }

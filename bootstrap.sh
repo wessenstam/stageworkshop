@@ -84,7 +84,7 @@ if [[ -z ${MY_EMAIL} ]]; then
 fi
 
 _WC_ARG='--lines'
-if [[ `uname -s` == "Darwin" ]]; then
+if [[ $(uname -s) == 'Darwin' ]]; then
   _WC_ARG='-l'
 fi
 if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then

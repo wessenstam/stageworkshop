@@ -75,7 +75,7 @@ function authentication_source() {
 
         repo_source AUTODC_REPOS[@]
 
-        if (( `source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${AUTH_SERVER}${_autodc_release} | wc --lines` == 0 )); then
+        if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${AUTH_SERVER}${_autodc_release} | wc --lines) == 0 )); then
           log "Import ${AUTH_SERVER}${_autodc_release} image from ${SOURCE_URL}..."
           acli image.create ${AUTH_SERVER}${_autodc_release} \
             image_type=kDiskImage wait=true \
@@ -192,22 +192,22 @@ function network_configure() {
     log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${AUTH_DOMAIN}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
     acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
     acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_DOMAIN}"
-    acli "net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
+    acli "  net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
 
     if [[ ! -z "${NW2_NAME}" ]]; then
       log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
       acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
       acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_DOMAIN}"
-      acli "net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
+      acli "  net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
     fi
   fi
 }
 
 function pc_configure() {
+  args_required 'PC_MANIFEST RELEASE'
   local      _command
   local    _container
-  local     _manifest=$1
-  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${_manifest}"
+  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${PC_MANIFEST}"
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -229,11 +229,11 @@ function pc_configure() {
     fi
   done
 
-  # Execute that file asynchroneously remotely (script keeps running on CVM in the background)
-  _command="MY_EMAIL=${MY_EMAIL} PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} PC_VERSION=${PC_VERSION} \
-  nohup bash ${HOME}/${_manifest} PC"
-  log "Launch PC configuration script... ${_command}"
-  remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${_manifest%%.sh}.log 2>&1 &"
+  _command="MY_EMAIL=${MY_EMAIL} \
+    PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
+    PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_MANIFEST} PC"
+  log "Remote asynchroneous launch PC configuration script... ${_command}"
+  remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_MANIFEST%%.sh}.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
@@ -359,7 +359,7 @@ function pe_init() {
     ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
       from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
     ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
-      --subject="[pe_init:Config SMTP:alert test] `ncli cluster get-params`" \
+      --subject="[pe_init:Config SMTP:alert test] $(ncli cluster get-params)" \
       && ${HOME}/serviceability/bin/send-email
 
     log "Configure NTP"

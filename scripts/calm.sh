@@ -22,7 +22,7 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    args_required 'PE_HOST'
+    args_required 'PE_HOST PC_MANIFEST'
 
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
@@ -34,7 +34,7 @@ case ${1} in
     if (( $? == 0 )) ; then
       pc_install \
       && prism_check 'PC' \
-      && pc_configure ${0##*/} \
+      && pc_configure \
       && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
@@ -46,8 +46,9 @@ case ${1} in
       finish
     else
       finish
-      log "Error 18: in main functional chain, exit!"
-      exit 18
+      _error=18
+      log "Error ${_error}: in main functional chain, exit!"
+      exit ${_error}
     fi
   ;;
   PC | pc )
