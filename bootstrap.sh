@@ -78,17 +78,17 @@ if [[ -z ${PE_PASSWORD} ]]; then
   fi
 fi
 
-if [[ -z ${MY_EMAIL} ]]; then
+if [[ -z ${EMAIL} ]]; then
   echo -e "\n    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
-  read -p "REQUIRED: Email address for cluster admin? " MY_EMAIL
+  read -p "REQUIRED: Email address for cluster admin? " EMAIL
 fi
 
 _WC_ARG='--lines'
 if [[ $(uname -s) == 'Darwin' ]]; then
   _WC_ARG='-l'
 fi
-if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
-  MY_EMAIL+=@${EMAIL_DOMAIN}
+if (( $(echo ${EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
+  EMAIL+=@${EMAIL_DOMAIN}
 fi
 
 if [[ -d ../${REPOSITORY}-${BRANCH} ]]; then
@@ -113,13 +113,13 @@ PE_HOST=$(ncli cluster get-params \
   | awk -F: '{print $2}' \
   | tr -d '[:space:]')
 
-echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${PE_HOST} ...\n"
+echo -e "\nStarting stage_workshop.sh for ${EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${PE_HOST} ...\n"
 
 if [[ ! -z ${WORKSHOP} ]]; then
   echo -e "\tAdding workshop: ${WORKSHOP}"
   MY_WORKSHOP=" -w ${WORKSHOP}"
 fi
-   MY_EMAIL=${MY_EMAIL} \
+   EMAIL=${EMAIL} \
     PE_HOST=${PE_HOST} \
 PRISM_ADMIN=${PRISM_ADMIN} \
 PE_PASSWORD=${PE_PASSWORD} \

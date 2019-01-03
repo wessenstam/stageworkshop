@@ -99,7 +99,7 @@ function pc_admin() {
     "username":"${_admin_user}",
     "firstName":"Mark",
     "lastName":"Lavi",
-    "emailId":"${MY_EMAIL}",
+    "emailId":"${EMAIL}",
     "password":"${PE_PASSWORD}",
     "locale":"en-US"},"enabled":false,"roles":[]}
 EOF
@@ -254,7 +254,7 @@ function pc_smtp() {
   #log $(ncli cluster get-smtp-server | grep Status | grep success)
 
   # shellcheck disable=2153
-  ncli cluster send-test-email recipient="${MY_EMAIL}" \
+  ncli cluster send-test-email recipient="${EMAIL}" \
     subject="pc_smtp https://${PRISM_ADMIN}:${PE_PASSWORD}@${PC_HOST}:9440 Testing."
   # local _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{
   #   "address":"${SMTP_SERVER_ADDRESS}","port":"${SMTP_SERVER_PORT}","username":null,"password":null,"secureMode":"NONE","fromEmailAddress":"${SMTP_SERVER_FROM}","emailStatus":null}' \
@@ -451,7 +451,7 @@ function pc_ui() {
 {"type":"custom_login_screen","key":"color_in","value":"#ADD100"} \
 {"type":"custom_login_screen","key":"color_out","value":"#11A3D7"} \
 {"type":"custom_login_screen","key":"product_title","value":"${CLUSTER_NAME},PC-${PC_VERSION}"} \
-{"type":"custom_login_screen","key":"title","value":"Nutanix.HandsOnWorkshops.com,@${MY_DOMAIN_FQDN}"} \
+{"type":"custom_login_screen","key":"title","value":"Nutanix.HandsOnWorkshops.com,@${AUTH_FQDN}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_status","value":true} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"welcome_banner_content","value":"${PRISM_ADMIN}:${PE_PASSWORD}@${CLUSTER_NAME}"} \
 {"type":"WELCOME_BANNER","username":"system_data","key":"disable_video","value":true} \
@@ -502,7 +502,7 @@ function pc_project() {
   local _count
   local  _uuid
 
-   _name=${MY_EMAIL%%@nutanix.com}.test
+   _name=${EMAIL%%@nutanix.com}.test
   _count=$(. /etc/profile.d/nutanix_env.sh \
     && nuclei project.list 2>/dev/null | grep ${_name} | wc --lines)
   if (( ${_count} > 0 )); then
@@ -528,10 +528,4 @@ function pc_project() {
     #     spec.resources.user_reference_list.kind=
 
     # {"spec":{"access_control_policy_list":[],"project_detail":{"name":"mark.lavi.test1","resources":{"external_user_group_reference_list":[],"user_reference_list":[],"environment_reference_list":[],"account_reference_list":[],"subnet_reference_list":[{"kind":"subnet","name":"Primary","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"},{"kind":"subnet","name":"Secondary","uuid":"4689bc7f-61dd-4527-bc7a-9d737ae61322"}],"default_subnet_reference":{"kind":"subnet","uuid":"a4000fcd-df41-42d7-9ffe-f1ab964b2796"}},"description":"test from NuCLeI!"},"user_list":[],"user_group_list":[]},"api_version":"3.1","metadata":{"creation_time":"2018-06-22T03:54:59Z","spec_version":0,"kind":"project","last_update_time":"2018-06-22T03:55:00Z","uuid":"1be7f66a-5006-4061-b9d2-76caefedd298","categories":{},"owner_reference":{"kind":"user","name":"admin","uuid":"00000000-0000-0000-0000-000000000000"}}}
-}
-
-function pc_update() {
-  log "This function not implemented yet."
-  log "Download PC upgrade image: ${MY_PC_UPGRADE_URL##*/}"
-  cd /home/nutanix/install && ./bin/cluster -i . -p upgrade
 }

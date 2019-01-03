@@ -132,7 +132,7 @@ function stageworkshop_cluster() {
 
   export     PE_HOST=${_fields[0]}
   export PE_PASSWORD=${_fields[1]}
-  export    MY_EMAIL=${_fields[2]}
+  export    EMAIL=${_fields[2]}
   echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
 
   . scripts/global.vars.sh
@@ -157,7 +157,7 @@ function stageworkshop_ssh() {
   case "${1}" in
     PC | pc)
       echo 'pkill -f calm ; tail -f calm*log'
-      echo "PC_VERSION=${PC_VERSION} MY_EMAIL=${MY_EMAIL} PE_PASSWORD='${_password}' ./calm.sh 'PC'"
+      echo "PC_VERSION=${PC_VERSION} EMAIL=${EMAIL} PE_PASSWORD='${_password}' ./calm.sh 'PC'"
           _host=${PC_HOST}
       _password='nutanix/4u'
       ;;
@@ -173,9 +173,9 @@ EOF
 
       echo 'rm -rf master.zip calm*.log stageworkshop-master/ && \'
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
-      echo '  && SOURCE=${_} 'MY_EMAIL=${MY_EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
+      echo '  && SOURCE=${_} 'EMAIL=${EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
       echo '  && tail -f ~/calm*.log'
-      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD='${_password}' PC_VERSION=${PC_DEV_VERSION} MY_EMAIL=${MY_EMAIL} ./calm.sh 'PE'"
+      echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD='${_password}' PC_VERSION=${PC_DEV_VERSION} EMAIL=${EMAIL} ./calm.sh 'PE'"
       ;;
     AUTH | auth | ldap)
           _host=${AUTH_HOST}

@@ -22,8 +22,8 @@ function stage_clusters() {
   local _dependencies
   local       _fields
   local    _libraries='global.vars.sh lib.common.sh '
-  local  _pe_manifest # will be transferred and executed on PE
-  local  _pc_manifest # will be transferred and executed on PC
+  local  _pe_launch # will be transferred and executed on PE
+  local  _pc_launch # will be transferred and executed on PC
   local       _sshkey="${HOME}/.ssh/id_rsa.pub"
   local       _wc_arg='--lines'
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
@@ -43,32 +43,32 @@ function stage_clusters() {
   fi
 
   # Map workshop to staging script(s) and libraries,
-  # _pe_manifest will be executed on PE
+  # _pe_launch will be executed on PE
   if (( $(echo ${_workshop} | grep -i Calm | wc ${WC_ARG}) > 0 )); then
-     _libraries+='lib.pe.sh lib.pc.sh'
-    _pe_manifest='calm.sh'
-    _pc_manifest=${_pe_manifest}
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='calm.sh'
+    _pc_launch=${_pe_launch}
   fi
   if (( $(echo ${_workshop} | grep -i Citrix | wc ${WC_ARG}) > 0 )); then
-    _pe_manifest='stage_citrixhow.sh'
-    _pc_manifest='stage_citrixhow_pc.sh'
+    _pe_launch='stage_citrixhow.sh'
+    _pc_launch='stage_citrixhow_pc.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Summit | wc ${WC_ARG}) > 0 )); then
-    _pe_manifest='stage_ts18.sh'
-    _pc_manifest='stage_ts18_pc.sh'
+    _pe_launch='stage_ts18.sh'
+    _pc_launch='stage_ts18_pc.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Marketing | wc ${WC_ARG}) > 0 )); then
-     _libraries+='lib.pe.sh'
-    _pe_manifest='marketing.sh'
+    _libraries+='lib.pe.sh'
+    _pe_launch='marketing.sh'
   fi
   if (( $(echo ${_workshop} | grep -i Files | wc ${WC_ARG}) > 0 )); then
-     _libraries+='lib.pe.sh'
-    _pe_manifest='file-afs.sh'
+    _libraries+='lib.pe.sh'
+    _pe_launch='file-afs.sh'
   fi
   if (( $(echo ${_workshop} | grep -i SH-COLO | wc ${WC_ARG}) > 0 )); then
-     _libraries+='lib.pe.sh lib.pc.sh'
-    _pe_manifest='sh-colo.sh'
-    _pc_manifest=${_pe_manifest}
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='sh-colo.sh'
+    _pc_launch=${_pe_launch}
   fi
 
   dependencies 'install' 'sshpass'
@@ -80,10 +80,11 @@ function stage_clusters() {
   # Send configuration scripts to remote clusters and execute Prism Element script
   if [[ ${CLUSTER_LIST} == '-' ]]; then
     echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
-    pe_configuration_args "${_pc_manifest}"
+    pe_configuration_args "${_pc_launch}"
+
     pushd scripts || true
-    eval "${CONFIGURATION} ./${_pe_manifest} 'PE'" >> ${HOME}/${_pe_manifest%%.sh}.log 2>&1 &
-    unset CONFIGURATION
+    eval "${PE_CONFIGURATION} ./${_pe_launch} 'PE'" >> ${HOME}/${_pe_launch%%.sh}.log 2>&1 &
+    unset PE_CONFIGURATION
     popd || true
   else
     for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^#)
@@ -93,9 +94,9 @@ function stage_clusters() {
           _fields=(${_cluster//|/ })
           PE_HOST=${_fields[0]}
       PE_PASSWORD=${_fields[1]}
-         MY_EMAIL=${_fields[2]}
+         EMAIL=${_fields[2]}
 
-      pe_configuration_args "${_pc_manifest}"
+      pe_configuration_args "${_pc_launch}"
 
       . scripts/global.vars.sh # re-import for relative settings
 
@@ -130,7 +131,7 @@ EoM
       fi
 
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "${_libraries} ${_pe_manifest} ${_pc_manifest}" \
+        && remote_exec 'SCP' 'PE' "${_libraries} ${_pe_launch} ${_pc_launch}" \
         && popd || exit
 
       # For Calm container updates...
@@ -153,9 +154,9 @@ EoM
         remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
-      log "Remote execution configuration script ${_pe_manifest} on PE@${PE_HOST}"
-      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_manifest} 'PE' >> ${_pe_manifest%%.sh}.log 2>&1 &"
-      unset CONFIGURATION
+      log "Remote execution configuration script ${_pe_launch} on PE@${PE_HOST}"
+      remote_exec 'SSH' 'PE' "${PE_CONFIGURATION} nohup bash /home/nutanix/${_pe_launch} 'PE' >> ${_pe_launch%%.sh}.log 2>&1 &"
+      unset PE_CONFIGURATION
 
       # shellcheck disable=SC2153
       cat <<EOM
@@ -166,7 +167,7 @@ EoM
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
   $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${PE_HOST} 'date; tail -f pe_manifest.log'
+      nutanix@${PE_HOST} 'date; tail -f ${_pe_launch%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
@@ -176,7 +177,7 @@ EOM
         # shellcheck disable=2153
         cat <<EOM
   $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${PC_HOST} 'date; tail -f ${_pc_manifest}.log'
+      nutanix@${PC_HOST} 'date; tail -f ${_pc_launch%%.sh}.log'
     https://${PRISM_ADMIN}@${PC_HOST}:9440/
 
 EOM
@@ -190,9 +191,9 @@ EOM
 }
 
 function pe_configuration_args() {
-  local _pc_manifest="${1}"
+  local _pc_launch="${1}"
 
-  CONFIGURATION="MY_EMAIL=${MY_EMAIL} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PE_HOST=${PE_HOST} PC_MANIFEST=${_pc_manifest} PC_VERSION=${PC_VERSION}"
+  PE_CONFIGURATION="EMAIL=${EMAIL} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PE_HOST=${PE_HOST} PC_LAUNCH=${_pc_launch} PC_VERSION=${PC_VERSION}"
 }
 
 function validate_clusters() {
@@ -225,7 +226,7 @@ See README.md and guidebook.md for more information.
 
     Interactive Usage: $0
 Non-interactive Usage: $0 -f [${_CLUSTER_FILE}] -w [workshop_number]
-Non-interactive Usage: MY_EMAIL=first.last@nutanix.com PE_HOST=10.x.x.37 PRISM_ADMIN=admin PE_PASSWORD=examplePW $0 -f -
+Non-interactive Usage: EMAIL=first.last@nutanix.com PE_HOST=10.x.x.37 PRISM_ADMIN=admin PE_PASSWORD=examplePW $0 -f -
 
 Available Workshops:
 EOF
@@ -337,7 +338,7 @@ while getopts "f:w:\?" opt; do
           . global.vars.sh # re-populate PE_HOST dependencies
         fi
 
-        args_required 'MY_EMAIL PE_HOST PE_PASSWORD'
+        args_required 'EMAIL PE_HOST PE_PASSWORD'
         CLUSTER_LIST=${OPTARG}
       elif [[ -f ${OPTARG} ]]; then
         CLUSTER_LIST=${OPTARG}

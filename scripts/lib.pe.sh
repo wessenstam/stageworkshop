@@ -204,10 +204,10 @@ function network_configure() {
 }
 
 function pc_configure() {
-  args_required 'PC_MANIFEST RELEASE'
+  args_required 'PC_LAUNCH RELEASE'
   local      _command
   local    _container
-  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${PC_MANIFEST}"
+  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${PC_LAUNCH}"
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -229,11 +229,11 @@ function pc_configure() {
     fi
   done
 
-  _command="MY_EMAIL=${MY_EMAIL} \
+  _command="EMAIL=${EMAIL} \
     PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
-    PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_MANIFEST} PC"
+    PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} PC"
   log "Remote asynchroneous launch PC configuration script... ${_command}"
-  remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_MANIFEST%%.sh}.log 2>&1 &"
+  remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_LAUNCH%%.sh}.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
@@ -346,7 +346,7 @@ function pe_auth() {
 }
 
 function pe_init() {
-  args_required 'DATA_SERVICE_IP MY_EMAIL \
+  args_required 'DATA_SERVICE_IP EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
     STORAGE_DEFAULT STORAGE_POOL STORAGE_IMAGES \
     SLEEP ATTEMPTS'
@@ -358,7 +358,7 @@ function pe_init() {
     log "Configure SMTP"
     ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
       from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
-    ${HOME}/serviceability/bin/email-alerts --to_addresses="${MY_EMAIL}" \
+    ${HOME}/serviceability/bin/email-alerts --to_addresses="${EMAIL}" \
       --subject="[pe_init:Config SMTP:alert test] $(ncli cluster get-params)" \
       && ${HOME}/serviceability/bin/send-email
 

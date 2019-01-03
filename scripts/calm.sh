@@ -9,7 +9,7 @@
 . global.vars.sh
 begin
 
-args_required 'MY_EMAIL PE_PASSWORD PC_VERSION'
+args_required 'EMAIL PE_PASSWORD PC_VERSION'
 
 #dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
@@ -22,7 +22,7 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    args_required 'PE_HOST PC_MANIFEST'
+    args_required 'PE_HOST PC_LAUNCH'
 
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \

@@ -776,7 +776,7 @@ function repo_source() {
 }
 
 function ssh_pubkey() {
-  local   _name=${MY_EMAIL//\./_DOT_}
+  local   _name=${EMAIL//\./_DOT_}
   local _sshkey=${HOME}/id_rsa.pub
 
   _name=${_name/@/_AT_}
