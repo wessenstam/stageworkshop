@@ -13,7 +13,7 @@ args_required 'EMAIL PE_PASSWORD PC_VERSION'
 
 #dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
-log "Adding key to ${1} VMs..."
+log "Adding SSH key to ${1} VMs..."
 ssh_pubkey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
@@ -32,11 +32,6 @@ case ${1} in
     && pe_auth
 
     if (( $? == 0 )) ; then
-
-      # local override: pc deploy file in sh-colo, TODO: make an array of URLs
-                 PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
-         PC_DEV_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
-      PC_STABLE_METAURL=${PC_DEV_METAURL}
 
       pc_install \
       && prism_check 'PC' \
@@ -87,16 +82,6 @@ case ${1} in
     && pc_ui \
     && pc_auth \
     && pc_smtp
-
-    QCOW2_IMAGES=(\
-      Centos7-Base.qcow2 \
-      Centos7-Update.qcow2 \
-      Windows2012R2.qcow2 \
-      panlm-img-52.qcow2 \
-      kx_k8s_01.qcow2 \
-      kx_k8s_02.qcow2 \
-      kx_k8s_03.qcow2 \
-    )
 
     ssp_auth \
     && calm_enable \

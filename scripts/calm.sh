@@ -13,7 +13,7 @@ args_required 'EMAIL PE_PASSWORD PC_VERSION'
 
 #dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
 
-log "Adding key to ${1} VMs..."
+log "Adding SSH key to ${1} VMs..."
 ssh_pubkey & # non-blocking, parallel suitable
 
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!

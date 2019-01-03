@@ -47,6 +47,8 @@ Bugs, Priorities, and Notes
   - tail -f $Branch/workshop.log?
   - Email when PC is ready, point to next steps in guidebook
   - Refactor PC_URL to be an array?
+  - LCM inventory (check AOS, PC, and LCM version)
+    - Calm 2.6 containers
 - Auth + role mappings
   - OpenLDAP is now supported for Self Service on Prism Central: ENG-126217
   - OpenLDAP works fine for authentication, but Prism Central has a problem with anything more than simple RBAC with it.
@@ -64,8 +66,6 @@ Bugs, Priorities, and Notes
     - PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
       Error: Password requirements: Should be at least 8 characters long. Should have at least 1 lowercase character(s). Should have at least 1 uppercase character(s). Should have at least 1 digit(s). Should have at least 1 special character(s). Should differ by at least 4 characters from previous password. Should not be from last 5 passwords. Should not have more than 2 same consecutive character(s). Should not be a dictionary word or too simplistic/systematic. Should should have at least one character belonging to 4 out of the 4 supported classes (lowercase, uppercase, digits, special characters).
       2018-10-02 10:56:27|92834|PC_Init|Warning: password not reset: 0.#
-- LCM inventory
-  - Calm 2.6 containers
 - Test Calm 5.8 bootcamp labs and 5.5-6 bugs
   - https://github.com/nutanixworkshops/introcalm
   vs. https://github.com/mlavi/calm_workshop
