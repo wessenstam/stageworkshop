@@ -313,6 +313,7 @@ function pe_auth() {
   local           _aos
   local   _aos_version
   local _directory_url="ldaps://${AUTH_HOST}/"
+  local         _error=45
 
   args_required 'AUTH_DOMAIN AUTH_FQDN AUTH_HOST AUTH_ADMIN_USER AUTH_ADMIN_PASS AUTH_ADMIN_GROUP'
 
@@ -324,10 +325,13 @@ function pe_auth() {
     if [[ ! -z ${_aos} ]]; then
       # shellcheck disable=2206
       _aos_version=(${_aos//./ })
-      log "Checking if _aos ${_aos} >= 5.8"
-      if (( ${_aos_version[0]} >= 5 && ${_aos_version[1]} >= 8 )); then
-        log 'it is'
+      if (( ${_aos_version[0]} >= 5 && ${_aos_version[1]} >= 10 )); then
+        _directory_url="ldap://${AUTH_HOST}:${LDAP_PORT}"
+        log "Adjusted directory-url=${_directory_url} because AOS-${_aos} >= 5.10"
       fi
+    else
+      log "Error ${_error}: couldn't determine AOS version=${_aos}"
+      exit ${_error}
     fi
 
     log "Configure PE external authentication"
