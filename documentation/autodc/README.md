@@ -34,8 +34,8 @@ Users and groups are imported as part of the initialization:
 
 ## Tips ##
 
-I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/lib.pe.sh#L88),
- so I use that.
+Investigating memory use with `vmstat --wide --unit M --active`,
+I believe you can [easily get away with 2GB RAM for AutoDC](https://github.com/mlavi/stageworkshop/blob/master/scripts/lib.pe.sh#L88).
 
 You may wish to use ````poc_samba_user.sh```` to populate AutoDC past the initial set of users, above:
 
