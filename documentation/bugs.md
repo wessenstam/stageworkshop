@@ -1,7 +1,7 @@
-Bugs, Priorities, and Notes
+# Bugs, Priorities, and Notes #
 
 ---
-<!-- MDTOC maxdepth:6 firsth1:1 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
+<!-- MDTOC maxdepth:6 firsth1:0 numbering:0 flatten:0 bullets:1 updateOnSave:1 -->
 
 - [Bugs](#bugs)   
 - [Semi-prioritized Backlog with Technical Debt](#semi-prioritized-backlog-with-technical-debt)   

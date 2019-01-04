@@ -248,6 +248,10 @@ We'll round up to the nearest half minute.
 | NX-1060 | 30 | N/A | N/A |
 | NX-3060-G5 | 25 | 35 | 33 |
 
+    When rebuilding a HPOC from rx, Foundation automation takes:
+    - 4 nodes@NX-3060-G5: 30 minutes
+    - 4 nodes@NX-1050: 40 minutes.
+
 2. 0.5 min per cluster = ./stage_workshop.sh
 
 3. 28/26/20 min = calm.sh PE
