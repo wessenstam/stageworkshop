@@ -12,7 +12,6 @@ WORKSHOPS=(\
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
 "SH-COLO Cluster with PC 5.10.x" \
-"Add Files ${FILES_VERSION} (AFS) to cluster" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -57,14 +56,6 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i Summit | wc ${WC_ARG}) > 0 )); then
     _pe_launch='stage_ts18.sh'
     _pc_launch='stage_ts18_pc.sh'
-  fi
-  if (( $(echo ${_workshop} | grep -i Marketing | wc ${WC_ARG}) > 0 )); then
-    _libraries+='lib.pe.sh'
-    _pe_launch='marketing.sh'
-  fi
-  if (( $(echo ${_workshop} | grep -i Files | wc ${WC_ARG}) > 0 )); then
-    _libraries+='lib.pe.sh'
-    _pe_launch='file-afs.sh'
   fi
   if (( $(echo ${_workshop} | grep -i SH-COLO | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
