@@ -7,10 +7,10 @@ DEBUG=
 # - PC #.#
 WORKSHOPS=(\
 "Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
+"Calm Workshop (AOS 5.8.x/AHV PC 5.10.x) = Stable (AutoDC2)" \
+"Calm Workshop (AOS 5.9+/AHV PC 5.10.x) = Development" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
-"Marketing Cluster with PC 5.9.x" \
 "SH-COLO Cluster with PC 5.10.x" \
 "Add Files ${FILES_VERSION} (AFS) to cluster" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
@@ -22,14 +22,15 @@ function stage_clusters() {
   local _dependencies
   local       _fields
   local    _libraries='global.vars.sh lib.common.sh '
-  local  _pe_launch # will be transferred and executed on PE
-  local  _pc_launch # will be transferred and executed on PC
-  local       _sshkey="${HOME}/.ssh/id_rsa.pub"
+  local    _pe_launch # will be transferred and executed on PE
+  local    _pc_launch # will be transferred and executed on PC
+  local       _sshkey="${HOME}/.ssh/id_rsa.pub" #TODO: hardcoded SSH key filespec
   local       _wc_arg='--lines'
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
+  # TODO: make WORKSHOPS and map a JSON configuration file?
   if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc ${WC_ARG}) > 0 )); then
