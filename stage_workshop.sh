@@ -67,7 +67,7 @@ function stage_clusters() {
   fi
   if (( $(echo ${_workshop} | grep -i SH-COLO | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
-    _pe_launch='sh-colo.sh'
+    _pe_launch='calm.sh'
     _pc_launch=${_pe_launch}
   fi
 
