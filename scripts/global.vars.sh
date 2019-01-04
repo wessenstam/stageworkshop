@@ -15,10 +15,11 @@ PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/
     FILES_VERSION='3.2.0' # was: '3.1.0.1'
     FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
 
-    PRISM_ADMIN='admin'
-   STORAGE_POOL='SP01'
-STORAGE_DEFAULT='Default'
- STORAGE_IMAGES='Images'
+       PRISM_ADMIN='admin'
+NTNX_INIT_PASSWORD='nutanix/4u'
+      STORAGE_POOL='SP01'
+   STORAGE_DEFAULT='Default'
+    STORAGE_IMAGES='Images'
 
  # Conventions for *_REPOS arrays, the URL must end with:
  # - trailing slash (which imples _IMAGES argument to function repo_source())
@@ -33,7 +34,7 @@ STORAGE_DEFAULT='Default'
     'http://10.21.250.221/images/ahv/techsummit/' \
     'http://10.132.128.50:81/share/saved-images/' \
     'https://s3.amazonaws.com/get-ahv-images/' \
- ) # talk to Nathan Cox to populate S3, Sharon to populate Daisy File Share
+ ) # talk to Nathan.C to populate S3, Sharon.S to populate Daisy File Share
   QCOW2_IMAGES=(\
    CentOS7.qcow2 \
    Windows2016.qcow2 \
@@ -65,6 +66,7 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
     NTP_SERVERS='0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org'
        NW1_NAME='Primary'
        NW1_VLAN=0
+# Assuming HPOC defaults
      NW1_SUBNET="${IPV4_PREFIX}.1/25"
  NW1_DHCP_START="${IPV4_PREFIX}.50"
    NW1_DHCP_END="${IPV4_PREFIX}.125"
@@ -73,7 +75,7 @@ SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
    SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
    SMTP_SERVER_PORT=25
 
-    AUTH_SERVER='AutoDC' # TODO:240 refactor AUTH_SERVER choice to input file, set default here.
+    AUTH_SERVER='AutoDC' # default; TODO:180 refactor AUTH_SERVER choice to input file
       AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
       LDAP_PORT=389
       AUTH_FQDN='ntnxlab.local'
@@ -128,7 +130,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
         NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
     NW1_DHCP_START="${IPV4_PREFIX}.100"
       NW1_DHCP_END="${IPV4_PREFIX}.250"
-      # pc deploy file local override, TODO: make an array of URLs
+      # pc deploy file local override, TODO:30 make an PC_URL array and eliminate
                PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
        PC_DEV_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
     PC_STABLE_METAURL=${PC_DEV_METAURL}

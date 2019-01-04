@@ -172,7 +172,7 @@ function dns_check() {
 function download() {
   local           _attempts=5
   local              _error=0
-  local _http_range_enabled   # TODO:50 disabled '--continue-at -'
+  local _http_range_enabled   # TODO:40 OPTIMIZATION: disabled '--continue-at -'
   local               _loop=0
   local             _output
   local              _sleep=2
@@ -311,7 +311,7 @@ function images() {
         # exit ${_error}
       fi
 
-      # TODO: TOFIX: acs-centos ugly override for today...
+      # TODO:0 TOFIX: acs-centos ugly override for today...
       if (( $(echo "${_image}" | grep -i 'acs-centos' | wc --lines ) > 0 )); then
         _name=acs-centos
       fi
@@ -429,7 +429,7 @@ function ntnx_download() {
       fi
       ;;
     'NOS' | 'nos' | 'AOS' | 'aos')
-      # TODO: nos is a prototype
+      # TODO:70 nos is a prototype
       args_required 'AOS_VERSION AOS_UPGRADE'
       _meta_url="${AOS_METAURL}"
 
@@ -633,7 +633,7 @@ function remote_exec() {
   local     _host
   local     _loop=0
   local _password="${PE_PASSWORD}"
-  local   _pw_init='nutanix/4u' # TODO:230 hardcoded p/w
+  local  _pw_init="${NTNX_INIT_PASSWORD}"
   local    _sleep=${SLEEP}
   local     _test=0
 

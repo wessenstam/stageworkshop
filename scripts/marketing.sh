@@ -28,7 +28,7 @@ case ${1} in
     && network_configure \
     && files_install \
     && images \
-    && pc_install \
+    && pc_install "${NW1_NAME}" \
     && prism_check 'PC'
 
     if (( $? == 0 )) ; then

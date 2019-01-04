@@ -238,8 +238,9 @@ function pc_configure() {
 }
 
 function pc_install() {
-  local             _nw1_uuid
   local    _ncli_softwaretype='PRISM_CENTRAL_DEPLOY'
+  local              _nw_name="${1}"
+  local              _nw_uuid
   local _storage_default_uuid
   local                 _test
 
@@ -249,13 +250,13 @@ function pc_install() {
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip."
   else
-    log "Get NW1, Storage Container UUIDs from cluster..."
-    _nw1_uuid=$(acli "net.get ${NW1_NAME}" \
+    log "Get cluster network and storage container UUIDs..."
+    _nw_uuid=$(acli "net.get ${_nw_name}" \
       | grep "uuid" | cut -f 2 -d ':' | xargs)
     _storage_default_uuid=$(ncli container ls name=${STORAGE_DEFAULT} \
       | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-    log "${NW1_NAME} network UUID is ${_nw1_uuid}"
-    log "${STORAGE_DEFAULT} storage container UUID is ${_storage_default_uuid}"
+    log "${_nw_name} network UUID: ${_nw_uuid}"
+    log "${STORAGE_DEFAULT} storage container UUID: ${_storage_default_uuid}"
 
     _test=$(source /etc/profile.d/nutanix_env.sh \
       && ncli --json=true software list \
@@ -270,10 +271,11 @@ function pc_install() {
     fi
 
     log "Deploy Prism Central (typically takes 17+ minutes)..."
-    # TODO:210 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
+    # TODO:160 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     # Sizing suggestions, certified configurations:
     # https://portal.nutanix.com/#/page/docs/details?targetId=Release-Notes-Prism-Central-v591:sha-pc-scalability-r.html
 
+    # TODO:10 network_configuration.{subnet_mask|default_gateway}
     HTTP_BODY=$(cat <<EOF
 {
   "resources": {
@@ -284,7 +286,7 @@ function pc_install() {
       "nic_list":[{
         "network_configuration":{
           "subnet_mask":"255.255.255.128",
-          "network_uuid":"${_nw1_uuid}",
+          "network_uuid":"${_nw_uuid}",
           "default_gateway":"${IPV4_PREFIX}.1"
         },
         "ip_list":["${PC_HOST}"]

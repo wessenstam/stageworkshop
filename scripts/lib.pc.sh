@@ -117,13 +117,13 @@ EOF
 }
 
 function pc_auth() {
-  # TODO:250 configure case for each authentication server type?
+  # TODO:190 configure case for each authentication server type?
   local      _group
   local  _http_body
   local _pc_version
   local       _test
 
-  # TODO:60 not passing AUTH_SERVER argument yet
+  # TODO:50 FUTURE: pass AUTH_SERVER argument
 
   log "Add Directory ${AUTH_SERVER}"
   _http_body=$(cat <<EOF
@@ -156,7 +156,7 @@ EOF
   log "directories: _test=|${_test}|_http_body=|${_http_body}|"
 
   log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..."
-  #TODO:130 hardcoded role mappings
+  #TODO:20 hardcoded role mappings
   for _group in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
     _http_body=$(cat <<EOF
     {
@@ -214,7 +214,7 @@ function pc_dns_add() {
 }
 
 function pc_init() {
-  # TODO:170 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
+  # TODO:130 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
   local _test
 
   log "Configure NTP@PC"
@@ -300,7 +300,7 @@ function ssp_auth() {
 
   # TODO:110 get directory service name _ldap_name
   _ldap_name=${AUTH_SERVER}
-  # TODO:180 bats? test ldap connection
+  # TODO:140 bats? test ldap connection
 
   log "Connect SSP Authentication (spec-ssp-authrole.json)..."
   _http_body=$(cat <<EOF
@@ -340,9 +340,9 @@ EOF
     https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
   log "_ssp_connect=|${_ssp_connect}|"
 
-  # TODO:160 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
+  # TODO:120 SSP Admin assignment, cluster, networks (default project?) = spec-project-config.json
   # PUT https://localhost:9440/api/nutanix/v3/directory_services/9d8c2c33-9d95-438c-a7f4-2187120ae99e = spec-ssp-direcory_service.json
-  # TODO:70 make directory_type variable?
+  # TODO:60 FUTURE: use directory_type variable?
   log "Enable SSP Admin Authentication (spec-ssp-direcory_service.json)..."
   _http_body=$(cat <<EOF
   {

@@ -109,7 +109,7 @@ EoM
       prism_check 'PE' 60
 
       if [[ -d cache ]]; then
-        #TODO:190 proper cache detection and downloads
+        #TODO:150 proper cache detection and downloads
         _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE}"
         log "Sending cached dependencies (optional)..."
         pushd cache \

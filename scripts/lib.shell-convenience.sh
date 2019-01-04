@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# stageworkshop_pe kill && stageworkshop_w1 && stageworkshop_pe
-# TODO:80 prompt for choice when more than one cluster
-# TODO:90 scp?
+# stageworkshop_pe kill && stageworkshop_w 2 && stageworkshop_pe && stageworkshop_pe logs
+# TODO:80 FUTURE: prompt for choice when more than one cluster
 
 . scripts/global.vars.sh
 

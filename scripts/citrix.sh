@@ -86,7 +86,7 @@ EOF"
     && network_configure \
     && authentication_source \
     && pe_auth \
-    && pc_install \
+    && pc_install "${NW1_NAME}" \
     && prism_check 'PC'
 
     if (( $? == 0 )) ; then

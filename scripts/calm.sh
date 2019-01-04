@@ -32,7 +32,7 @@ case ${1} in
     && pe_auth
 
     if (( $? == 0 )) ; then
-      pc_install \
+      pc_install "${NW1_NAME}" \
       && prism_check 'PC' \
       && pc_configure \
       && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
