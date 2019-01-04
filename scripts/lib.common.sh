@@ -427,6 +427,10 @@ function ntnx_download() {
         log ' - Provide the metadata URL for the "PC 1-click deploy from PE" option to this function, both case stanzas.'
         exit ${_error}
       fi
+
+      if [[ ! -z ${PC_URL} ]]; then
+        _source_url="${PC_URL}"
+      fi
       ;;
     'NOS' | 'nos' | 'AOS' | 'aos')
       # TODO:70 nos is a prototype
@@ -441,6 +445,10 @@ function ntnx_download() {
         log ' - Provide the Upgrade metadata URL to this function for both case stanzas.'
         exit ${_error}
       fi
+
+      if [[ ! -z ${AOS_URL} ]]; then
+        _source_url="${AOS_URL}"
+      fi
     ;;
     FILES | files | AFS | afs )
       args_required 'FILES_VERSION'
@@ -453,6 +461,10 @@ function ntnx_download() {
         log " - Find ${FILES_VERSION} in the Additional Releases section on the lower right side"
         log ' - Provide the metadata URL option to this function, both case stanzas.'
         exit ${_error}
+      fi
+
+      if [[ ! -z ${FILES_URL} ]]; then
+        _source_url="${FILES_URL}"
       fi
     ;;
     * )
@@ -469,11 +481,9 @@ function ntnx_download() {
     log "Warning: using cached download ${_meta_url##*/}"
   fi
 
-  if [[ -z ${PC_URL} ]]; then
+  if [[ -z ${_source_url} ]]; then
     dependencies 'install' 'jq' || exit 13
     _source_url=$(cat ${_meta_url##*/} | jq -r .download_url_cdn)
-  else
-    _source_url="${PC_URL}"
   fi
 
   if (( $(pgrep curl | wc --lines | tr -d '[:space:]') > 0 )); then
