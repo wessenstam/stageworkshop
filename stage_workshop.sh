@@ -18,7 +18,7 @@ function stage_clusters() {
   # Adjust map below as needed with $WORKSHOPS
   local      _cluster
   local    _container
-  local _dependencies
+  local _dependency
   local       _fields
   local    _libraries='global.vars.sh lib.common.sh '
   local    _pe_launch # will be transferred and executed on PE
@@ -101,12 +101,14 @@ EoM
       prism_check 'PE' 60
 
       if [[ -d cache ]]; then
-        #TODO:150 proper cache detection and downloads
-        _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE}"
-        log "Sending cached dependencies (optional)..."
-        pushd cache \
-          && remote_exec 'SCP' 'PE' "${_dependencies}" 'OPTIONAL' \
-          && popd || exit
+        pushd cache || true
+        for _dependency in ${JQ_PACKAGE} ${SSHPASS_PACKAGE}; do
+          if [[ -e ${_dependency} ]]; then
+            log "Sending cached ${_dependency} (optional)..."
+            remote_exec 'SCP' 'PE' "${_dependency}" 'OPTIONAL'
+          fi
+        done
+        popd || true
       fi
 
       if (( $? == 0 )) ; then

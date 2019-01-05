@@ -43,9 +43,10 @@
 # Semi-prioritized Backlog with Technical Debt #
 
 - Small improvements/bugs:
+  - Banner: PC-X bug:,@HPOC #
+  - Check if images are already active/uploaded on PC
   - stage-workshop: load into an array, Round-robin clusters
     - shell-convenience: load cluster array, menu of array index selection
-  - Banner: PC-X@HPOC #
   - tail -f $Branch/workshop.log?
   - Email when PC is ready, point to next steps in guidebook
   - Refactor PC_URL to be an array?

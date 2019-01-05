@@ -325,9 +325,9 @@ function pe_auth() {
     if [[ ! -z ${_aos} ]]; then
       # shellcheck disable=2206
       _aos_version=(${_aos//./ })
-      if (( ${_aos_version[0]} >= 5 && ${_aos_version[1]} >= 10 )); then
+      if (( ${_aos_version[0]} >= 5 && ${_aos_version[1]} >= 9 )); then
         _directory_url="ldap://${AUTH_HOST}:${LDAP_PORT}"
-        log "Adjusted directory-url=${_directory_url} because AOS-${_aos} >= 5.10"
+        log "Adjusted directory-url=${_directory_url} because AOS-${_aos} >= 5.9"
       fi
     else
       log "Error ${_error}: couldn't determine AOS version=${_aos}"
