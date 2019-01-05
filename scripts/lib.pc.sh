@@ -2,7 +2,6 @@
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 
-# shellcheck disable=SC2120
 function calm_update() {
   local  _attempts=12
   local  _calm_bin=/usr/local/nutanix/epsilon
@@ -15,6 +14,7 @@ function calm_update() {
   if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
     log "Bypassing download of updated containers."
   else
+    dependencies 'install' 'sshpass' || exit 13
     remote_exec 'ssh' 'AUTH_SERVER' \
       'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
       'OPTIONAL'

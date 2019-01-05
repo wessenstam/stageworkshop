@@ -12,10 +12,6 @@ begin
 args_required 'EMAIL PE_PASSWORD PC_VERSION'
 
 #dependencies 'install' 'jq' && ntnx_download 'PC' & #attempt at parallelization
-
-log "Adding SSH key to ${1} VMs..."
-ssh_pubkey & # non-blocking, parallel suitable
-
 # Some parallelization possible to critical path; not much: would require pre-requestite checks to work!
 
 case ${1} in
@@ -23,6 +19,7 @@ case ${1} in
     . lib.pe.sh
 
     args_required 'PE_HOST PC_LAUNCH'
+    ssh_pubkey & # non-blocking, parallel suitable
 
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
@@ -41,7 +38,7 @@ case ${1} in
       log "PE = https://${PE_HOST}:9440"
       log "PC = https://${PC_HOST}:9440"
 
-      files_install & # parallel test, optional?
+      files_install & # parallel, optional. Versus: $0 'files' &
 
       finish
     else
@@ -53,7 +50,9 @@ case ${1} in
   ;;
   PC | pc )
     . lib.pc.sh
-    dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13
+    dependencies 'install' 'jq' || exit 13
+
+    ssh_pubkey & # non-blocking, parallel suitable
 
     pc_passwd
     ntnx_cmd # check cli services available?
@@ -68,8 +67,7 @@ case ${1} in
       . global.vars.sh # re-populate PE_HOST dependencies
     fi
 
-    if [[ ! -z "${2}" ]]; then
-      # hidden bonus
+    if [[ ! -z "${2}" ]]; then # hidden bonus
       log "Don't forget: $0 first.last@nutanixdc.local%password"
       calm_update && exit 0
     fi
@@ -90,11 +88,10 @@ case ${1} in
     && pc_cluster_img_import \
     && prism_check 'PC'
 
-    # new functions, non-blocking, at the end.
+    log "Non-blocking functions (in development) follow."
     pc_project
     flow_enable
     pc_admin
-
     # ntnx_download 'AOS' # function in lib.common.sh
 
     unset NUCLEI_SERVER NUCLEI_USERNAME NUCLEI_PASSWORD
@@ -109,5 +106,8 @@ case ${1} in
       log "Error ${_error}: failed to reach PC!"
       exit ${_error}
     fi
+  ;;
+  FILES | files | afs )
+    files_install
   ;;
 esac

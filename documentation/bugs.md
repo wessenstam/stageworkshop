@@ -38,13 +38,15 @@
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
     - Fix scheduled for PC 5.10.1
   - Workaround = [AutoDC: Version2](autodc/README.md#Version2)
-  - deprecate AutoDC1 for 5.6+5.7+5.8?
+  - deprecate AutoDC1 for 5.6-8?
 
 # Semi-prioritized Backlog with Technical Debt #
 
 - Small improvements/bugs:
   - Banner: PC-X bug:,@HPOC #
-  - Check if images are already active/uploaded on PC
+  - Duplicate images are already active/uploaded on PC: check on import/inactive?
+  - dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13 everywhere for robustness/parallelization
+  - capture NFS URL timeout error message?
   - stage-workshop: load into an array, Round-robin clusters
     - shell-convenience: load cluster array, menu of array index selection
   - tail -f $Branch/workshop.log?

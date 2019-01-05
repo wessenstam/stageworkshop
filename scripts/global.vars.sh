@@ -12,17 +12,18 @@ PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/
 # Browse to: https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA
 # Find ${FILES_VERSION} in the Additional Releases section on the lower right side
 # Provide Upgrade metadata file URL to FILES_METAURL
-    FILES_VERSION='3.2.0' # was: '3.1.0.1'
+    FILES_VERSION='3.2.0'
     FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
 
-       PRISM_ADMIN='admin'
 NTNX_INIT_PASSWORD='nutanix/4u'
+       PRISM_ADMIN='admin'
+        SSH_PUBKEY="${HOME}/.ssh/id_rsa.pub"
       STORAGE_POOL='SP01'
    STORAGE_DEFAULT='Default'
     STORAGE_IMAGES='Images'
 
- # Conventions for *_REPOS arrays, the URL must end with:
- # - trailing slash (which imples _IMAGES argument to function repo_source())
+ # Conventions for *_REPOS arrays -- the URL must end with either:
+ # - trailing slash, which imples _IMAGES argument to function repo_source()
  # - or full package filename.
 
  # https://stedolan.github.io/jq/download/#checksums_and_signatures

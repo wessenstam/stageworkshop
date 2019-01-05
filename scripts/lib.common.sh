@@ -609,7 +609,7 @@ function prism_check {
     fi
 
     if (( ${_test} == 401 )); then
-      log "Warning: unauthorized ${1} user or password."
+      log "Warning: unauthorized ${1} user or password on ${_host}."
     fi
 
     if (( ${_test} == 401 )) && [[ ${1} == 'PC' && ${_password} != "${_pw_init}" ]]; then
@@ -646,6 +646,8 @@ function remote_exec() {
   local  _pw_init="${NTNX_INIT_PASSWORD}"
   local    _sleep=${SLEEP}
   local     _test=0
+
+  args_required 'SSH_OPTS'
 
   # shellcheck disable=SC2153
   case ${2} in
@@ -712,7 +714,7 @@ function remote_exec() {
         break
       fi
     else
-      log "${_loop}/${_attempts}: _test=$?|${_test}| ${FILENAME} SLEEP ${_sleep}..."
+      log "${_loop}/${_attempts}: _test=$?|${_test}| SLEEP ${_sleep}..."
       sleep ${_sleep}
     fi
   done
@@ -786,13 +788,34 @@ function repo_source() {
 }
 
 function ssh_pubkey() {
-  local   _name=${EMAIL//\./_DOT_}
-  local _sshkey=${HOME}/id_rsa.pub
+  local         _dir
+  local _directories=(\
+     "${HOME}" \
+     "${HOME}/ssh_keys" \
+     "${HOME}/cache" \
+   )
+  local        _name
+  local        _test
 
+  args_required 'EMAIL SSH_PUBKEY'
+
+  _name=${EMAIL//\./_DOT_}
   _name=${_name/@/_AT_}
-  if [[ -e ${_sshkey} ]]; then
-    log "Note that a period and other symbols aren't allowed to be a key name."
-    log "Locally adding ${_sshkey} under ${_name} label..."
-    ncli cluster add-public-key name=${_name} file-path=${_sshkey} || true
+  _test=$(source /etc/profile.d/nutanix_env.sh \
+    && ncli cluster list-public-keys name=${_name})
+
+  if (( $(echo ${_test} | grep -i "Failed" | wc ${WC_ARG}) > 0 )); then
+    for _dir in "${_directories[@]}"; do
+      if [[ -e ${_dir}/${SSH_PUBKEY##*/} ]]; then
+        log "Note that a period and other symbols aren't allowed to be a key name."
+
+        log "Locally adding ${_dir}/${SSH_PUBKEY##*/} under ${_name} label..."
+        ncli cluster add-public-key name=${_name} file-path=${_dir}/${SSH_PUBKEY##*/} || true
+
+        break
+      fi
+    done
+  else
+    log "IDEMPOTENCY: found pubkey ${_name}"
   fi
 }

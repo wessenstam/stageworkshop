@@ -11,7 +11,6 @@ WORKSHOPS=(\
 "Calm Workshop (AOS 5.9+/AHV PC 5.10.x) = Development" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
-"SH-COLO Cluster with PC 5.10.x" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -23,7 +22,7 @@ function stage_clusters() {
   local    _libraries='global.vars.sh lib.common.sh '
   local    _pe_launch # will be transferred and executed on PE
   local    _pc_launch # will be transferred and executed on PC
-  local       _sshkey="${HOME}/.ssh/id_rsa.pub" #TODO: hardcoded SSH key filespec
+  local       _sshkey=${SSH_PUBKEY}
   local       _wc_arg='--lines'
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
@@ -56,11 +55,6 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i Summit | wc ${WC_ARG}) > 0 )); then
     _pe_launch='stage_ts18.sh'
     _pc_launch='stage_ts18_pc.sh'
-  fi
-  if (( $(echo ${_workshop} | grep -i SH-COLO | wc ${WC_ARG}) > 0 )); then
-    _libraries+='lib.pe.sh lib.pc.sh'
-    _pe_launch='calm.sh'
-    _pc_launch=${_pe_launch}
   fi
 
   dependencies 'install' 'sshpass'
