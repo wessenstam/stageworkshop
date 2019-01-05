@@ -57,7 +57,7 @@ Rebuild AHV-2 cluster no more than 1 hour.
 
 - see log on ``pe`` and ``pc``
     ```
-    tail -f ~/sh-colo.log
+    tail -f ~/calm.log
     ```
     
 - finial configure
