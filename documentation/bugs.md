@@ -44,6 +44,9 @@
 
 # Semi-prioritized Backlog with Technical Debt #
 
+- Linux migration:
+
+      docker image inspect $(docker image ls | grep gitversion | awk '{print $3}') > documentation/container.gitversion.$(uname -s).txt
 - Small improvements/bugs:
   - Banner: PC-X bug:,@HPOC #
   - Duplicate images are already active/uploaded on PC: check on import/inactive?
@@ -184,6 +187,9 @@ I’ve looked into some server testing frameworks.
   - https://pre-commit.com/
     - brew install pre-commit
   - https://github.com/rycus86/githooks
+  - Research https://medium.freecodecamp.org/improve-development-workflow-of-your-team-with-githooks-9cda15377c3b
+  - TODO via hook?: check if unpushed commits, then allow git commit --amend
+    - https://stackoverflow.com/questions/253055/how-do-i-push-amended-commit-to-the-remote-git-repository
 - Add (git)version/release to each script (assembly?) for github archive cache
   - https://semver.org/
     - https://guides.github.com/introduction/flow/index.html
@@ -439,4 +445,7 @@ git checkout master && git merge [topic_branch]
 git branch --delete [topic_branch]
 git push origin --delete [topic_branch|tag]
 git remote set-url origin git@github.com:mlavi/stageworkshop.git #change transport
+
+$ git stash list
+git stage && git pull --rebase && git stash pop
 ````

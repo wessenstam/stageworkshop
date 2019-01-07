@@ -1,0 +1,106 @@
+[
+    {
+        "Id": "sha256:cb08da7ab939214440440b2bcaf88a8904e27c47b071086dbc876aabdae4ef57",
+        "RepoTags": [
+            "gittools/gitversion-fullfx:linux"
+        ],
+        "RepoDigests": [
+            "gittools/gitversion-fullfx@sha256:fd5ef6be6864585776f4c7827825e674a39a9cd47f23d2e75d7de5fdd352caa9"
+        ],
+        "Parent": "",
+        "Comment": "",
+        "Created": "2018-10-24T11:46:33.952190652Z",
+        "Container": "404031c17f634908b685d0b1b5f7d015b9f23b6c018a5dc288983306338d8464",
+        "ContainerConfig": {
+            "Hostname": "404031c17f63",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "MONO_VERSION=5.14.0.177"
+            ],
+            "Cmd": [
+                "/bin/sh",
+                "-c",
+                "#(nop) ",
+                "ENTRYPOINT [\"mono\" \"GitVersion.exe\"]"
+            ],
+            "ArgsEscaped": true,
+            "Image": "sha256:97e4919656e4898c97fb32386665eb382f4d25f8cb54cf5a69d6e1a42a73466c",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "mono",
+                "GitVersion.exe"
+            ],
+            "OnBuild": [],
+            "Labels": {
+                "maintainers": "GitTools Maintainers"
+            }
+        },
+        "DockerVersion": "17.09.0-ce",
+        "Author": "",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "MONO_VERSION=5.14.0.177"
+            ],
+            "Cmd": null,
+            "ArgsEscaped": true,
+            "Image": "sha256:97e4919656e4898c97fb32386665eb382f4d25f8cb54cf5a69d6e1a42a73466c",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "mono",
+                "GitVersion.exe"
+            ],
+            "OnBuild": [],
+            "Labels": {
+                "maintainers": "GitTools Maintainers"
+            }
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 666746092,
+        "VirtualSize": 666746092,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/fae3baac94514cc0ba8b6d0025cd5ece00958b1f483e69d8899df0f8135847db/diff:/var/lib/docker/overlay2/03f9cb2424f18fa1f6d4e5f35c4b65a1d1708cd3871d64224d48d5cf59e3281f/diff:/var/lib/docker/overlay2/f8f3320f5342242350a1bd056c5a62199fdf688269d424024d9215bcd7a33c5e/diff:/var/lib/docker/overlay2/d835081f05381e7717eaa23f1af027672cb5a5a98f3ffd92ffc64f7ec259675e/diff:/var/lib/docker/overlay2/037f6de681d502c777357a2d16089940e6df79cf8e63abda833d6551998a0f53/diff:/var/lib/docker/overlay2/81841883ede2e77a4c538b4d2412206911fe92e9bd3536175a1adcc373c133ed/diff",
+                "MergedDir": "/var/lib/docker/overlay2/8cddd536ab2db78236a4d5355f7e86ea1c4611fab098c6e6eb5c5c8802b21e63/merged",
+                "UpperDir": "/var/lib/docker/overlay2/8cddd536ab2db78236a4d5355f7e86ea1c4611fab098c6e6eb5c5c8802b21e63/diff",
+                "WorkDir": "/var/lib/docker/overlay2/8cddd536ab2db78236a4d5355f7e86ea1c4611fab098c6e6eb5c5c8802b21e63/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:dbf4cf3850fd9ebf4ac98c7429026988d1b88c80b5f44cb6c29fa2f72226784b",
+                "sha256:3c5adc5420ef98ac901f81d5c1f57cc0424bd8b321b42886ef0977b8b2d15d43",
+                "sha256:3983afa774af4230ccb042c72066fee164d4f3feb999732193fed7757888934b",
+                "sha256:a431a5421647f0cfa6562b9856301793b853f2977a50e4c12e9f397a01f2cb31",
+                "sha256:9cd6a35efb1eab4757fd981b6a4a6dd67794e49d7784aabd7de472d904bd10c6",
+                "sha256:5074184fdc0f7b3aa5e1c3449fd19b8419b33dc0d2fdf23f9bb814bb5558f6e4",
+                "sha256:281e2f57c49edff027e0749f3a291b87570b5716aed43798625f7dbc80fb30f0"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "0001-01-01T00:00:00Z"
+        }
+    }
+]
