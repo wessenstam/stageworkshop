@@ -218,6 +218,9 @@ In order to keep the master branch stable, a developer should work on a feature 
   - /hooks/pre-commit/... = symbolic link to hooks/script/...
   - /hooks/scripts/semver_release.sh
     - [GitVersion](https://github.com/GitTools/GitVersion) container outputs to /release.json
+  - Setup:
+    - Docker + GitVersion (see: semver_release.sh::${CONTAINER_TAG})
+    - cd hooks && ./autohook.sh install
 - Shell Style Guide
   - shfmt via IDE
   - [Google Shell Script Guide](https://google.github.io/styleguide/shell.xml)

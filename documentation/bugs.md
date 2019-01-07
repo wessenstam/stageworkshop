@@ -46,38 +46,29 @@
 # Semi-prioritized Backlog with Technical Debt #
 
 - Linux migration:
-
-      docker image inspect $(docker image ls | grep gitversion | awk '{print $3}') > documentation/container.gitversion.$(uname -s).txt
-
   - https://hub.docker.com/u/gittools
     - https://hub.docker.com/r/gittools/gitversion 2 years old: v4.0.0-beta.12 493 MB
     - https://hub.docker.com/r/gittools/gitversion-fullfx
-      - docker pull gittools/gitversion-fullfx:linux
+      - latest=linux-4.0.1beta, linux-4.0.0 works on LinuxMint
+      - docker pull gittools/gitversion-fullfx:linux{-version}
       - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
-      - Last known good @MacOS from: image info
-      "Id": "sha256:cb08da7ab939214440440b2bcaf88a8904e27c47b071086dbc876aabdae4ef57",
-      "RepoTags": [
-          "gittools/gitversion-fullfx:linux"
-      ],
-      "RepoDigests": [
-          "gittools/gitversion-fullfx@sha256:fd5ef6be6864585776f4c7827825e674a39a9cd47f23d2e75d7de5fdd352caa9"
-      ],
-      "Parent": "",
-      "Comment": "",
-      "Created": "2018-10-24T11:46:33.952190652Z",
-      "Container": "404031c17f634908b685d0b1b5f7d015b9f23b6c018a5dc288983306338d8464",
-      "ContainerConfig": {
-          "Env": [
-              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-              "MONO_VERSION=5.14.0.177"
+
+            docker image inspect $(docker image ls | grep gitversion | awk '{print $3}') > documentation/container.gitversion.$(uname -s).txt
+
+      - Last known good @MacOS from: image inspect (above):
+        "Created": "2018-10-24T11:46:33.952190652Z",
+        "Container": "404031c17f634908b685d0b1b5f7d015b9f23b6c018a5dc288983306338d8464",
     - https://hub.docker.com/r/gittools/gitversion-dotnetcore
       - https://hub.docker.com/r/asimonf/docker-gitversion-compose/dockerfile
       - https://hub.docker.com/r/pblachut/gitversionindocker/tags
-  - How to find all container tags from a remote image registry:
-    - https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock
+  - How to:
+    - check for latest remote container tags
+      - How to find all container tags from a remote image registry:
+        - https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock
 
-    curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | jq '."results"[]["name"]' |sort
-    - https://stackoverflow.com/questions/28320134/how-to-list-all-tags-for-a-docker-image-on-a-remote-registry
+        curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | jq '."results"[]["name"]' |sort
+        - https://stackoverflow.com/questions/28320134/how-to-list-all-tags-for-a-docker-image-on-a-remote-registry
+    - purge unused container tags
 - Small improvements/bugs:
   - Banner: PC-X bug:,@HPOC #
   - Duplicate images are already active/uploaded on PC: check on import/inactive?
