@@ -160,7 +160,18 @@ CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
       SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
      SSH_OPTS+=' -q' # -v'
 
+# Find operating system and set dependencies
+if [[ -e /etc/lsb-release ]]; then
+  # Linux Standards Base
+  OS_NAME="$(grep DISTRIB_ID /etc/lsb-release | awk -F= '{print $2}')"
+elif [[ -e /etc/os-release ]]; then
+  # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
+  OS_NAME="$(grep '^ID=' /etc/os-release | awk -F= '{print $2}')"
+elif [[ $(uname -s) == 'Darwin' ]]; then
+  OS_NAME='Darwin'
+fi
+
 WC_ARG='--lines'
-if [[ $(uname -s) == 'Darwin' ]]; then
+if [[ ${OS_NAME} == 'Darwin' ]]; then
   WC_ARG='-l'
 fi

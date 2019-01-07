@@ -15,9 +15,11 @@ if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   fi
 fi
 
-alias stageworkshop_pe-chrome='stageworkshop_chrome PE'
-alias stageworkshop_pc-chrome='stageworkshop_chrome PC'
-alias         stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
+alias stageworkshop_ssh-pe='stageworkshop_ssh PE'
+alias stageworkshop_ssh-pc='stageworkshop_ssh PC'
+alias stageworkshop_web-pe='stageworkshop_web PE'
+alias stageworkshop_web-pc='stageworkshop_web PC'
+alias stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
 
 function stageworkshop_auth() {
   . scripts/global.vars.sh
@@ -79,7 +81,7 @@ function stageworkshop_cache_start() {
 
   ps -efww | grep ssh
   unset NTNX_USER PE_HOST PE_PASSWORD SSHPASS
-  stageworkshop_chrome http://localhost:${HTTP_CACHE_PORT}
+  stageworkshop_web http://localhost:${HTTP_CACHE_PORT}
 }
 
 function stageworkshop_cache_stop() {
@@ -87,9 +89,10 @@ function stageworkshop_cache_stop() {
   pkill -f ${HTTP_CACHE_PORT}
 }
 
-function stageworkshop_chrome() {
+function stageworkshop_web() {
+  local _url
+
   stageworkshop_cluster ''
-  local   _url="${1}"
 
   case "${1}" in
     PC | pc)
@@ -102,9 +105,18 @@ function stageworkshop_chrome() {
   esac
   unset NTNX_USER PE_HOST PE_PASSWORD PC_HOST SSHPASS
 
-  if [[ $(uname -s) == 'Darwin' ]]; then
-    open -a 'Google Chrome' ${_url}
-  fi
+  case "${OS_NAME}" in
+    Darwin)
+      open -a 'Google Chrome' ${_url}
+      ;;
+    LinuxMint | Ubuntu)
+      firefox ${_url} || chromium-browser ${_url}
+      ;;
+    *)
+      echo "Undetected operating system OS_NAME=${OS_NAME}"
+      exit 10
+      ;;
+  esac
 }
 
 function stageworkshop_cluster() {
@@ -131,18 +143,10 @@ function stageworkshop_cluster() {
 
   export     PE_HOST=${_fields[0]}
   export PE_PASSWORD=${_fields[1]}
-  export    EMAIL=${_fields[2]}
+  export       EMAIL=${_fields[2]}
   echo "INFO|stageworkshop_cluster|PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} NTNX_USER=${NTNX_USER}"
 
   . scripts/global.vars.sh
-}
-
-function stageworkshop_pe() {
-  stageworkshop_ssh 'PE' "${1}"
-}
-
-function stageworkshop_pc() {
-  stageworkshop_ssh 'PC' "${1}"
 }
 
 function stageworkshop_ssh() {

@@ -21,6 +21,8 @@
 
 # Bugs #
 
+- RFE: AOS 5.10.0.1 may need latest or have incompatible AHV release
+  - PE: ncli software ls software-type=Hypervisor
 - BUG = AOS 5.9, 5.10: all calm.sh PC service timeout detect/retry
   - Notify bart.grootzevert when fixed
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...

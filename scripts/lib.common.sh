@@ -37,9 +37,6 @@ function dependencies {
   local    _argument
   local       _error
   local       _index
-  local         _cpe=/etc/os-release  # CPE = https://www.freedesktop.org/software/systemd/man/os-release.html
-  local         _lsb=/etc/lsb-release # Linux Standards Base
-  local    _os_found
   local      _jq_pkg=${JQ_REPOS[0]##*/}
   local _sshpass_pkg=${SSHPASS_REPOS[0]##*/}
 
@@ -57,14 +54,6 @@ function dependencies {
     exit ${_error}
   fi
 
-  if [[ -e ${_lsb} ]]; then
-    _os_found="$(grep DISTRIB_ID ${_lsb} | awk -F= '{print $2}')"
-  elif [[ -e ${_cpe} ]]; then
-    _os_found="$(grep '^ID=' ${_cpe} | awk -F= '{print $2}')"
-  elif [[ $(uname -s) == 'Darwin' ]]; then
-    _os_found='Darwin'
-  fi
-
   case "${1}" in
     'install')
 
@@ -72,9 +61,9 @@ function dependencies {
         log "Install ${2}..."
         case "${2}" in
           sshpass | ${_sshpass_pkg})
-            if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
+            if [[ ( ${OS_NAME} == 'Ubuntu' || ${OS_NAME} == 'LinuxMint' ) ]]; then
               sudo apt-get install --yes sshpass
-            elif [[ ${_os_found} == '"centos"' ]]; then
+            elif [[ ${OS_NAME} == '"centos"' ]]; then
               # TOFIX: assumption, probably on NTNX CVM or PCVM = CentOS7
               if [[ ! -e ${_sshpass_pkg} ]]; then
                 repo_source SSHPASS_REPOS[@] ${_sshpass_pkg}
@@ -86,16 +75,16 @@ function dependencies {
                 log "Error ${_error}: cannot install ${2}."
                 exit ${_error}
               fi
-            elif [[ ${_os_found} == 'Darwin' ]]; then
+            elif [[ ${OS_NAME} == 'Darwin' ]]; then
               brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
             fi
             ;;
           jq | ${_jq_pkg} )
-            if [[ ( ${_os_found} == 'Ubuntu' || ${_os_found} == 'LinuxMint' ) ]]; then
+            if [[ ( ${OS_NAME} == 'Ubuntu' || ${OS_NAME} == 'LinuxMint' ) ]]; then
               if [[ ! -e ${_jq_pkg} ]]; then
                 sudo apt-get install --yes jq
               fi
-            elif [[ ${_os_found} == '"centos"' ]]; then
+            elif [[ ${OS_NAME} == '"centos"' ]]; then
               if [[ ! -e ${_jq_pkg} ]]; then
                  repo_source JQ_REPOS[@] ${_jq_pkg}
                  download ${SOURCE_URL}
@@ -108,7 +97,7 @@ function dependencies {
                 PATH+=:$(pwd)
                 export PATH
               fi
-            elif [[ ${_os_found} == 'Darwin' ]]; then
+            elif [[ ${OS_NAME} == 'Darwin' ]]; then
               brew install jq
             fi
             ;;
@@ -124,7 +113,7 @@ function dependencies {
       fi
       ;;
     'remove')
-      if [[ ${_os_found} == '"centos"' ]]; then
+      if [[ ${OS_NAME} == '"centos"' ]]; then
         log "Warning: assuming on PC or PE VM, removing ${2}..."
         case "${2}" in
           sshpass | ${_sshpass_pkg})
