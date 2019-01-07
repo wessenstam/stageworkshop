@@ -195,8 +195,7 @@ See [the planning and working document](bugs.md).
 
 ## Development ##
 
-Shell scripting is not a complete computer language, but despite its drawbacks, it is capable.
-In the limited environment of the CVM, it is the easiest manner to orchestrate other command line tools, including Nutanix CLIs. You will also see API calls to access platform functionality.
+Shell scripting is not a complete computer language, but despite its drawbacks, it is capable. In the limited environment of the CVM, it is the easiest manner to orchestrate other command line tools, including Nutanix CLIs. You will also see RESTful API calls to exercise platform functionality.
 
 I refer to the [Advanced Bash-Scripting Guide](http://tldp.org/LDP/abs/html/index.html) every time I forget something or see strange syntax, it is a great way to learn and understand shell scripting!
 
@@ -207,8 +206,21 @@ In order to keep the master branch stable, a developer should work on a feature 
     cd $(git clone https://github.com/mlavi/stageworkshop.git 2>&1 \
       | grep Cloning | awk -F\' '{print $2}') \
       && git checkout <BRANCH>
-    # Create your cluster file, e.g.: echo "${PE}|${PE_PASSWORD}|${EMAIL}" > example_pocs.txt
-    ./stage_workshop.sh -f example_pocs.txt
+
+    # Create your cluster file, e.g.: echo "${PE}|${PE_PASSWORD}|${EMAIL}" > pocs.txt
+    ./stage_workshop.sh -f pocs.txt
+
+### Local Development Strategies and Tactics ###
+
+- [Semantic Versioning](https://semver.org/) implemented via:
+  - /hooks/ = local git hooks
+    - [Autohook](https://github.com/nkantar/Autohook).sh
+  - /hooks/pre-commit/... = symbolic link to hooks/script/...
+  - /hooks/scripts/semver_release.sh
+    - [GitVersion](https://github.com/GitTools/GitVersion) container outputs to /release.json
+- Shell Style Guide
+  - shfmt via IDE
+  - [Google Shell Script Guide](https://google.github.io/styleguide/shell.xml)
 
 ### How to Update or Add a Workshop ###
 
@@ -223,11 +235,8 @@ Everything takes place in `stage_workshop.sh`:
         "Calm Workshop (AOS 5.5+/AHV PC 5.10.x) = Development" \
         "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
         #"Tech Summit 2018" \
-        "Marketing Cluster with PC 5.9.x" \
     )````
-2. Adjust/update function stage_clusters() (which immediately follows the
-  `WORKSHOPS` array) for mappings to latest version number and staging scripts,
-  as needed.
+2. Adjust/update function stage_clusters() (which immediately follows the `WORKSHOPS` array) for mappings to latest version number and staging scripts, as needed.
 
 ### How to Update Nutanix Software Version Used in a Workshop ###
 
@@ -323,7 +332,7 @@ Typical download and install of Prism Central is 17 minutes of waiting!
 
 1. Push button Calm!
 
-    1. __PC> Apps (or Services > Calm):__ click lower left ? to show Calm version
+    1. __PC> Apps (or PC-5.10+: Services > Calm):__ click lower left ? to show Calm version
     2. __Projects:__ Default: add the following:
 
         - Description: "Freedom to Cloud",

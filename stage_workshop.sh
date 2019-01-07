@@ -80,14 +80,14 @@ function stage_clusters() {
           _fields=(${_cluster//|/ })
           PE_HOST=${_fields[0]}
       PE_PASSWORD=${_fields[1]}
-         EMAIL=${_fields[2]}
+            EMAIL=${_fields[2]}
 
       pe_configuration_args "${_pc_launch}"
 
       . scripts/global.vars.sh # re-import for relative settings
 
       cat <<EoM
-      Warning -- curl time out indicates either:
+______Warning -- curl time out indicates either:
       - a network routing issue (perhaps you're not on VPN?),
       - cluster Foundation and initialization hasn't completed.
 EoM
@@ -149,12 +149,15 @@ EoM
       # shellcheck disable=SC2153
       cat <<EOM
 
-  Cluster automation progress for ${_workshop} can be monitored via Prism Element and Central.
+  Cluster automation progress for:
+  ${_workshop}
+  can be monitored via Prism Element and Central.
 
   If your SSH key has been uploaded to Prism > Gear > Cluster Lockdown,
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
-  $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
+  $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh \\
+      ${SSH_OPTS} \\
       nutanix@${PE_HOST} 'date; tail -f ${_pe_launch%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
     https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
@@ -164,7 +167,8 @@ EOM
       if (( "$(echo ${_libraries} | grep -i lib.pc | wc ${_wc_arg})" > 0 )); then
         # shellcheck disable=2153
         cat <<EOM
-  $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
+  $ SSHPASS='nutanix/4u' sshpass -e ssh \\
+      ${SSH_OPTS} \\
       nutanix@${PC_HOST} 'date; tail -f ${_pc_launch%%.sh}.log'
     https://${PRISM_ADMIN}@${PC_HOST}:9440/
 

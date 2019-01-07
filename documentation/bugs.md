@@ -48,6 +48,36 @@
 - Linux migration:
 
       docker image inspect $(docker image ls | grep gitversion | awk '{print $3}') > documentation/container.gitversion.$(uname -s).txt
+
+  - https://hub.docker.com/u/gittools
+    - https://hub.docker.com/r/gittools/gitversion 2 years old: v4.0.0-beta.12 493 MB
+    - https://hub.docker.com/r/gittools/gitversion-fullfx
+      - docker pull gittools/gitversion-fullfx:linux
+      - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
+      - Last known good @MacOS from: image info
+      "Id": "sha256:cb08da7ab939214440440b2bcaf88a8904e27c47b071086dbc876aabdae4ef57",
+      "RepoTags": [
+          "gittools/gitversion-fullfx:linux"
+      ],
+      "RepoDigests": [
+          "gittools/gitversion-fullfx@sha256:fd5ef6be6864585776f4c7827825e674a39a9cd47f23d2e75d7de5fdd352caa9"
+      ],
+      "Parent": "",
+      "Comment": "",
+      "Created": "2018-10-24T11:46:33.952190652Z",
+      "Container": "404031c17f634908b685d0b1b5f7d015b9f23b6c018a5dc288983306338d8464",
+      "ContainerConfig": {
+          "Env": [
+              "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+              "MONO_VERSION=5.14.0.177"
+    - https://hub.docker.com/r/gittools/gitversion-dotnetcore
+      - https://hub.docker.com/r/asimonf/docker-gitversion-compose/dockerfile
+      - https://hub.docker.com/r/pblachut/gitversionindocker/tags
+  - How to find all container tags from a remote image registry:
+    - https://stackoverflow.com/questions/24481564/how-can-i-find-a-docker-image-with-a-specific-tag-in-docker-registry-on-the-dock
+
+    curl -s -S "https://registry.hub.docker.com/v2/repositories/library/$@/tags/" | jq '."results"[]["name"]' |sort
+    - https://stackoverflow.com/questions/28320134/how-to-list-all-tags-for-a-docker-image-on-a-remote-registry
 - Small improvements/bugs:
   - Banner: PC-X bug:,@HPOC #
   - Duplicate images are already active/uploaded on PC: check on import/inactive?
@@ -173,38 +203,32 @@
   - Multi product demo
 
 ## Improved Software Engineering ##
-- I’ve been wrestling with how to best make my bash scripts test driven. There are TDD Bash frameworks, however most of the systems leveraged/orchestrated are external and would require mocking, something I’m not sure how to approach.
+- I've been wrestling with how to best make my bash scripts test driven. There are TDD Bash frameworks, however most of the systems leveraged/orchestrated are external and would require mocking, something I’m not sure how to approach.
 
 What I have done, in most functions, is try to make them [idempotent](https://en.wiktionary.org/wiki/idempotent) by "testing" for the desired outcome and skipping if accomplished. Of course, most of these tests are cheats: they only check for the final stage of a function being accomplished. Usually, this is good enough, because the final configuration is predicated on all preceding stages in the function. It would be ideal to test every operation, but as you can imagine, that’s quite a bit of work.
 
 This gives the ability to rerun the script from the beginning, skip all previously successful work, and rapidly begin work on the next, unaccomplished stage.
 
-I’ve looked into some server testing frameworks.
+I've looked into some server testing frameworks.
 
-- https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
-- https://bors.tech/ "Bors is a GitHub bot that prevents merge skew / semantic merge conflicts, so when a developer checks out the main branch, they can expect all of the tests to pass out-of-the-box."
 - https://githooks.com/
-  - https://github.com/nkantar/Autohook
-  - https://pre-commit.com/
-    - brew install pre-commit
-  - https://github.com/rycus86/githooks
+  - https://github.com/nkantar/Autohook (success)
+  - Also investigated:
+    - https://pre-commit.com/
+      - brew install pre-commit
+    - https://github.com/rycus86/githooks
   - Research https://medium.freecodecamp.org/improve-development-workflow-of-your-team-with-githooks-9cda15377c3b
   - TODO via hook?: check if unpushed commits, then allow git commit --amend
     - https://stackoverflow.com/questions/253055/how-do-i-push-amended-commit-to-the-remote-git-repository
 - Add (git)version/release to each script (assembly?) for github archive cache
   - https://semver.org/
-    - https://guides.github.com/introduction/flow/index.html
     - https://github.com/GitTools/GitVersion
       - https://gitversion.readthedocs.io/en/stable/usage/command-line/
       - brew install gitversion
       - GitVersion /showConfig
     - sudo apt-get install mono-complete
       - do not: sudo apt-get install libcurl3 # removes curl libcurl4
-    - Download dotnet4 zip archive
-    - put on mono-path?
-    - Investigate https://hub.docker.com/r/gittools/gitversion-fullfx/
-      - docker pull gittools/gitversion-fullfx:linux
-      - docker run --rm -v "$(pwd):/repo" gittools/gitversion-fullfx:linux{-version} /repo
+    - Download dotnet4 zip archive and put on mono-path?
     - gitversion | tee gitversion.json | jq -r .FullSemVer
     - ````ls -l *json && echo _GV=${_GV}````
     - ````_GV=gitversion.json ; rm -f ${_GV} \
@@ -213,6 +237,9 @@ I’ve looked into some server testing frameworks.
   - versus https://github.com/markchalloner/git-semver
 - ~/Documents/github.com/ideadevice/calm/src/calm/tests/qa/docs
   = https://github.com/ideadevice/calm/tree/master/src/calm/tests/qa/docs
+- https://stackoverflow.com/questions/14494747/add-images-to-readme-md-on-github
+- https://guides.github.com/introduction/flow/index.html
+- https://bors.tech/ "Bors is a GitHub bot that prevents merge skew / semantic merge conflicts, so when a developer checks out the main branch, they can expect all of the tests to pass out-of-the-box."
 - Per Google shell style guide:
   - refactor function names to lowercase: https://google.github.io/styleguide/shell.xml?showone=Function_Names#Function_Names
 - http://jake.ginnivan.net/blog/2014/05/25/simple-versioning-and-release-notes/
