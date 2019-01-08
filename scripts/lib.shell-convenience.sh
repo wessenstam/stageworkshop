@@ -15,10 +15,10 @@ if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   fi
 fi
 
-alias stageworkshop_ssh-pe='stageworkshop_ssh PE'
-alias stageworkshop_ssh-pc='stageworkshop_ssh PC'
-alias stageworkshop_web-pe='stageworkshop_web PE'
-alias stageworkshop_web-pc='stageworkshop_web PC'
+alias stageworkshop_ssh_pe='stageworkshop_ssh PE'
+alias stageworkshop_ssh_pc='stageworkshop_ssh PC'
+alias stageworkshop_web_pe='stageworkshop_web PE'
+alias stageworkshop_web_pc='stageworkshop_web PC'
 alias stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
 
 function stageworkshop_auth() {
@@ -110,7 +110,7 @@ function stageworkshop_web() {
       open -a 'Google Chrome' ${_url}
       ;;
     LinuxMint | Ubuntu)
-      firefox ${_url} || chromium-browser ${_url}
+      firefox ${_url} || chromium-browser ${_url} &
       ;;
     *)
       echo "Undetected operating system OS_NAME=${OS_NAME}"
