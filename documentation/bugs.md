@@ -21,11 +21,8 @@
 
 # Bugs #
 
-- RFE: AOS 5.10.0.1 may need latest or have incompatible AHV release
-  - PE: ncli software ls software-type=Hypervisor
-    - cluster --version <version.185> --md5sum=<md5 from portal> --bundle=<full path to bundle location on CVM> -p host_upgrade
 - BUG = AOS 5.9, 5.10: all calm.sh PC service timeout detect/retry
-  - Notify bart.grootzevert when fixed
+  - Notify Nathan and bart.grootzevert when fixed
   - 2018-10-24 21:54:23|14165|Determine_PE|Warning: expect errors on lines 1-2, due to non-JSON outputs by nuclei...
   E1024 21:54:24.142107   14369 jwt.go:35] ZK session is nil
   2018/10/24 21:54:24 Failed to connect to the server: websocket.Dial ws://127.0.0.1:9444/icli: bad status: 403
@@ -98,6 +95,9 @@
     - PC_Init|Reset PC password to PE password, must be done by nci@PC, not API or on PE
       Error: Password requirements: Should be at least 8 characters long. Should have at least 1 lowercase character(s). Should have at least 1 uppercase character(s). Should have at least 1 digit(s). Should have at least 1 special character(s). Should differ by at least 4 characters from previous password. Should not be from last 5 passwords. Should not have more than 2 same consecutive character(s). Should not be a dictionary word or too simplistic/systematic. Should should have at least one character belonging to 4 out of the 4 supported classes (lowercase, uppercase, digits, special characters).
       2018-10-02 10:56:27|92834|PC_Init|Warning: password not reset: 0.#
+- RFE: AOS 5.10.0.1 may need latest or have incompatible AHV release
+  - PE: ncli software ls software-type=Hypervisor
+    - cluster --version <version.185> --md5sum=<md5 from portal> --bundle=<full path to bundle location on CVM> -p host_upgrade
 - Test Calm 5.8 bootcamp labs and 5.5-6 bugs
   - https://github.com/nutanixworkshops/introcalm
   vs. https://github.com/mlavi/calm_workshop

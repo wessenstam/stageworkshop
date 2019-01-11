@@ -32,6 +32,13 @@ Users and groups are imported as part of the initialization:
 |poweruser01-05|nutanix/4u|SSP Power Users|
 |basicuser01-05|nutanix/4u|SSP Basic Users|
 
+Via: ./add_group_and_users.sh
+
+|Username(s)|Password|Group|
+|----|-----|-----|
+|user01-25|nutanix/4u|? confirm first|
+|user26-69|nutanix/4u|CalmAdmin|
+
 ## Tips ##
 
 Investigating memory use with `vmstat --wide --unit M --active`,

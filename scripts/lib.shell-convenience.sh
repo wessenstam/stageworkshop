@@ -15,10 +15,12 @@ if [[ -e ${RELEASE} && "${1}" != 'quiet' ]]; then
   fi
 fi
 
-alias stageworkshop_ssh_pe='stageworkshop_ssh PE'
-alias stageworkshop_ssh_pc='stageworkshop_ssh PC'
-alias stageworkshop_web_pe='stageworkshop_web PE'
-alias stageworkshop_web_pc='stageworkshop_web PC'
+alias stageworkshop_pe='stageworkshop_ssh PE'
+alias stageworkshop_pe_ssh='stageworkshop_ssh PE'
+alias stageworkshop_pe_web='stageworkshop_web PE'
+alias stageworkshop_pc='stageworkshop_ssh PC'
+alias stageworkshop_pc_ssh='stageworkshop_ssh PC'
+alias stageworkshop_pc_web='stageworkshop_web PC'
 alias stageworkshop_w='./stage_workshop.sh -f example_pocs.txt -w '
 
 function stageworkshop_auth() {
@@ -159,6 +161,9 @@ function stageworkshop_ssh() {
 
   case "${1}" in
     PC | pc)
+      echo "SSHPASS='nutanix/4u' sshpass -e ssh \\
+          ${SSH_OPTS} \\
+          nutanix@${PC_HOST}"
       echo 'pkill -f calm ; tail -f calm*log'
       echo "PC_VERSION=${PC_VERSION} EMAIL=${EMAIL} PE_PASSWORD='${_password}' ./calm.sh 'PC'"
           _host=${PC_HOST}
@@ -170,6 +175,10 @@ function stageworkshop_ssh() {
       cat << EOF
 OPTIONAL: cd stageworkshop-master
    CHECK: wget http://${HTTP_CACHE_HOST}:${HTTP_CACHE_PORT} -q -O-
+
+SSHPASS='${PE_PASSWORD}' sshpass -e ssh \\
+ ${SSH_OPTS} \\
+ nutanix@${PE_HOST}
 
 pkill -f calm ; tail -f calm*log
 EOF
