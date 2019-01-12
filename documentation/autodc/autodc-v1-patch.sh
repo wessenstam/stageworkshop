@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# if [[ ${AUTH_SERVER} == 'AutoDCv1' ]]; then
+#   # local  _autodc_conf='/etc/samba/smb.conf'
+#   # local _autodc_patch='ldap server require strong auth = no'
+#   remote_exec 'ssh' 'AUTH_SERVER' \
+#   'curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/documentation/autodc/autodc-v1-patch.sh && bash ${_##*/}' \
+#   'OPTIONAL'
+# fi
+
 if [[ ${USER} != 'root' ]]; then
   echo "Error in assumption: execute as user root."
   exit 1

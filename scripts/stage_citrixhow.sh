@@ -21,9 +21,9 @@ array=(${MY_CVM_IP//./ })
 MY_HPOC_NUMBER=${array[2]}
 # HPOC Password (if commented, we assume we get that from environment)
 #MY_PE_PASSWORD='nx2TechXXX!'
-MY_SP_NAME='SP01'
-MY_CONTAINER_NAME='Default'
-MY_IMG_CONTAINER_NAME='Images'
+STORAGE_POOL='SP01'
+STORAGE_DEFAULT='Default'
+STORAGE_IMAGES='Images'
 MY_DOMAIN_FQDN='ntnxlab.local'
 MY_DOMAIN_NAME='NTNXLAB'
 MY_DOMAIN_USER='administrator@ntnxlab.local'
@@ -69,19 +69,19 @@ ncli cluster set-smtp-server address=nutanix-com.mail.protection.outlook.com fro
 # Configure NTP
 my_log "Configure NTP"
 ncli cluster add-to-ntp-servers servers=0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org
-# Rename default storage container to MY_CONTAINER_NAME
-my_log "Rename default container to ${MY_CONTAINER_NAME}"
+# Rename default storage container to STORAGE_DEFAULT
+my_log "Rename default container to ${STORAGE_DEFAULT}"
 default_container=$(ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep '^default-container-')
-ncli container edit name="${default_container}" new-name="${MY_CONTAINER_NAME}"
-# Rename default storage pool to MY_SP_NAME
-my_log "Rename default storage pool to ${MY_SP_NAME}"
+ncli container edit name="${default_container}" new-name="${STORAGE_DEFAULT}"
+# Rename default storage pool to STORAGE_POOL
+my_log "Rename default storage pool to ${STORAGE_POOL}"
 default_sp=$(ncli storagepool ls | grep 'Name' | cut -d ':' -f 2 | sed s/' '//g)
-ncli sp edit name="${default_sp}" new-name="${MY_SP_NAME}"
-# Check if there is a container named MY_IMG_CONTAINER_NAME, if not create one
-my_log "Check if there is a container named ${MY_IMG_CONTAINER_NAME}, if not create one"
-(ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${MY_IMG_CONTAINER_NAME}" 2>&1 > /dev/null) \
-    && echo "Container ${MY_IMG_CONTAINER_NAME} already exists" \
-    || ncli container create name="${MY_IMG_CONTAINER_NAME}" sp-name="${MY_SP_NAME}"
+ncli sp edit name="${default_sp}" new-name="${STORAGE_POOL}"
+# Check if there is a container named STORAGE_IMAGES, if not create one
+my_log "Check if there is a container named ${STORAGE_IMAGES}, if not create one"
+(ncli container ls | grep -P '^(?!.*VStore Name).*Name' | cut -d ':' -f 2 | sed s/' '//g | grep "^${STORAGE_IMAGES}" 2>&1 > /dev/null) \
+    && echo "Container ${STORAGE_IMAGES} already exists" \
+    || ncli container create name="${STORAGE_IMAGES}" sp-name="${STORAGE_POOL}"
 # Set external IP address:
 #ncli cluster edit-params external-ip-address=10.21.${MY_HPOC_NUMBER}.37
 # Set Data Services IP address:
@@ -92,7 +92,7 @@ ncli cluster edit-params external-data-services-ip-address=10.21.${MY_HPOC_NUMBE
 MY_IMAGE="AutoDC"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${STORAGE_IMAGES}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -106,7 +106,7 @@ done
 MY_IMAGE="CentOS"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${STORAGE_IMAGES}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/CentOS7-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -120,7 +120,7 @@ done
 MY_IMAGE="Windows2012"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${STORAGE_IMAGES}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows2012R2-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -134,7 +134,7 @@ done
 MY_IMAGE="Windows10"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows10-1709-04282018.qcow2 wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${STORAGE_IMAGES}" image_type=kDiskImage source_url=http://10.21.250.221/images/ahv/techsummit/Windows10-1709-04282018.qcow2 wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -148,7 +148,7 @@ done
 MY_IMAGE="XenDesktop-7.15.iso"
 retries=1
 my_log "Importing ${MY_IMAGE} image"
-until [[ $(acli image.create ${MY_IMAGE} container="${MY_IMG_CONTAINER_NAME}" image_type=kIsoImage source_url=http://10.21.250.221/images/ahv/techsummit/XD715.iso wait=true) =~ "complete" ]]; do
+until [[ $(acli image.create ${MY_IMAGE} container="${STORAGE_IMAGES}" image_type=kIsoImage source_url=http://10.21.250.221/images/ahv/techsummit/XD715.iso wait=true) =~ "complete" ]]; do
   let retries++
   if [ $retries -gt 5 ]; then
     my_log "${MY_IMAGE} failed to upload after 5 attempts. This cluster may require manual remediation."
@@ -258,8 +258,8 @@ ncli user grant-cluster-admin-role user-name=xd
 my_log "Get UUIDs from cluster:"
 MY_NET_UUID=$(acli net.get ${MY_PRIMARY_NET_NAME} | grep "uuid" | cut -f 2 -d ':' | xargs)
 my_log "${MY_PRIMARY_NET_NAME} UUID is ${MY_NET_UUID}"
-MY_CONTAINER_UUID=$(ncli container ls name=${MY_CONTAINER_NAME} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
-my_log "${MY_CONTAINER_NAME} UUID is ${MY_CONTAINER_UUID}"
+MY_CONTAINER_UUID=$(ncli container ls name=${STORAGE_DEFAULT} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+my_log "${STORAGE_DEFAULT} UUID is ${MY_CONTAINER_UUID}"
 
 # Validate EULA on PE
 my_log "Validate EULA on PE"
@@ -316,7 +316,6 @@ rm ${MY_PC_SRC_URL##*/} ${MY_PC_META_URL##*/}
 
 # Deploy Prism Central
 my_log "Deploy Prism Central"
-# TODO:110 Parameterize DNS Servers & add secondary
 MY_DEPLOY_BODY=$(cat <<EOF
 {
   "resources": {
