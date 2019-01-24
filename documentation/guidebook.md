@@ -69,7 +69,8 @@ You can get push button Calm in two ways. It is best to decide by answering this
     - If appropriate, work with your local field marketing team to make a Bootcamp event landing and registration page, they can also help reserve a marketing cluster.
       - You should drive attendees to register.
       - More information and supporting materials are on GDrive in the [Technology Bootcamp](https://drive.google.com/drive/folders/0B_IfSpggJeFVfjdrVUxkZ25tQVRINHFVMkl4TFpWMG1GUUNhOVhaWnJOZ1gtSkJfa2QzSGc) folder.
-    - Estimate the count of your audience, reserve a HPOC cluster for every 25 attendees.
+    - Estimate the count of your audience, reserve a HPOC cluster for every 20 attendees (due to VDI login constraints).
+      - You can workaround the 20 VDI user constraint per HPOC by using Juniper VPN.
       - Budget for extra people to attend at the last moment and expect last minute attrition as well.
       - Confirm your dates.
       - Think about bringing Nutanix schwag: stickers, t-shirts, etc. for giveaways.
@@ -108,6 +109,17 @@ You can get push button Calm in two ways. It is best to decide by answering this
     - Arrive early, re-survey the site, send any updates to the e-mail attendee list, and include this link:
       - [Nutanix Partner Workshop](https://nutanix.handsonworkshops.com/workshops/6070f10d-3aa0-4c7e-b727-dc554cbc2ddf/start/)
       - Alternatively, have them access http://nutanix.handsonworkshops.com and register/log in.
+    - Project WiFi/logisical and Agenda info
+    - Once quorum is established, I like to begin with a introductions and review of the agenda:
+      - why are we here?
+      - what do want to accomplish today?
+      - who is the Nutanix team in the room to ask for help?
+    - I take a role call of who is in the room, writing down their first name and last initial to protect their privacy, and I ask: "what is your role and company, what do you want to accomplish or for us to address today?"
+    - Amend the agenda if needed based on feedback
+    - Review the agenda and begin the day, here is the typical agenda:
+      - Introductions and Logistics
+      - Calm overview and enablement
+      - Lab 1, etc.
 
 7. __Extended Enablement:__ it is easy to do a full day of enablement on Calm, there are many topics:
     1. Overview of Enablement
@@ -181,7 +193,11 @@ You can get push button Calm in two ways. It is best to decide by answering this
         - Sales close.
       - Continuously prospect: nurture Calm and  upsell platform
         - Typical use case is SSP-IaaS deployment.
+          - Add self-service and showback
+          - Add t-shirt sizes, multiple application profiles
           - Add apps
+          - Add integrations
+          - Add multiple providers (active-active)
           - Add app lifecycle operations
           - Drive to CI/CD pipelines
           - Drive to continuous operations
