@@ -5,8 +5,9 @@
 # Browse to: https://portal.nutanix.com/#/page/releases/prismDetails
 # Find ${PC_VERSION} in the Additional Releases section on the lower right side
 # Provide the metadata URL for the "PC 1-click deploy from PE" option to PC_*_METAURL
-   PC_DEV_VERSION='5.10.0.1'
-   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.0.1/v1/euphrates-5.10.0.1-stable-prism_central_metadata.json'
+   PC_DEV_VERSION='5.10.1'
+   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.1/pcdeploy-5.10.1.json'
+#   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.0.1/v1/euphrates-5.10.0.1-stable-prism_central_metadata.json'
 PC_STABLE_VERSION='5.8.2'
 PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/v1/pc_deploy-5.8.2.json'
 # Browse to: https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA

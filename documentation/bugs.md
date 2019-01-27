@@ -303,6 +303,7 @@ I've looked into some server testing frameworks.
   - 24:     "heartbeat":    "/PrismGateway/services/rest/v1/heartbeat",
   - 326: def validate_cluster(entity):
   - 500: def add_network_to_project(name,directory_uuid):
+- https://github.com/digitalformula/nutanix-cluster-setup
 
 ## AutoDC ##
   - See also: [AutoDC](autodc/README.md)
