@@ -33,7 +33,7 @@
     2018-12-26 16:05:26|96508|calm_enable|_test=||
     2018-12-26 16:05:26|96508|lcm|PC_VERSION 5.10.0.1 >= 5.9, starting LCM inventory...
     2018-12-26 16:05:26|96508|lcm|inventory _test=|500|```
-
+  - ? PE> ncli multicluster add-to-multicluster external-ip-address-or-svm-ips=$PC_HOST username=admin password=yaknow
 - FIXED = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
     - Fix scheduled for PC 5.10.1
@@ -98,6 +98,15 @@
 - RFE: AOS 5.10.0.1 may need latest or have incompatible AHV release
   - PE: ncli software ls software-type=Hypervisor
     - cluster --version <version.185> --md5sum=<md5 from portal> --bundle=<full path to bundle location on CVM> -p host_upgrade
+- RFE: refactor sshpass dependency
+  - Sylvain Huguet   https://nutanix.slack.com/archives/C0JSE04TA/p1549918415017800?thread_ts=1549915109.010300&cid=C0JSE04TA
+    @mark.lavi jot down a note somewhere that I need to revisit that one with you, maybe providing an alternative version as a Docker container would help. Many people have Docker for Mac/Docker for Windows these days
+    Or we can replace that `sshpass` dependancy with a Python script instead, might be another idea.
+    Or start with an API call to push an SSH key to the cluster... then ssh should work passwordless.
+    Chris Rasmussen
+    @shu API call or Python would be preferable, IMO.  More likely that a Python binary already exists on the user's system than Docker.
+    Sylvain Huguet: Docker has other added benefits in terms of packaging sources/binaries with the script and using the docker hub as a CDN/delivery mechanism, especially with Big Bang happening. But we can at least provide alternative method to `sshpass` based on some logic to identify what’s available on the machine.
+    Chris Rasmussen: Yeah, not saying Docker is a _bad_ idea.  Just that in terms of the number of people that could use this script without any changes, Python/API is likely the best choice (on OS X).
 - Test Calm 5.8 bootcamp labs and 5.5-6 bugs
   - https://github.com/nutanixworkshops/introcalm
   vs. https://github.com/mlavi/calm_workshop
@@ -411,6 +420,7 @@ or nuclei, only on PCVM or in container
   - \\lab-ftp\ftp
   - smb://hpoc-ftp/ = \\hpoc-ftp\ftp
   - ftp://nutanix:nutanix/4u@hostedpoc.nutanix.com/
+  - \\pocfs.nutanixdc.local and \\hpoc-afs.nutanixdc.local
   - smb://pocfs/    = \\pocfs\iso\ and \images\
     - nutanixdc\username
   - smb://pocfs.nutanixdc.local use: auth

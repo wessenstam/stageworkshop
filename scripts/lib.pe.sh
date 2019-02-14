@@ -57,6 +57,7 @@ function authentication_source() {
          'http://10.132.128.50:81/share/saved-images/autodc-2.0.qcow2' \
          'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
         # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+         'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
          'http://10.59.103.143:8000/autodc-2.0.qcow2' \
         )
       fi
@@ -320,6 +321,7 @@ function pe_auth() {
   if [[ -z $(ncli authconfig list-directory name=${AUTH_DOMAIN} | grep Error) ]]; then
     log "IDEMPOTENCY: ${AUTH_DOMAIN} directory set, skip."
   else
+    # https://portal.nutanix.com/kb/1005
     _aos=$(ncli --json=true cluster info | jq -r .data.version)
 
     if [[ ! -z ${_aos} ]]; then
