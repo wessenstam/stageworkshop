@@ -93,7 +93,7 @@ AUTH_ADMIN_GROUP='SSP Admins'
   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 
-# For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55)
+# For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55, 10.42)
 # https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
 case "${OCTET[0]}.${OCTET[1]}" in
   10.20 )
@@ -123,6 +123,14 @@ case "${OCTET[0]}.${OCTET[1]}" in
           NW2_NAME='Secondary'
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_DHCP_START="${IPV4_PREFIX}.132"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
+    ;;
+  10.42 )
+       DNS_SERVERS='10.42.196.10'
+          NW2_NAME='Secondary'
+          NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+        NW2_SUBNET="${IPV4_PREFIX}.128/25"
     NW2_DHCP_START="${IPV4_PREFIX}.132"
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
