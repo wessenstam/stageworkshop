@@ -140,6 +140,25 @@ case "${OCTET[0]}.${OCTET[1]}" in
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
     NW2_DHCP_START="${IPV4_PREFIX}.132"
       NW2_DHCP_END="${IPV4_PREFIX}.253"
+      QCOW2_IMAGES=(\
+        CentOS7.qcow2 \
+        Windows2016.qcow2 \
+        Windows2012R2.qcow2 \
+        Windows10-1709.qcow2 \
+        ToolsVM.qcow2 \
+        CentOS7.iso \
+        Windows2012R2.iso \
+        SQLServer2014SP3.iso \
+        Nutanix-VirtIO-1.1.3.iso \
+        acs-centos7.qcow2 \
+        acs-ubuntu1604.qcow2 \
+        xtract-vm-2.0.3.qcow2 \
+        ERA-Server-build-1.0.1.qcow2 \
+        sherlock-k8s-base-image_320.qcow2 \
+        hycu-3.5.0-6138.qcow2 \
+        VeeamAvailability_1.0.457.vmdk \
+        VeeamBR_9.5.4.2615.Update4.iso \
+      )
     ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
