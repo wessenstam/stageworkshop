@@ -29,22 +29,14 @@ case ${1} in
     && pe_auth
 
     if (( $? == 0 )) ; then
-      # _pc_version=(${PC_VERSION//./ })
-      #
-      # if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
-      #   pc_install "${NW1_NAME}" \
-      #   && prism_check 'PC'
-      #   pc_configure #proceed anyway via SSH, because API+UI password == ?
-      # else
-        pc_install "${NW1_NAME}" \
-        && prism_check 'PC' \
-        && pc_configure \
-        && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
+      pc_install "${NW1_NAME}" \
+      && prism_check 'PC' \
+      && pc_configure \
+      && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
-        log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
-        log "PE = https://${PE_HOST}:9440"
-        log "PC = https://${PC_HOST}:9440"
-      # fi
+      log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
+      log "PE = https://${PE_HOST}:9440"
+      log "PC = https://${PC_HOST}:9440"
 
       files_install & # parallel, optional. Versus: $0 'files' &
 

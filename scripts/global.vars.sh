@@ -19,31 +19,9 @@ PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/
     # 2019-02-15: override until metadata URL fixed
     # http://download.nutanix.com/afs/7.3/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
         FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
-
-# CentOS7 - https://s3.amazonaws.com/get-ahv-images/CentOS7.qcow2
-# Windows10 - https://s3.amazonaws.com/get-ahv-images/Windows10-1709.qcow2
-# Windows2012R2 - https://s3.amazonaws.com/get-ahv-images/Windows2012R2.qcow2
-# Windows2016 - https://s3.amazonaws.com/get-ahv-images/Windows2016.qcow2
-# Nutanix VirtIO 1.1.3 - https://s3.amazonaws.com/get-ahv-images/Nutanix-VirtIO-1.1.3.iso
-# ToolsVM - https://s3.amazonaws.com/get-ahv-images/ToolsVM.qcow2
-# Karbon OS Images:
-# ACS CentOS7 - https://s3.amazonaws.com/get-ahv-images/acs-centos7.qcow2
-# ACS Ubuntu1604 - https://s3.amazonaws.com/get-ahv-images/acs-ubuntu1604.qcow2
-#
-# Nutanix Software:
-# Xtract - https://s3.amazonaws.com/get-ahv-images/xtract-vm-2.0.3.qcow2
-# Era - https://s3.amazonaws.com/get-ahv-images/ERA-Server-build-1.0.1.qcow2
-# Sherlock/ XiIoT - https://s3.amazonaws.com/get-ahv-images/sherlock-k8s-base-image_320.qcow2
-# AFS 3.2.0.1 - https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2
-# AFS 3.2.0.1 - https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json
-#
-# EUC Infra:
-# MSSql - https://s3.amazonaws.com/get-ahv-images/SQLServer2014SP3.iso
-#
-# Partner Software:
-# HYCU - https://s3.amazonaws.com/get-ahv-images/hycu-3.5.0-6138.qcow2
-# Veeam - https://s3.amazonaws.com/get-ahv-images/VeeamAvailability_1.0.457.vmdk
-# Veeam - https://s3.amazonaws.com/get-ahv-images/VeeamBR_9.5.4.2615.Update4.iso
+    # Revert by overriding again...
+    FILES_VERSION='3.2.0'
+    FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
 
 NTNX_INIT_PASSWORD='nutanix/4u'
        PRISM_ADMIN='admin'
@@ -161,7 +139,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
     NW2_DHCP_START="${IPV4_PREFIX}.132"
-      NW2_DHCP_END="${IPV4_PREFIX}.254"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
