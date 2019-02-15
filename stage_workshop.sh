@@ -88,8 +88,8 @@ function stage_clusters() {
 
       cat <<EoM
 ______Warning -- curl time out indicates either:
-      - a network routing issue (perhaps you're not on VPN?),
-      - cluster Foundation and initialization hasn't completed.
+      - Network routing issue (perhaps you're not on VPN?),
+      - Foundation and initialization (Cluster IP API response) hasn't completed.
 EoM
 
       prism_check 'PE' 60
