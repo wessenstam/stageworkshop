@@ -214,7 +214,7 @@ function script_usage() {
 
   cat << EOF
 
-See README.md and guidebook.md for more information.
+See README.md and documentation/guidebook.md for more information.
 
     Interactive Usage: $0
 Non-interactive Usage: $0 -f [${_CLUSTER_FILE}] -w [workshop_number]

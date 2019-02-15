@@ -29,14 +29,22 @@ case ${1} in
     && pe_auth
 
     if (( $? == 0 )) ; then
-      pc_install "${NW1_NAME}" \
-      && prism_check 'PC' \
-      && pc_configure \
-      && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
+      # _pc_version=(${PC_VERSION//./ })
+      #
+      # if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
+      #   pc_install "${NW1_NAME}" \
+      #   && prism_check 'PC'
+      #   pc_configure #proceed anyway via SSH, because API+UI password == ?
+      # else
+        pc_install "${NW1_NAME}" \
+        && prism_check 'PC' \
+        && pc_configure \
+        && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
-      log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
-      log "PE = https://${PE_HOST}:9440"
-      log "PC = https://${PC_HOST}:9440"
+        log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
+        log "PE = https://${PE_HOST}:9440"
+        log "PC = https://${PC_HOST}:9440"
+      # fi
 
       files_install & # parallel, optional. Versus: $0 'files' &
 
@@ -62,7 +70,8 @@ case ${1} in
     export NUCLEI_PASSWORD="${PE_PASSWORD}"
     # nuclei -debug -username admin -server localhost -password x vm.list
 
-    if [[ -z ${CLUSTER_NAME} || -z "${PE_HOST}" ]]; then
+    if [[ -z "${PE_HOST}" ]]; then # -z ${CLUSTER_NAME} || #TOFIX
+      log "CLUSTER_NAME=|${CLUSTER_NAME}|, PE_HOST=|${PE_HOST}|"
       pe_determine ${1}
       . global.vars.sh # re-populate PE_HOST dependencies
     fi

@@ -68,6 +68,10 @@
     - purge unused container tags
 - Small improvements/bugs:
   - Banner: PC-X bug:,@HPOC #
+    - PE banner: PUT /PrismGateway/services/rest/v1/application/system_data
+    {"type":"WELCOME_BANNER","key":"welcome_banner_status","value":true,"username":"system_data","updatedTimeInUsecs":1550212264611000}
+    {"type":"WELCOME_BANNER","key":"welcome_banner_content","value":"Welcome!","username":"system_data","updatedTimeInUsecs":1550212264751000}
+  - Add AutoDC to PE DNS, like PC_DNS
   - Duplicate images are already active/uploaded on PC: check on import/inactive?
   - dependencies 'install' 'sshpass' && dependencies 'install' 'jq' || exit 13 everywhere for robustness/parallelization
   - capture NFS URL timeout error message?
@@ -305,6 +309,7 @@ I've looked into some server testing frameworks.
 - Acknowledge https://drt-it-github-prod-1.eng.nutanix.com/sylvain-huguet/auto-hpoc
   - "Drafted a first version. Then @Christophe Jauffret took over and polished it
     Then we handed over the whole thing to Matt and Nathan during the prep for TS18"
+- https://github.com/MMouse-23/FoundationDemoAddon in Powershell!
 - One more: @anthony.c?
 - Add links: https://drt-it-github-prod-1.eng.nutanix.com/akim-sissaoui/calm_aws_setup_blueprint/blob/master/Action%20Create%20Project/3-Create%20AWS%20Calm%20Entry
 - https://gitlab.com/Chandru.tkc/Serviceability_shared/

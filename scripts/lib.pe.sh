@@ -216,9 +216,9 @@ function pc_configure() {
     log 'Warning: did NOT find '${RELEASE}
   fi
   log "Send configuration scripts to PC and remove: ${_dependencies}"
-  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies}
+  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies} lib.pe.sh
 
-  _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE} id_rsa.pub"
+  _dependencies="bin/${JQ_REPOS[0]##*/} ${SSHPASS_REPOS[0]##*/} id_rsa.pub"
 
   log "OPTIONAL: Send binary dependencies to PC: ${_dependencies}"
   remote_exec 'scp' 'PC' "${_dependencies}" 'OPTIONAL'
@@ -397,6 +397,7 @@ function pe_init() {
 }
 
 function pe_license() {
+  local _test
   args_required 'CURL_POST_OPTS PE_PASSWORD'
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
@@ -405,15 +406,14 @@ function pe_license() {
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip"
   else
-    log "Validate EULA on PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
+    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
       "username": "SE with $(basename ${0})",
       "companyName": "Nutanix",
       "jobTitle": "SE"
-    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
+    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
+    log "Validate EULA on PE: _test=|${_test}|"
 
-    log "Disable Pulse in PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
+    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
       "enable": false,
@@ -422,7 +422,8 @@ function pe_license() {
       "nosVersion": null,
       "remindLater": null,
       "verbosityType": null
-    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse
+    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
+    log "Disable Pulse in PE: _test=|${_test}|"
 
     #echo; log "Create PE Banner Login" # TODO: for PC, login banner
     # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
