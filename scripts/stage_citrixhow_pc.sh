@@ -7,7 +7,7 @@ MY_SCRIPT_NAME=`basename "$0"`
 
 # Source Nutanix environments (for PATH and other things)
 . /etc/profile.d/nutanix_env.sh
-. common.lib.sh # source common routines
+. lib.common.sh # source common routines
 Dependencies 'install';
 
 # Derive HPOC number from IP 3rd byte
@@ -16,7 +16,7 @@ Dependencies 'install';
          array=(${MY_CVM_IP//./ })
 MY_HPOC_NUMBER=${array[2]}
 
-CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}" #common.lib.sh initialized
+CURL_OPTS="${CURL_OPTS} --user admin:${MY_PE_PASSWORD}" #lib.common.sh initialized
 #CURL_OPTS="${CURL_OPTS} --verbose"
 
 # Set Prism Central Password to Prism Element Password
