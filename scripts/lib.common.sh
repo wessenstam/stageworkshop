@@ -605,11 +605,11 @@ function prism_check {
       if [[ ${1} == 'PC' && ${_password} != "${_pw_init}" ]]; then
         _password=${_pw_init}
         log "Warning @${1}: Fallback on ${_host}: try initial password next cycle..."
-        _sleep=0 #break
+        #_sleep=0 #break
       elif [[ ${1} == 'PC' && ${_password} == "${_pw_init}" && ${PC_VERSION} == "${PC_DEV_VERSION}" ]]; then
         _password=${PE_PASSWORD}
         log "Warning @${1}-dev: Fallback on ${_host}: try PE cluster password next cycle..."
-        _sleep=0 #break
+        #_sleep=0 #break
       fi
 
     fi

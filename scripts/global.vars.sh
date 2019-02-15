@@ -19,31 +19,9 @@ PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/
     # 2019-02-15: override until metadata URL fixed
     # http://download.nutanix.com/afs/7.3/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
         FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
-
-# CentOS7 - https://s3.amazonaws.com/get-ahv-images/CentOS7.qcow2
-# Windows10 - https://s3.amazonaws.com/get-ahv-images/Windows10-1709.qcow2
-# Windows2012R2 - https://s3.amazonaws.com/get-ahv-images/Windows2012R2.qcow2
-# Windows2016 - https://s3.amazonaws.com/get-ahv-images/Windows2016.qcow2
-# Nutanix VirtIO 1.1.3 - https://s3.amazonaws.com/get-ahv-images/Nutanix-VirtIO-1.1.3.iso
-# ToolsVM - https://s3.amazonaws.com/get-ahv-images/ToolsVM.qcow2
-# Karbon OS Images:
-# ACS CentOS7 - https://s3.amazonaws.com/get-ahv-images/acs-centos7.qcow2
-# ACS Ubuntu1604 - https://s3.amazonaws.com/get-ahv-images/acs-ubuntu1604.qcow2
-#
-# Nutanix Software:
-# Xtract - https://s3.amazonaws.com/get-ahv-images/xtract-vm-2.0.3.qcow2
-# Era - https://s3.amazonaws.com/get-ahv-images/ERA-Server-build-1.0.1.qcow2
-# Sherlock/ XiIoT - https://s3.amazonaws.com/get-ahv-images/sherlock-k8s-base-image_320.qcow2
-# AFS 3.2.0.1 - https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2
-# AFS 3.2.0.1 - https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json
-#
-# EUC Infra:
-# MSSql - https://s3.amazonaws.com/get-ahv-images/SQLServer2014SP3.iso
-#
-# Partner Software:
-# HYCU - https://s3.amazonaws.com/get-ahv-images/hycu-3.5.0-6138.qcow2
-# Veeam - https://s3.amazonaws.com/get-ahv-images/VeeamAvailability_1.0.457.vmdk
-# Veeam - https://s3.amazonaws.com/get-ahv-images/VeeamBR_9.5.4.2615.Update4.iso
+    # Revert by overriding again...
+    FILES_VERSION='3.2.0'
+    FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
 
 NTNX_INIT_PASSWORD='nutanix/4u'
        PRISM_ADMIN='admin'
@@ -106,6 +84,88 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
 SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
    SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
    SMTP_SERVER_PORT=25
+
+    AUTH_SERVER='AutoDC' # default; TODO:180 refactor AUTH_SERVER choice to input file
+      AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"
+      LDAP_PORT=389
+      AUTH_FQDN='ntnxlab.local'
+    AUTH_DOMAIN='NTNXLAB'
+AUTH_ADMIN_USER='administrator@'${AUTH_FQDN}
+AUTH_ADMIN_PASS='nutanix/4u'
+AUTH_ADMIN_GROUP='SSP Admins'
+   AUTODC_REPOS=(\
+  'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
+  'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
+  'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+ # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+  'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+)
+
+# For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55, 10.42)
+# https://sewiki.nutanix.com/index.php/HPOC_IP_Schema
+case "${OCTET[0]}.${OCTET[1]}" in
+  10.20 ) #Marketing: us-west = SV
+    DNS_SERVERS='10.21.253.10'
+    ;;
+  10.21 ) #HPOC: us-west = SV
+    if (( ${OCTET[2]} == 60 )) || (( ${OCTET[2]} == 77 )); then
+      log 'GPU cluster, aborting! See https://sewiki.nutanix.com/index.php/Hosted_Proof_of_Concept_(HPOC)#GPU_Clusters'
+      exit 0
+    fi
+
+    # backup cluster; override relative IP addressing
+    if (( ${OCTET[2]} == 249 )); then
+      AUTH_HOST="${IPV4_PREFIX}.118"
+        PC_HOST="${IPV4_PREFIX}.119"
+    fi
+
+       DNS_SERVERS='10.21.253.10,10.21.253.11'
+          NW2_NAME='Secondary'
+          NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+        NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_DHCP_START="${IPV4_PREFIX}.132"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
+    ;;
+  10.55 ) # HPOC us-east = DUR
+       DNS_SERVERS='10.21.253.11'
+          NW2_NAME='Secondary'
+          NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+        NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_DHCP_START="${IPV4_PREFIX}.132"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
+    ;;
+  10.42 ) # HPOC us-west = PHX
+       DNS_SERVERS='10.42.196.10'
+          NW2_NAME='Secondary'
+          NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+        NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_DHCP_START="${IPV4_PREFIX}.132"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
+    ;;
+  10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
+       DNS_SERVERS='10.132.71.40'
+        NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
+    NW1_DHCP_START="${IPV4_PREFIX}.100"
+      NW1_DHCP_END="${IPV4_PREFIX}.250"
+      # PC deploy file local override, TODO:30 make an PC_URL array and eliminate
+               PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
+       PC_DEV_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
+    PC_STABLE_METAURL=${PC_DEV_METAURL}
+
+    QCOW2_IMAGES=(\
+      Centos7-Base.qcow2 \
+      Centos7-Update.qcow2 \
+      Windows2012R2.qcow2 \
+      panlm-img-52.qcow2 \
+      kx_k8s_01.qcow2 \
+      kx_k8s_02.qcow2 \
+      kx_k8s_03.qcow2 \
+    )
+    ;;
+esac
+
+HTTP_CACHE_HOST='localhost'
+HTTP_CACHE_PORT=8181
 
     AUTH_SERVER='AutoDC' # default; TODO:180 refactor AUTH_SERVER choice to input file
       AUTH_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 3))"

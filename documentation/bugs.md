@@ -33,7 +33,16 @@
     2018-12-26 16:05:26|96508|calm_enable|_test=||
     2018-12-26 16:05:26|96508|lcm|PC_VERSION 5.10.0.1 >= 5.9, starting LCM inventory...
     2018-12-26 16:05:26|96508|lcm|inventory _test=|500|```
-  - ? PE> ncli multicluster add-to-multicluster external-ip-address-or-svm-ips=$PC_HOST username=admin password=yaknow
+  - PE> ncli multicluster add-to-multicluster external-ip-address-or-svm-ips=$PC_HOST username=admin password=yaknow
+
+- ADC2 wonky
+  - 2019-02-15 16:12:08|20294|pe_auth|Adjusted directory-url=ldap://10.42.23.40:389 because AOS-5.10.0.1 >= 5.9
+2019-02-15 16:12:08|20294|pe_auth|Configure PE external authentication
+Error: Failed to process server response. Possible reason includes version mismatch between NCLI and Prism Gateway server.
+2019-02-15 16:17:12|20294|pe_auth|Configure PE role map
+Error: Directory name NTNXLAB does not exist
+  - workaround: rerun script, all good.
+
 - FIXED = PC 5.9 authentication regression
   - https://jira.nutanix.com/browse/ENG-180716 = "Invalid service account details" error message is incorrect
     - Fix scheduled for PC 5.10.1
@@ -67,6 +76,7 @@
         - https://stackoverflow.com/questions/28320134/how-to-list-all-tags-for-a-docker-image-on-a-remote-registry
     - purge unused container tags
 - Small improvements/bugs:
+  - Check DNS for cluster is set
   - Banner: PC-X bug:,@HPOC #
     - PE banner: PUT /PrismGateway/services/rest/v1/application/system_data
     {"type":"WELCOME_BANNER","key":"welcome_banner_status","value":true,"username":"system_data","updatedTimeInUsecs":1550212264611000}

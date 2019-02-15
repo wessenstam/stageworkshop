@@ -179,9 +179,15 @@ function files_install() {
 }
 
 function network_configure() {
+  local _network_name="${NW1_NAME}"
 
-  if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
-    log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
+  if [[ ! -z "${NW2_NAME}" ]]; then
+    #TODO: accommodate for X networks!
+    _network_name="${NW2_NAME}"
+  fi
+
+  if [[ ! -z $(acli "net.list" | grep ${_network_name}) ]]; then
+    log "IDEMPOTENCY: ${_network_name} network set, skip."
   else
     args_required 'AUTH_DOMAIN IPV4_PREFIX AUTH_HOST'
 
@@ -209,6 +215,17 @@ function pc_configure() {
   local      _command
   local    _container
   local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${PC_LAUNCH}"
+  local   _pc_version
+  local         _test
+
+  # shellcheck disable=2206
+  _pc_version=(${PC_VERSION//./ })
+  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
+     _test=$(ncli multicluster add-to-multicluster \
+       external-ip-address-or-svm-ips=${PC_HOST} \
+       username=${PRISM_ADMIN} password=${PE_PASSWORD})
+     log "PC>=5.10, manual join PE to PC = |${_test}|"
+  fi
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -242,6 +259,8 @@ function pc_install() {
   local    _ncli_softwaretype='PRISM_CENTRAL_DEPLOY'
   local              _nw_name="${1}"
   local              _nw_uuid
+  local           _pc_version
+  local _should_auto_register
   local _storage_default_uuid
   local                 _test
 
@@ -271,6 +290,12 @@ function pc_install() {
       log "IDEMPOTENCY: PC-${PC_VERSION} upload already completed."
     fi
 
+    # shellcheck disable=2206
+    _pc_version=(${PC_VERSION//./ })
+    if (( ${_pc_version[0]} = 5 && ${_pc_version[1]} <= 6 )); then
+      _should_auto_register='"should_auto_register":true,'
+    fi
+
     log "Deploy Prism Central (typically takes 17+ minutes)..."
     # TODO:160 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     # Sizing suggestions, certified configurations:
@@ -280,7 +305,7 @@ function pc_install() {
     HTTP_BODY=$(cat <<EOF
 {
   "resources": {
-    "should_auto_register":true,
+    ${_should_auto_register}
     "version":"${PC_VERSION}",
     "pc_vm_list":[{
       "data_disk_size_bytes":536870912000,
