@@ -1,148 +1,180 @@
 #!/usr/bin/env bash
 # use bash -x to debug command substitution and evaluation instead of echo.
+DEBUG=
 
 # For WORKSHOPS keyword mappings to scripts and variables, please use:
 # - Calm || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
 "Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
-"Calm Workshop (AOS 5.5+/AHV PC 5.9.x) = Development (AutoDC2)" \
-# "Calm Workshop (AOS 5.5+/AHV PC 5.7.x)" \
-# "Calm Workshop (AOS 5.5+/AHV PC 5.6.x)" \
+"Calm Workshop (AOS 5.8.x/AHV PC 5.10.x) = Stable (AutoDC2)" \
+"Calm Workshop (AOS 5.9+/AHV PC 5.10.x) = Development" \
 "Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 #"Tech Summit 2018" \
-) # Adjust function stage_clusters for mappings as needed
+) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
   # Adjust map below as needed with $WORKSHOPS
   local      _cluster
   local    _container
-  local _dependencies
+  local _dependency
   local       _fields
-  local    _pe_config
-  local    _pc_config
-  local      _release
-  local       _sshkey
+  local    _libraries='global.vars.sh lib.common.sh '
+  local    _pe_launch # will be transferred and executed on PE
+  local    _pc_launch # will be transferred and executed on PC
+  local       _sshkey=${SSH_PUBKEY}
+  local       _wc_arg='--lines'
   local     _workshop=${WORKSHOPS[$((${WORKSHOP_NUM}-1))]}
 
   # Map to latest and greatest of each point release
-  # Metadata URLs MUST be specified in common.lib.sh function: NTNX_Download
-  if (( $(echo ${_workshop} | grep -i "PC 5.9" | wc -l) > 0 )); then
-    export PC_VERSION=5.9.1
-  elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc -l) > 0 )); then
-    export PC_VERSION=5.8.2
-  elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc -l) > 0 )); then
+  # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
+  # TODO: make WORKSHOPS and map a JSON configuration file?
+  if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc ${WC_ARG}) > 0 )); then
+    export PC_VERSION="${PC_DEV_VERSION}"
+  elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc ${WC_ARG}) > 0 )); then
+    export PC_VERSION="${PC_STABLE_VERSION}"
+  elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc ${WC_ARG}) > 0 )); then
+    export PC_VERSION=5.9.2
+  elif (( $(echo ${_workshop} | grep -i "PC 5.7" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION=5.7.1.1
-  elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc -l) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.6" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION=5.6.2
   fi
 
-  # Map to staging scripts
-  if (( $(echo ${_workshop} | grep -i Calm | wc -l) > 0 )); then
-    _pe_config=stage_calmhow.sh
-    _pc_config=stage_calmhow_pc.sh
+  # Map workshop to staging script(s) and libraries,
+  # _pe_launch will be executed on PE
+  if (( $(echo ${_workshop} | grep -i Calm | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='calm.sh'
+    _pc_launch=${_pe_launch}
   fi
-  if (( $(echo ${_workshop} | grep -i Citrix | wc -l) > 0 )); then
-    _pe_config=stage_citrixhow.sh
-    _pc_config=stage_citrixhow_pc.sh
+  if (( $(echo ${_workshop} | grep -i Citrix | wc ${WC_ARG}) > 0 )); then
+    _pe_launch='stage_citrixhow.sh'
+    _pc_launch='stage_citrixhow_pc.sh'
   fi
-  if (( $(echo ${_workshop} | grep -i Summit | wc -l) > 0 )); then
-    _pe_config=stage_ts18.sh
-    _pc_config=stage_ts18_pc.sh
+  if (( $(echo ${_workshop} | grep -i Summit | wc ${WC_ARG}) > 0 )); then
+    _pe_launch='stage_ts18.sh'
+    _pc_launch='stage_ts18_pc.sh'
   fi
 
-  Dependencies 'install' 'sshpass'
+  dependencies 'install' 'sshpass'
 
-  log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
+  if [[ -z ${PC_VERSION} ]]; then
+    log "WORKSHOP #${WORKSHOP_NUM} = ${_workshop} with PC-${PC_VERSION}"
+  fi
+
   # Send configuration scripts to remote clusters and execute Prism Element script
-
   if [[ ${CLUSTER_LIST} == '-' ]]; then
-    echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440"
-    get_configuration
-    cd scripts && eval "${CONFIGURATION} ./${_pe_config}" >> ${HOME}/${_pe_config%%.sh}.log 2>&1 &
+    echo "Login to see tasks in flight via https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440"
+    pe_configuration_args "${_pc_launch}"
+
+    pushd scripts || true
+    eval "${PE_CONFIGURATION} ./${_pe_launch} 'PE'" >> ${HOME}/${_pe_launch%%.sh}.log 2>&1 &
+    unset PE_CONFIGURATION
+    popd || true
   else
-    for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
+    for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^#)
     do
       set -f
-             _fields=(${_cluster//|/ })
-          MY_PE_HOST=${_fields[0]}
-      MY_PE_PASSWORD=${_fields[1]}
-            MY_EMAIL=${_fields[2]}
+      # shellcheck disable=2206
+          _fields=(${_cluster//|/ })
+          PE_HOST=${_fields[0]}
+      PE_PASSWORD=${_fields[1]}
+            EMAIL=${_fields[2]}
 
-      get_configuration
+      pe_configuration_args "${_pc_launch}"
 
       . scripts/global.vars.sh # re-import for relative settings
 
-      Check_Prism_API_Up 'PE' 60
+      cat <<EoM
+______Warning -- curl time out indicates either:
+      - Network routing issue (perhaps you're not on VPN?),
+      - Foundation and initialization (Cluster IP API response) hasn't completed.
+EoM
+
+      prism_check 'PE' 60
 
       if [[ -d cache ]]; then
-        #TODO:90 proper cache detection and downloads
-        _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE}"
-        log "Sending cached dependencies (optional)..."
-        pushd cache \
-          && remote_exec 'SCP' 'PE' "${_dependencies}" 'OPTIONAL' \
-          && popd
+        pushd cache || true
+        for _dependency in ${JQ_PACKAGE} ${SSHPASS_PACKAGE}; do
+          if [[ -e ${_dependency} ]]; then
+            log "Sending cached ${_dependency} (optional)..."
+            remote_exec 'SCP' 'PE' "${_dependency}" 'OPTIONAL'
+          fi
+        done
+        popd || true
       fi
 
       if (( $? == 0 )) ; then
-        log "Sending configuration script(s) to PE@${MY_PE_HOST}"
+        log "Sending configuration script(s) to PE@${PE_HOST}"
       else
         _error=15
-        log "Error ${_error}: Can't reach PE@${MY_PE_HOST}, are you on VPN?"
+        log "Error ${_error}: Can't reach PE@${PE_HOST}"
         exit ${_error}
       fi
 
       if [[ -e ${RELEASE} ]]; then
-        log "Adding release version file to manifest."
-        _release="../${RELEASE}"
+        log "Adding release version file..."
+        _libraries+=" ../${RELEASE}"
       fi
 
       pushd scripts \
-        && remote_exec 'SCP' 'PE' "common.lib.sh global.vars.sh ${_release} ${_pe_config} ${_pc_config}" \
-        && popd
+        && remote_exec 'SCP' 'PE' "${_libraries} ${_pe_launch} ${_pc_launch}" \
+        && popd || exit
 
       # For Calm container updates...
       if [[ -d cache/pc-${PC_VERSION}/ ]]; then
         log "Uploading PC updates in background..."
         pushd cache/pc-${PC_VERSION} \
-        && pkill scp || true
-        for _container in epsilon nucalm ; do \
-          if [[ -f ${_container}.tar ]]; then \
-            remote_exec 'SCP' 'PE' ${_container}.tar 'OPTIONAL' & \
+          && pkill scp || true
+        for _container in epsilon nucalm ; do
+          if [[ -f ${_container}.tar ]]; then
+            remote_exec 'SCP' 'PE' ${_container}.tar 'OPTIONAL' &
           fi
         done
-        popd
+        popd || exit
       else
         log "No PC updates found in cache/pc-${PC_VERSION}/"
       fi
 
-      _sshkey=${HOME}/.ssh/id_rsa.pub
       if [[ -f ${_sshkey} ]]; then
-        log "Sending ${_sshkey} for additon to cluster..."
+        log "Sending ${_sshkey} for addition to cluster..."
         remote_exec 'SCP' 'PE' ${_sshkey} 'OPTIONAL'
       fi
 
-      log "Remote execution configuration script on PE@${MY_PE_HOST}"
-      remote_exec 'SSH' 'PE' "${CONFIGURATION} nohup bash /home/nutanix/${_pe_config} >> ${_pe_config%%.sh}.log 2>&1 &"
+      log "Remote execution configuration script ${_pe_launch} on PE@${PE_HOST}"
+      remote_exec 'SSH' 'PE' "${PE_CONFIGURATION} nohup bash /home/nutanix/${_pe_launch} 'PE' >> ${_pe_launch%%.sh}.log 2>&1 &"
+      unset PE_CONFIGURATION
 
       # shellcheck disable=SC2153
       cat <<EOM
 
-  Cluster automation progress for ${_workshop} can be monitored via Prism Element and Central.
+  Cluster automation progress for:
+  ${_workshop}
+  can be monitored via Prism Element and Central.
 
   If your SSH key has been uploaded to Prism > Gear > Cluster Lockdown,
   the following will fail silently, use ssh nutanix@{PE|PC} instead.
 
-  $ SSHPASS='${MY_PE_PASSWORD}' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PE_HOST} 'date; tail -f ${_pe_config%%.sh}.log'
+  $ SSHPASS='${PE_PASSWORD}' sshpass -e ssh \\
+      ${SSH_OPTS} \\
+      nutanix@${PE_HOST} 'date; tail -f ${_pe_launch%%.sh}.log'
     You can login to PE to see tasks in flight and eventual PC registration:
-    https://${PRISM_ADMIN}:${MY_PE_PASSWORD}@${MY_PE_HOST}:9440/
-
-  $ SSHPASS='nutanix/4u' sshpass -e ssh ${SSH_OPTS} \\
-      nutanix@${MY_PC_HOST} 'date; tail -f ${_pc_config%%.sh}.log'
-    https://${PRISM_ADMIN}@${MY_PC_HOST}:9440/
+    https://${PRISM_ADMIN}:${PE_PASSWORD}@${PE_HOST}:9440/
 
 EOM
+
+      if (( "$(echo ${_libraries} | grep -i lib.pc | wc ${_wc_arg})" > 0 )); then
+        # shellcheck disable=2153
+        cat <<EOM
+  $ SSHPASS='nutanix/4u' sshpass -e ssh \\
+      ${SSH_OPTS} \\
+      nutanix@${PC_HOST} 'date; tail -f ${_pc_launch%%.sh}.log'
+    https://${PRISM_ADMIN}@${PC_HOST}:9440/
+
+EOM
+
+      fi
     done
 
   fi
@@ -150,26 +182,29 @@ EOM
   exit
 }
 
-function get_configuration() {
-  CONFIGURATION="MY_EMAIL=${MY_EMAIL} MY_PE_HOST=${MY_PE_HOST} PRISM_ADMIN=${PRISM_ADMIN} MY_PE_PASSWORD=${MY_PE_PASSWORD} PC_VERSION=${PC_VERSION}"
+function pe_configuration_args() {
+  local _pc_launch="${1}"
+
+  PE_CONFIGURATION="EMAIL=${EMAIL} PRISM_ADMIN=${PRISM_ADMIN} PE_PASSWORD=${PE_PASSWORD} PE_HOST=${PE_HOST} PC_LAUNCH=${_pc_launch} PC_VERSION=${PC_VERSION}"
 }
 
 function validate_clusters() {
   local _cluster
   local  _fields
 
-  for _cluster in `cat ${CLUSTER_LIST} | grep -v ^#`
+  for _cluster in $(cat ${CLUSTER_LIST} | grep -v ^\#)
   do
     set -f
-           _fields=(${_cluster//|/ })
-        MY_PE_HOST=${_fields[0]}
-    MY_PE_PASSWORD=${_fields[1]}
+    # shellcheck disable=2206
+        _fields=(${_cluster//|/ })
+        PE_HOST=${_fields[0]}
+    PE_PASSWORD=${_fields[1]}
 
-    Check_Prism_API_Up 'PE'
+    prism_check 'PE'
     if (( $? == 0 )) ; then
-      log "Success: execute PE API on ${MY_PE_HOST}"
+      log "Success: execute PE API on ${PE_HOST}"
     else
-      log "Failure: cannot validate PE API on ${MY_PE_HOST}"
+      log "Failure: cannot validate PE API on ${PE_HOST}"
     fi
   done
 }
@@ -179,11 +214,11 @@ function script_usage() {
 
   cat << EOF
 
-See README.md and guidebook.md for more information.
+See README.md and documentation/guidebook.md for more information.
 
     Interactive Usage: $0
 Non-interactive Usage: $0 -f [${_CLUSTER_FILE}] -w [workshop_number]
-Non-interactive Usage: MY_EMAIL=first.last@nutanix.com MY_PE_HOST=10.x.x.37 PRISM_ADMIN=admin MY_PE_PASSWORD=examplePW $0 -f -
+Non-interactive Usage: EMAIL=first.last@nutanix.com PE_HOST=10.x.x.37 PRISM_ADMIN=admin PE_PASSWORD=examplePW $0 -f -
 
 Available Workshops:
 EOF
@@ -204,7 +239,7 @@ function get_file() {
     read -p "$_CLUSTER_FILE: " CLUSTER_LIST # Prompt user
 
     if [[ ! -f "${CLUSTER_LIST}" ]]; then
-      echo "Warning ${_error}: file not found = ${CLUSTER_LIST}"
+      echo "Warning ${_error}: file not found = ${CLUSTER_LIST}. Use: Control+C to cancel."
       get_file
     fi
   fi
@@ -263,7 +298,7 @@ function select_workshop() {
 #__main__
 
 # Source Workshop common routines + global variables
-. scripts/common.lib.sh
+. scripts/lib.common.sh
 . scripts/global.vars.sh
 begin
 
@@ -271,25 +306,31 @@ begin
 _CLUSTER_FILE='Cluster Input File'
  CLUSTER_LIST=
 
-# NONWORKSHOPS appended to end of WORKSHOPS
+# NONWORKSHOPS appended to WORKSHOPS
              WORKSHOP_COUNT=${#WORKSHOPS[@]}
 WORKSHOPS[${#WORKSHOPS[@]}]="Change ${_CLUSTER_FILE}"
 WORKSHOPS[${#WORKSHOPS[@]}]=${_VALIDATE}
 WORKSHOPS[${#WORKSHOPS[@]}]="Quit"
            let NONWORKSHOPS=${#WORKSHOPS[@]}-${WORKSHOP_COUNT}
 
-# Check if file passed via command line, otherwise prompt for cluster list file
+# shellcheck disable=SC2213
 while getopts "f:w:\?" opt; do
 
   if [[ ${DEBUG} ]]; then
-    log "Checking option: ${opt} with arguent ${OPTARG}"
+    log "Checking option: ${opt} with argument ${OPTARG}"
   fi
 
   case ${opt} in
     f )
       if [[ ${OPTARG} == '-' ]]; then
         log "${_CLUSTER_FILE} override, checking environment variables..."
-        CheckArgsExist 'MY_EMAIL MY_PE_HOST MY_PE_PASSWORD'
+
+        if [[ -z "${PE_HOST}" ]]; then
+          pe_determine 'PE'
+          . global.vars.sh # re-populate PE_HOST dependencies
+        fi
+
+        args_required 'EMAIL PE_HOST PE_PASSWORD'
         CLUSTER_LIST=${OPTARG}
       elif [[ -f ${OPTARG} ]]; then
         CLUSTER_LIST=${OPTARG}
@@ -314,14 +355,24 @@ while getopts "f:w:\?" opt; do
 done
 shift $((OPTIND -1))
 
-if [[ -n ${CLUSTER_LIST} && -n ${WORKSHOP_NUM} ]]; then
-  stage_clusters
-elif [[ -n ${WORKSHOP_NUM} ]]; then
-  log "Error: missing workshop number argument."
-  script_usage
-elif [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == "${_VALIDATE}" ]]; then
+if [[ -z ${CLUSTER_LIST} ]]; then
+  get_file
+fi
+if [[ -z ${WORKSHOP_NUM} ]]; then
+  log "Warning: missing workshop number argument."
+  select_workshop
+fi
+
+if [[ ${WORKSHOPS[${WORKSHOP_NUM}]} == "${_VALIDATE}" ]]; then
   validate_clusters
+elif (( ${WORKSHOP_NUM} == ${#WORKSHOPS[@]} - 1 )); then
+  echo ${WORKSHOPS[${WORKSHOP_NUM}]}
+  finish
+elif (( ${WORKSHOP_NUM} == ${#WORKSHOPS[@]} - 2 )); then
+  echo ${WORKSHOPS[${WORKSHOP_NUM}]}
+elif (( ${WORKSHOP_NUM} > 0 && ${WORKSHOP_NUM} <= ${#WORKSHOPS[@]} - 3 )); then
+  stage_clusters
 else
-  log "Warning: missing ${_CLUSTER_FILE} argument."
-  get_file # If no command line arguments, start interactive session
+  #log "DEBUG: WORKSHOP_NUM=${WORKSHOP_NUM}"
+  script_usage
 fi

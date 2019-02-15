@@ -11,6 +11,7 @@ if [[ -z ${SOURCE} ]]; then
     REPOSITORY=stageworkshop
         BRANCH=master
 else
+  # shellcheck disable=2206
     URL_SOURCE=(${SOURCE//\// }) # zero index
   ORGANIZATION=${URL_SOURCE[2]}
     REPOSITORY=${URL_SOURCE[3]}
@@ -38,7 +39,7 @@ if [[ -f ${BRANCH}.zip ]]; then
   sh ${HOME}/${0} clean
 fi
 
-echo -e "\nFor details, please see: ${BASE_URL}"
+echo -e "\nFor details, please see: ${BASE_URL}/documentation/guidebook.md"
 
 _ERROR=0
 
@@ -55,8 +56,8 @@ CLUSTER_NAME+=$(ncli cluster get-params | grep 'Cluster Name' \
               | awk -F: '{print $2}' | tr -d '[:space:]')
 EMAIL_DOMAIN=nutanix.com
 
-if [[ -z ${MY_PE_PASSWORD} ]]; then
-  _PRISM_ADMIN=admin
+if [[ -z ${PE_PASSWORD} ]]; then
+  _PRISM_ADMIN='admin'
   echo -e "\n    Note: Hit [Return] to use the default answer inside brackets.\n"
   read -p "Optional: What is this cluster's admin username? [${_PRISM_ADMIN}] " PRISM_ADMIN
   if [[ -z ${PRISM_ADMIN} ]]; then
@@ -72,22 +73,22 @@ if [[ -z ${MY_PE_PASSWORD} ]]; then
     echo "Error ${_ERROR}: passwords do not match."
     exit ${_ERROR}
   else
-    MY_PE_PASSWORD=${_PW1}
+    PE_PASSWORD=${_PW1}
     unset _PW1 _PW2
   fi
 fi
 
-if [[ -z ${MY_EMAIL} ]]; then
+if [[ -z ${EMAIL} ]]; then
   echo -e "\n    Note: @${EMAIL_DOMAIN} will be added if domain omitted."
-  read -p "REQUIRED: Email address for cluster admin? " MY_EMAIL
+  read -p "REQUIRED: Email address for cluster admin? " EMAIL
 fi
 
 _WC_ARG='--lines'
-if [[ `uname -s` == "Darwin" ]]; then
+if [[ $(uname -s) == 'Darwin' ]]; then
   _WC_ARG='-l'
 fi
-if (( $(echo ${MY_EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
-  MY_EMAIL+=@${EMAIL_DOMAIN}
+if (( $(echo ${EMAIL} | grep @ | wc ${_WC_ARG}) == 0 )); then
+  EMAIL+=@${EMAIL_DOMAIN}
 fi
 
 if [[ -d ../${REPOSITORY}-${BRANCH} ]]; then
@@ -107,32 +108,30 @@ if [[ -e release.json ]]; then
  echo -e "\n${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')"
 fi
 
-MY_PE_HOST=$(ncli cluster get-params \
+PE_HOST=$(ncli cluster get-params \
   | grep 'External IP' \
   | awk -F: '{print $2}' \
   | tr -d '[:space:]')
 
-echo -e "\nStarting stage_workshop.sh for ${MY_EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${MY_PE_HOST} ...\n"
+echo -e "\nStarting stage_workshop.sh for ${EMAIL} with ${PRISM_ADMIN}:passwordNotShown@${PE_HOST} ...\n"
 
 if [[ ! -z ${WORKSHOP} ]]; then
   echo -e "\tAdding workshop: ${WORKSHOP}"
   MY_WORKSHOP=" -w ${WORKSHOP}"
 fi
-      MY_EMAIL=${MY_EMAIL} \
-    MY_PE_HOST=${MY_PE_HOST} \
-   PRISM_ADMIN=${PRISM_ADMIN} \
-MY_PE_PASSWORD=${MY_PE_PASSWORD} \
-./stage_workshop.sh -f - ${MY_WORKSHOP} \
-  && popd
+   EMAIL=${EMAIL} \
+    PE_HOST=${PE_HOST} \
+PRISM_ADMIN=${PRISM_ADMIN} \
+PE_PASSWORD=${PE_PASSWORD} \
+./stage_workshop.sh -f - ${MY_WORKSHOP} # \
+#  && popd || exit
 
 echo -e "\n    DONE: ${0} ran for ${SECONDS} seconds."
 cat <<EOM
 Optional: Please consider running ${0} clean.
 
 Watch progress with:
-          tail -f stage_calmhow.log &
+          tail -f calm.log &
 or login to PE to see tasks in flight and eventual PC registration:
-          https://${MY_PE_HOST}:9440/
+          https://${PE_HOST}:9440/
 EOM
-
-# TODO: determine if I'm on HPOC nw variant for a local URL, etc.
