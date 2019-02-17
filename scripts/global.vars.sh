@@ -39,6 +39,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
        'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
  )
    QCOW2_REPOS=(\
+    'http://10.42.8.50/images/' \
     'http://10.21.250.221/images/tech-enablement/' \
     'http://10.21.250.221/images/ahv/techsummit/' \
     'http://10.132.128.50:81/share/saved-images/' \
@@ -95,7 +96,7 @@ AUTH_ADMIN_PASS='nutanix/4u'
 AUTH_ADMIN_GROUP='SSP Admins'
    AUTODC_REPOS=(\
   'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
-  'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
+  'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
   'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
  # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
   'http://10.59.103.143:8000/autodc-2.0.qcow2' \
