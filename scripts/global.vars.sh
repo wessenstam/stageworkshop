@@ -18,10 +18,11 @@ PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/
     FILES_METAURL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
     # 2019-02-15: override until metadata URL fixed
     # http://download.nutanix.com/afs/7.3/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
-        FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+    FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
     # Revert by overriding again...
-    FILES_VERSION='3.2.0'
-    FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
+    #FILES_VERSION='3.2.0'
+    #FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
+    #FILES_URL=
 
 NTNX_INIT_PASSWORD='nutanix/4u'
        PRISM_ADMIN='admin'
