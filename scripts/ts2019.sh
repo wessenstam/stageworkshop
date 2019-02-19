@@ -20,9 +20,9 @@ case ${1} in
 
     export PC_DEV_VERSION='5.10.1.1'
     export PC_DEV_METAURL='http://10.42.8.50/images/pcdeploy-5.10.1.1.json'
-    export         PC_URL='http://10.42.8.50/images/x.tar.gz'
+    export         PC_URL='http://10.42.8.50/images/euphrates-5.10.1.1-stable-prism_central.tar'
     #export PC_DEV_METAURL='https://s3.amazonaws.com/get-ahv-images/pcdeploy-5.10.1.1.json'
-    #export         PC_URL='https://s3.amazonaws.com/get-ahv-images/x.tar.gz'
+    #export         PC_URL='https://s3.amazonaws.com/get-ahv-images/euphrates-5.10.1.1-stable-prism_central.tar'
     export  FILES_VERSION='3.2.0.1'
     export  FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
     export      FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
@@ -74,7 +74,6 @@ case ${1} in
       Windows2012R2.qcow2 \
       Windows10-1709.qcow2 \
       ToolsVM.qcow2 \
-      CentOS7.iso \
       Windows2012R2.iso \
       SQLServer2014SP3.iso \
       Nutanix-VirtIO-1.1.3.iso \
