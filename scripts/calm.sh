@@ -32,13 +32,14 @@ case ${1} in
       pc_install "${NW1_NAME}" \
       && prism_check 'PC' \
       && pc_configure \
+      && pc_configure \
       && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
       log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
       log "PE = https://${PE_HOST}:9440"
       log "PC = https://${PC_HOST}:9440"
 
-      files_install & # parallel, optional. Versus: $0 'files' &
+      #files_install & # parallel, optional. Versus: $0 'files' &
 
       finish
     else
@@ -50,6 +51,9 @@ case ${1} in
   ;;
   PC | pc )
     . lib.pc.sh
+
+    run_once
+
     dependencies 'install' 'jq' || exit 13
 
     ssh_pubkey & # non-blocking, parallel suitable
@@ -66,6 +70,12 @@ case ${1} in
       log "CLUSTER_NAME=|${CLUSTER_NAME}|, PE_HOST=|${PE_HOST}|"
       pe_determine ${1}
       . global.vars.sh # re-populate PE_HOST dependencies
+    else
+      CLUSTER_NAME=$(ncli --json=true multicluster get-cluster-state | \
+                      jq -r .data[0].clusterDetails.clusterName)
+      if [[ ${CLUSTER_NAME} != '' ]]; then
+        log "INFO: ncli multicluster get-cluster-state looks good for ${CLUSTER_NAME}."
+      fi
     fi
 
     if [[ ! -z "${2}" ]]; then # hidden bonus

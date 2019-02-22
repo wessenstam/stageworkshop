@@ -180,14 +180,15 @@ SSHPASS='${PE_PASSWORD}' sshpass -e ssh \\
  ${SSH_OPTS} \\
  nutanix@${PE_HOST}
 
-pkill -f calm ; tail -f calm*log
+pkill -f calm ; tail -f *log
 EOF
 
       echo 'rm -rf master.zip calm*.log stageworkshop-master/ && \'
       echo '  curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh \'
       echo '  && SOURCE=${_} 'EMAIL=${EMAIL} PE_PASSWORD=${_password}' sh ${_##*/} \'
-      echo '  && tail -f ~/calm*.log'
+      echo '  && tail -f ~/*log'
       echo -e "cd stageworkshop-master/scripts/ && \ \n PE_HOST=${PE_HOST} PE_PASSWORD='${_password}' PC_VERSION=${PC_DEV_VERSION} EMAIL=${EMAIL} ./calm.sh 'PE'"
+      echo "ncli multicluster add-to-multicluster external-ip-address-or-svm-ips=10.42.x.39 username=admin password='x'"
       ;;
     AUTH | auth | ldap)
           _host=${AUTH_HOST}
@@ -198,7 +199,7 @@ EOF
 
   case "${2}" in
     log | logs)
-      _command='date; echo; tail -f calm*log'
+      _command='date; echo; tail -f *log'
       ;;
     calm | inflight)
       _command='ps -efww | grep calm'
