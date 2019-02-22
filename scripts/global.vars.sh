@@ -83,7 +83,8 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
  NW1_DHCP_START="${IPV4_PREFIX}.50"
    NW1_DHCP_END="${IPV4_PREFIX}.125"
 # https://sewiki.nutanix.com/index.php/Hosted_POC_FAQ#I.27d_like_to_test_email_alert_functionality.2C_what_SMTP_server_can_I_use_on_Hosted_POC_clusters.3F
-SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+#SMTP_SERVER_ADDRESS='nutanix-com.mail.protection.outlook.com'
+SMTP_SERVER_ADDRESS='mxb-002c1b01.gslb.pphosted.com'
    SMTP_SERVER_FROM='NutanixHostedPOC@nutanix.com'
    SMTP_SERVER_PORT=25
 
