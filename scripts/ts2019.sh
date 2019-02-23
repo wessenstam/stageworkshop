@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 # -x
-function ts_images() {
 
-
-  images && pc_cluster_img_import
-}
 #__main()__________
 
 # Source Nutanix environment (PATH + aliases), then common routines + global variables
