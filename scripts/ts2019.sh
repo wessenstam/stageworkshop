@@ -55,28 +55,6 @@ case ${1} in
     export NW2_DHCP_START="${IPV4_PREFIX}.132"
     export   NW2_DHCP_END="${IPV4_PREFIX}.229"
 
-    export QCOW2_REPOS=(\
-     'http://10.42.8.50/images/' \
-     'https://s3.amazonaws.com/get-ahv-images/' \
-    ) # talk to Nathan.C to populate S3, Sharon.S to populate Daisy File Share
-    export QCOW2_IMAGES=(\
-      CentOS7.qcow2 \
-      Windows2016.qcow2 \
-      Windows2012R2.qcow2 \
-      Windows10-1709.qcow2 \
-      ToolsVM.qcow2 \
-      Windows2012R2.iso \
-      SQLServer2014SP3.iso \
-      Nutanix-VirtIO-1.1.3.iso \
-      xtract-vm-2.0.3.qcow2 \
-      ERA-Server-build-1.0.1.qcow2 \
-      sherlock-k8s-base-image_320.qcow2 \
-      hycu-3.5.0-6253.qcow2 \
-      VeeamAvailability_1.0.457.vmdk \
-      VeeamBR_9.5.4.2615.Update4.iso \
-      'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
-    )
-
     args_required 'PE_HOST PC_LAUNCH'
     ssh_pubkey & # non-blocking, parallel suitable
 
