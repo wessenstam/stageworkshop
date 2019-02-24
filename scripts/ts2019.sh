@@ -173,6 +173,6 @@ case ${1} in
   ;;
   IMAGES | images )
     . lib.pc.sh
-    ts_images
+    #ts_images
   ;;
 esac
