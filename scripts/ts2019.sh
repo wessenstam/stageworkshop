@@ -171,8 +171,8 @@ case ${1} in
   FILES | files | afs )
     files_install
   ;;
-  IMAGES | images )
-    . lib.pc.sh
+  #IMAGES | images )
+  #  . lib.pc.sh
     #ts_images
-  ;;
+  #;;
 esac
