@@ -95,8 +95,6 @@ case ${1} in
       'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
     )
 
-    run_once
-
     dependencies 'install' 'jq' || exit 13
 
     ssh_pubkey & # non-blocking, parallel suitable
