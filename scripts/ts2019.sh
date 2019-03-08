@@ -18,9 +18,9 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    export PC_DEV_VERSION='5.10.1.1'
-    export PC_DEV_METAURL='http://10.42.8.50/images/pcdeploy-5.10.1.1.json'
-    export         PC_URL='http://10.42.8.50/images/euphrates-5.10.1.1-stable-prism_central.tar'
+    export PC_DEV_VERSION='5.10.2'
+    export PC_DEV_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
+    export         PC_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
     #export PC_DEV_METAURL='https://s3.amazonaws.com/get-ahv-images/pcdeploy-5.10.1.1.json'
     #export         PC_URL='https://s3.amazonaws.com/get-ahv-images/euphrates-5.10.1.1-stable-prism_central.tar'
     export  FILES_VERSION='3.2.0.1'
@@ -88,7 +88,7 @@ case ${1} in
       Nutanix-VirtIO-1.1.3.iso \
       xtract-vm-2.0.3.qcow2 \
       ERA-Server-build-1.0.1.qcow2 \
-      sherlock-k8s-base-image_320.qcow2 \
+      sherlock-k8s-base-image_403.qcow2 \
       hycu-3.5.0-6253.qcow2 \
       VeeamAvailability_1.0.457.vmdk \
       VeeamBR_9.5.4.2615.Update4.iso \
