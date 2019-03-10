@@ -6,8 +6,8 @@
 # Browse to: https://portal.nutanix.com/#/page/releases/prismDetails
 # - Find ${PC_VERSION} in the Additional Releases section on the lower right side
 # - Provide the metadata URL for the "PC 1-click deploy from PE" option to PC_*_METAURL
-   PC_DEV_VERSION='5.10.1.1'
-   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.1.1/pcdeploy-5.10.1.1.json'
+   PC_DEV_VERSION='5.10.2'
+   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.1.1/pcdeploy-5.10.2.json'
 PC_STABLE_VERSION='5.8.2'
 PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/v1/pc_deploy-5.8.2.json'
 # Sync the following to lib.common.sh::ntnx_download-Case=FILES
@@ -41,10 +41,10 @@ NTNX_INIT_PASSWORD='nutanix/4u'
  )
    QCOW2_REPOS=(\
     'http://10.42.8.50/images/' \
-    'http://10.21.250.221/images/tech-enablement/' \
-    'http://10.21.250.221/images/ahv/techsummit/' \
-    'http://10.132.128.50:81/share/saved-images/' \
     'https://s3.amazonaws.com/get-ahv-images/' \
+    #'http://10.21.250.221/images/tech-enablement/' \
+    #'http://10.21.250.221/images/ahv/techsummit/' \
+    #'http://10.132.128.50:81/share/saved-images/' \
  ) # talk to Nathan.C to populate S3, Sharon.S to populate Daisy File Share
   QCOW2_IMAGES=(\
    CentOS7.qcow2 \
@@ -97,11 +97,13 @@ AUTH_ADMIN_USER='administrator@'${AUTH_FQDN}
 AUTH_ADMIN_PASS='nutanix/4u'
 AUTH_ADMIN_GROUP='SSP Admins'
    AUTODC_REPOS=(\
-  'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
+  'http://10.42.8.50/images/AutoDC.qcow2' \
+  'http://10.42.8.50/images/AutoDC2.qcow2' \
   'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
-  'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+  'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+  #'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
  # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-  'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+  #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 
 # For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55, 10.42)
@@ -179,11 +181,13 @@ AUTH_ADMIN_USER='administrator@'${AUTH_FQDN}
 AUTH_ADMIN_PASS='nutanix/4u'
 AUTH_ADMIN_GROUP='SSP Admins'
    AUTODC_REPOS=(\
-  'http://10.21.250.221/images/ahv/techsummit/AutoDC.qcow2' \
-  'https://s3.amazonaws.com/get-ahv-images/AutoDC-04282018.qcow2' \
-  'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
+  'http://10.42.8.50/images/AutoDC.qcow2' \
+  'http://10.42.8.50/images/AutoDC2.qcow2' \
+  'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
+  'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+  #'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
  # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-  'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+  #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
 )
 
 # For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55, 10.42)
