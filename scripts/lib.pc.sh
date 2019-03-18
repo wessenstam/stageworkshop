@@ -81,7 +81,7 @@ function lcm() {
   if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
     log "PC_VERSION ${PC_VERSION} >= 5.9, starting LCM inventory..."
 
-    _http_body='value: "{".oid":"LifeCycleManager",".method":"lcm_framework_rpc",".kwargs":{"method_class":"LcmFramework","method":"perform_inventory","args":["http://download.nutanix.com/lcm/2.0"]}}"'
+    _http_body='{"value":"{\".oid\":\"LifeCycleManager\",\".method\":\"lcm_framework_rpc\",\".kwargs\":{\"method_class\":\"LcmFramework\",\"method\":\"perform_inventory\",\"args\":[\"http://download.nutanix.com/lcm/2.0\"]}}"}'
 
     _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
       https://localhost:9440/PrismGateway/services/rest/v1/genesis)
