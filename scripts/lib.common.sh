@@ -355,7 +355,7 @@ EOF
   # For doing ISO IMAGES
   #######################################
 
-  for _image in "${QCOW2_IMAGES[@]}" ; do
+  for _image in "${ISO_IMAGES[@]}" ; do
 
     # log "DEBUG: ${_image} image.create..."
     if [[ ${_cli} == 'nuclei' ]]; then
