@@ -83,16 +83,18 @@ case ${1} in
       Windows2012R2.qcow2 \
       Windows10-1709.qcow2 \
       ToolsVM.qcow2 \
-      Windows2012R2.iso \
-      SQLServer2014SP3.iso \
-      Nutanix-VirtIO-1.1.3.iso \
-      xtract-vm-2.0.3.qcow2 \
+      move-3.0.1.qcow2  \
       ERA-Server-build-1.0.1.qcow2 \
       sherlock-k8s-base-image_403.qcow2 \
       hycu-3.5.0-6253.qcow2 \
       VeeamAvailability_1.0.457.vmdk \
-      VeeamBR_9.5.4.2615.Update4.iso \
       'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
+    )
+    export ISO_IMAGES=(\
+      Windows2012R2.iso \
+      SQLServer2014SP3.iso \
+      Nutanix-VirtIO-1.1.3.iso \
+      VeeamBR_9.5.4.2615.Update4.iso \
     )
 
     dependencies 'install' 'jq' || exit 13

@@ -1,10 +1,6 @@
-#!/usr/bin/env bash
+65#!/usr/bin/env bash
 # -x
 # Dependencies: curl, ncli, nuclei, jq
-
-###############################################################################################################################################################################
-# Routine to update Calm, but can be done via the LCM!!!!
-###############################################################################################################################################################################
 
 function calm_update() {
   local  _attempts=12
@@ -63,10 +59,6 @@ function calm_update() {
   fi
 }
 
-###############################################################################################################################################################################
-# Routine to enable Flow
-###############################################################################################################################################################################
-
 function flow_enable() {
   ## (API; Didn't work. Used nuclei instead)
   ## https://localhost:9440/api/nutanix/v3/services/microseg
@@ -78,126 +70,24 @@ function flow_enable() {
   nuclei microseg.get_status 2>/dev/null
 }
 
-###############################################################################################################################################################################
-# Routine to be run/loop till yes we are ok.
-###############################################################################################################################################################################
-function loop(){
-
-  local _attempts=30
-  local _loops=0
-  local _sleep=60
-  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
-
-  # What is the progress of the taskid?? 
-  while true; do
-    (( _loops++ ))
-    # Get the progress of the task  
-    _progress=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} ${_url_progress}?filterCriteria=parent_task_uuid%3D%3D${_task_id} | jq '.entities[0].percentageCompleted' 2>nul | tr -d \")
-    if (( ${_progress} == 100 )); then
-      log "The step has been succesfuly run"
-      break;
-    elif (( ${_loops} > ${_attempts} )); then
-      log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
-      return ${_error}
-    else
-      log "Still running... loop $_loops/$_attempts. Step is at ${_progress}% ...Sleeping ${_sleep} seconds"
-      sleep ${_sleep}
-    fi
-  done
-}
-
-###############################################################################################################################################################################
-# Routine to start the LCM Inventory and the update.
-###############################################################################################################################################################################
-
 function lcm() {
+  local  _http_body
+  local _pc_version
+  local       _test
 
-  local _url_lcm='https://localhost:9440/PrismGateway/services/rest/v1/genesis'
-  local _url_progress='https://localhost:9440/PrismGateway/services/rest/v1/progress_monitors'
-  local _url_groups='https://localhost:9440/api/nutanix/v3/groups'
-  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
+  # shellcheck disable=2206
+  _pc_version=(${PC_VERSION//./ })
 
-  # Inventory download/run
-  _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{"value":"{\".oid\":\"LifeCycleManager\",\".method\":\"lcm_framework_rpc\",\".kwargs\":{\"method_class\":\"LcmFramework\",\"method\":\"perform_inventory\",\"args\":[\"http://download.nutanix.com/lcm/2.0\"]}}"}' ${_url_lcm} | jq '.value' 2>nul | cut -d "\\" -f 4 | tr -d \")
-  
-  # If there has been a reply (task_id) then the URL has accepted by PC
-  # Changed (()) to [] so it works....
-  if [ -z "$_task_id" ]; then
-       log "LCM Inventory start has encountered an eror..."
-  else
-       log "LCM Inventory started.."
-       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
-      
-       # Run the progess checker
-       loop
-      
-       # We need to get the UUIDs and the versions to be used.. so we can start the update. They are in the /home/nutanix/data/logs/lcm_ops.out AFTER an inventory run!
-       # ******!!!!!!WE ARE USING A DEBUG LINE IN THE FILE MENTIONED!!! NEED TO KEEP TRACK OF THAT IF IT CHANGES!!!!!*****
-       _full_uuids=$(cat /home/nutanix/data/logs/lcm_ops.out | grep -A 1 entity_uuid | grep -B 1 "2.6.0.3")
-       
-       # As we need to have the latest version from the LCM we need to reverse the string so we get the last versions/UUIDS
-       _first_uuid=$(echo $_full_uuids |rev|cut -d":" -f 4 |rev | cut -d "\"" -f2)
-       _first_version="2.6.0.3" # Setting the version number hard coded!!! This is what has been tested for the workshops.
-       _sec_uuid=$(echo $_full_uuids rev|rev | cut -d":" -f 2 |rev | cut -d "\"" -f2)
-       _sec_version=$_first_version
-      
-       # Set the parameter to create the ugrade plan
-       # Create the curl json string '-d blablablablabla' so we can call the string and not the full json data line
-       _json_data="-d "
-       _json_data+="{\"value\":\"{\\\".oid\\\":\\\"LifeCycleManager\\\",\\\".method\\\":\\\"lcm_framework_rpc\\\",\\\".kwargs\\\":{\\\"method_class\\\":\\\"LcmFramework\\\",\\\"method\\\":\\\"generate_plan\\\",\\\"args\\\":[\\\"http://download.nutanix.com/lcm/2.0\\\",[[\\\""
-       _json_data+=$_first_uuid
-       _json_data+="\\\",\\\""
-       _json_data+=$_first_version
-       _json_data+="\\\"],[\\\""
-       _json_data+=$_sec_uuid
-       _json_data+="\\\",\\\""
-       _json_data+=$_sec_version
-       _json_data+="\\\"]]]}}\"}"
-      
-      
-       # Run the generate plan task
-       _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm})
-      
-       # Notify the log server that the LCM has been creating a plan
-       log "LCM Inventory has created a plan"
-       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
-       
-       # As the new json only needs to have the generate_plan changed into "perform_update" we also migh tuse sed...
-       _json_data=$(echo $_json_data | sed -e 's/generate_plan/perform_update/g')
+  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
+    log "PC_VERSION ${PC_VERSION} >= 5.9, starting LCM inventory..."
 
-       # Create new json data string
-       #_json_data="-d "
-       #_json_data+="{\"value\":\"{\\\".oid\\\":\\\"LifeCycleManager\\\",\\\".method\\\":\\\"lcm_framework_rpc\\\",\\\".kwargs\\\":{\\\"method_class\\\":\\\"LcmFramework\\\",\\\"method\\\":\\\"perform_update\\\",\\\"args\\\":[\\\"http://download.nutanix.com/lcm/2.0\\\",[[\\\""
-       #_json_data+=$_first_uuid
-       #_json_data+="\\\",\\\""
-       #_json_data+=$_first_version
-       #_json_data+="\\\"],[\\\""
-       #_json_data+=$_sec_uuid
-       #_json_data+="\\\",\\\""
-       #_json_data+=$_sec_version
-       #_json_data+="\\\"]]]}}\"}"
-      
-      
-       # Run the upgrade to have the latest versions
-       _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm} | jq '.value' 2>nul | cut -d "\\" -f 4 | tr -d \")
-      
-       # If there has been a reply task_id then the URL has accepted by PC
-        if [ -z "$_task_id" ]; then
-            # There has been an error!!!
-            log "LCM Upgrade has encountered an error!!!!"
-        else
-            # Notify the logserver that we are starting the LCM Upgrade
-            log "LCM Upgrade starting..."
-        
-            # Run the progess checker
-            loop
-        fi
+    _http_body='{"value":"{\".oid\":\"LifeCycleManager\",\".method\":\"lcm_framework_rpc\",\".kwargs\":{\"method_class\":\"LcmFramework\",\"method\":\"perform_inventory\",\"args\":[\"http://download.nutanix.com/lcm/2.0\"]}}"}'
+
+    _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
+      https://localhost:9440/PrismGateway/services/rest/v1/genesis)
+    log "inventory _test=|${_test}|"
   fi
-
 }
-###############################################################################################################################################################################
-# Routine for PC_Admin
-###############################################################################################################################################################################
 
 function pc_admin() {
   local  _http_body
@@ -226,9 +116,6 @@ EOF
   log "add.roles ${_http_body}=|${_test}|"
 }
 
-###############################################################################################################################################################################
-# Routine set PC authentication to use the AD as well
-###############################################################################################################################################################################
 function pc_auth() {
   # TODO:190 configure case for each authentication server type?
   local      _group
@@ -287,11 +174,6 @@ EOF
   done
 }
 
-###############################################################################################################################################################################
-# Routine to import the images into PC
-# TODO: As we test for acli, which is not avail on the PC, we use NUCLEI. Can we make a change????
-###############################################################################################################################################################################
-
 function pc_cluster_img_import() {
   local _http_body
   local      _test
@@ -320,10 +202,6 @@ EOF
   log "batch _test=|${_test}|"
 }
 
-###############################################################################################################################################################################
-# Routine to add dns servers
-###############################################################################################################################################################################
-
 function pc_dns_add() {
   local _dns_server
   local       _test
@@ -334,10 +212,6 @@ function pc_dns_add() {
     log "name_servers/add_list |${_dns_server}| _test=|${_test}|"
   done
 }
-
-###############################################################################################################################################################################
-# Routine to setup the initial steps for PC; NTP, EULA and Pulse
-###############################################################################################################################################################################
 
 function pc_init() {
   # TODO:130 pc_init: NCLI, type 'cluster get-smtp-server' config for idempotency?
@@ -369,10 +243,6 @@ function pc_init() {
   log "PULSE _test=|${_test}|"
 }
 
-###############################################################################################################################################################################
-# Routine to setup the SMTP server in PC
-###############################################################################################################################################################################
-
 function pc_smtp() {
   log "Configure SMTP@PC"
   local _sleep=5
@@ -391,10 +261,6 @@ function pc_smtp() {
   #   https://localhost:9440/PrismGateway/services/rest/v1/cluster/smtp)
   # log "_test=|${_test}|"
 }
-
-###############################################################################################################################################################################
-# Routine to change the PC admin password
-###############################################################################################################################################################################
 
 function pc_passwd() {
   args_required 'PRISM_ADMIN PE_PASSWORD'
@@ -416,10 +282,6 @@ function pc_passwd() {
   #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
   # log "cURL reset password _test=${_test}"
 }
-
-###############################################################################################################################################################################
-# Routine to setp up the SSP authentication to use the AutoDC1 or 2 server
-###############################################################################################################################################################################
 
 function ssp_auth() {
   args_required 'AUTH_SERVER AUTH_HOST AUTH_ADMIN_USER AUTH_ADMIN_PASS'
@@ -559,15 +421,9 @@ EOF
 
 }
 
-###############################################################################################################################################################################
-# Routine to enable Calm and proceed only if Calm is enabled
-###############################################################################################################################################################################
-
 function calm_enable() {
   local _http_body
   local _test
-  local _sleep=30
-  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
 
   log "Enable Nutanix Calm..."
   _http_body=$(cat <<EOF
@@ -578,28 +434,11 @@ function calm_enable() {
 EOF
   )
   _http_body='{"enable_nutanix_apps":true,"state":"ENABLE"}'
-  _test=$(curl ${CURL_HTTP_OPTS} \
+  _test=$(curl ${CURL_POST_OPTS} \
     --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
   log "_test=|${_test}|"
-  
-  # Check if Calm is enabled
-  while true; do
-    # Get the progress of the task  
-    _progress=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/api/nutanix/v3/services/nucalm/status | jq '.service_enablement_status' 2>nul | tr -d \")
-    if [[ ${_progress} == "ENABLED" ]]; then
-      log "Calm has been Enabled..."
-      break;
-    else
-      log "Still enabling Calm.....Sleeping ${_sleep} seconds"
-      sleep ${_sleep}
-    fi
-  done
 }
-
-###############################################################################################################################################################################
-# Routine to make changes to the PC UI; Colors, naming and the Welcome Banner
-###############################################################################################################################################################################
 
 function pc_ui() {
   # http://vcdx56.com/2017/08/change-nutanix-prism-ui-login-screen/
@@ -657,10 +496,6 @@ EOF
     done
   fi
 }
-
-###############################################################################################################################################################################
-# Routine to Create a Project in the Calm part
-###############################################################################################################################################################################
 
 function pc_project() {
   local  _name

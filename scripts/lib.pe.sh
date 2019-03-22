@@ -267,7 +267,14 @@ function pc_configure() {
   args_required 'PC_LAUNCH RELEASE'
   local      _command
   local    _container
-  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${PC_LAUNCH}"
+  local _dependencies="global.vars.sh lib.pc.sh ${PC_LAUNCH}"
+
+  # If we are being called via the we-ts2019.sh, we need to change the lib.common.sh to we-lib.common.sh
+  if [[ ${PC_LAUNCH} != *"we-"* ]]; then
+    _dependencies+=" lib.common.sh"
+  else
+    _dependencies+=" we-lib.common.sh"
+  fi
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -288,7 +295,9 @@ function pc_configure() {
       remote_exec 'SCP' 'PC' ${_container}.tar 'OPTIONAL' &
     fi
   done
-
+  #####################################################################################
+  ### Handing of to the PC for rest of the installation
+  #####################################################################################
   _command="EMAIL=${EMAIL} \
     PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
     PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} PC"
