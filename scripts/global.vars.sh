@@ -43,7 +43,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
  )
    QCOW2_REPOS=(\
     'http://10.42.8.50/images/' \
-    'https://s3.amazonaws.com/get-ahv-images/' \
+    'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
     #'http://10.21.250.221/images/tech-enablement/' \
     #'http://10.21.250.221/images/ahv/techsummit/' \
     #'http://10.132.128.50:81/share/saved-images/' \
