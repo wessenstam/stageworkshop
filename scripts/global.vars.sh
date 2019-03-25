@@ -37,6 +37,8 @@ NTNX_INIT_PASSWORD='nutanix/4u'
 
  # https://stedolan.github.io/jq/download/#checksums_and_signatures
       JQ_REPOS=(\
+       'http://10.42.8.50/images/' \
+       'https://s3.amazonaws.com/get-ahv-images/' \
        'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
  )
    QCOW2_REPOS=(\
@@ -51,15 +53,17 @@ NTNX_INIT_PASSWORD='nutanix/4u'
    Windows2016.qcow2 \
    Windows2012R2.qcow2 \
    Windows10-1709.qcow2 \
-   CentOS7.iso \
-   Windows2016.iso \
-   Windows2012R2.iso \
-   Windows10.iso \
-   Nutanix-VirtIO-1.1.3.iso \
-   SQLServer2014SP3.iso \
-   XenApp_and_XenDesktop_7_18.iso \
    'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
  )
+ ISO_IMAGES=(\
+  CentOS7.iso \
+  Windows2016.iso \
+  Windows2012R2.iso \
+  Windows10.iso \
+  Nutanix-VirtIO-1.1.3.iso \
+  SQLServer2014SP3.iso \
+  XenApp_and_XenDesktop_7_18.iso \
+)
  # "XenDesktop-7.15.iso" http://10.21.250.221/images/ahv/techsummit/XD715.iso
  # http://download.nutanix.com/era/1.0.0/ERA-Server-build-1.0.0-bae7ca0d653e1af2bcb9826d1320e88d8c4713cc.qcow2
 
