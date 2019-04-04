@@ -7,7 +7,9 @@
 # - Find ${PC_VERSION} in the Additional Releases section on the lower right side
 # - Provide the metadata URL for the "PC 1-click deploy from PE" option to PC_*_METAURL
    PC_DEV_VERSION='5.10.2'
-   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.1.1/pcdeploy-5.10.2.json'
+   PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.2/pcdeploy-5.10.2.json'
+   PC_CURRENT_VERSION='5.10.2'
+   PC_CURRENT_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.2/pcdeploy-5.10.2.json'
 PC_STABLE_VERSION='5.8.2'
 PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/v1/pc_deploy-5.8.2.json'
 # Sync the following to lib.common.sh::ntnx_download-Case=FILES
@@ -15,7 +17,11 @@ PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/
 # - Find ${FILES_VERSION} in the Additional Releases section on the lower right side
 # - Provide "Upgrade Metadata File" URL to FILES_METAURL
     FILES_VERSION='3.2.0.1'
-    FILES_METAURL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+    FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+        FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+    #export  FILES_METAURL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+    #export      FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+    #FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
     # 2019-02-15: override until metadata URL fixed
     # http://download.nutanix.com/afs/7.3/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
     #FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
@@ -37,7 +43,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
 
  # https://stedolan.github.io/jq/download/#checksums_and_signatures
       JQ_REPOS=(\
-       'http://10.42.8.50/images/' \
+       #'http://10.42.8.50/images/' \
        'https://s3.amazonaws.com/get-ahv-images/' \
        'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
  )
@@ -53,16 +59,18 @@ NTNX_INIT_PASSWORD='nutanix/4u'
    Windows2016.qcow2 \
    Windows2012R2.qcow2 \
    Windows10-1709.qcow2 \
+   ToolsVM.qcow2 \
+   ERA-Server-build-1.0.1.qcow2 \
    'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
  )
- ISO_IMAGES=(\
-  CentOS7.iso \
-  Windows2016.iso \
-  Windows2012R2.iso \
-  Windows10.iso \
-  Nutanix-VirtIO-1.1.3.iso \
-  SQLServer2014SP3.iso \
-  XenApp_and_XenDesktop_7_18.iso \
+  ISO_IMAGES=(\
+   CentOS7.iso \
+   Windows2016.iso \
+   Windows2012R2.iso \
+   Windows10.iso \
+   Nutanix-VirtIO-1.1.3.iso \
+   SQLServer2014SP3.iso \
+   XenApp_and_XenDesktop_7_18.iso \
 )
  # "XenDesktop-7.15.iso" http://10.21.250.221/images/ahv/techsummit/XD715.iso
  # http://download.nutanix.com/era/1.0.0/ERA-Server-build-1.0.0-bae7ca0d653e1af2bcb9826d1320e88d8c4713cc.qcow2
@@ -158,8 +166,8 @@ case "${OCTET[0]}.${OCTET[1]}" in
       NW1_DHCP_END="${IPV4_PREFIX}.250"
       # PC deploy file local override, TODO:30 make an PC_URL array and eliminate
                PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
-       PC_DEV_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
-    PC_STABLE_METAURL=${PC_DEV_METAURL}
+       PC_CURRENT_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
+    PC_STABLE_METAURL=${PC_CURRENT_METAURL}
 
     QCOW2_IMAGES=(\
       Centos7-Base.qcow2 \
@@ -242,8 +250,8 @@ case "${OCTET[0]}.${OCTET[1]}" in
       NW1_DHCP_END="${IPV4_PREFIX}.250"
       # PC deploy file local override, TODO:30 make an PC_URL array and eliminate
                PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
-       PC_DEV_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
-    PC_STABLE_METAURL=${PC_DEV_METAURL}
+       PC_CURRENT_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
+    PC_STABLE_METAURL=${PC_CURRENT_METAURL}
 
     QCOW2_IMAGES=(\
       Centos7-Base.qcow2 \

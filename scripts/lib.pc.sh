@@ -2,66 +2,6 @@
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 
-###############################################################################################################################################################################
-# Routine to update Calm, but can be done via the LCM!!!!
-###############################################################################################################################################################################
-
-function calm_update() {
-  local  _attempts=12
-  local  _calm_bin=/usr/local/nutanix/epsilon
-  local _container
-  local     _error=19
-  local      _loop=0
-  local     _sleep=10
-  local       _url=http://${AUTH_HOST}:8080
-
-  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
-    log "Bypassing download of updated containers."
-  else
-    dependencies 'install' 'sshpass' || exit 13
-    remote_exec 'ssh' 'AUTH_SERVER' \
-      'if [[ ! -e nucalm.tar ]]; then smbclient -I 10.21.249.12 \\\\pocfs\\images --user ${1} --command "prompt ; cd /Calm-EA/pc-'${PC_VERSION}'/ ; mget *tar"; echo; ls -lH *tar ; fi' \
-      'OPTIONAL'
-
-    while true ; do
-      (( _loop++ ))
-      _test=$(curl ${CURL_HTTP_OPTS} ${_url} \
-        | tr -d \") # wonderful addition of "" around HTTP status code by cURL
-
-      if (( ${_test} == 200 )); then
-        log "Success reaching ${_url}"
-        break;
-      elif (( ${_loop} > ${_attempts} )); then
-        log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
-        return ${_error}
-      else
-        log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
-        sleep ${_sleep}
-      fi
-    done
-
-    download ${_url}/epsilon.tar
-    download ${_url}/nucacallm.tar
-  fi
-
-  if [[ -e ${HOME}/epsilon.tar ]] && [[ -e ${HOME}/nucalm.tar ]]; then
-    ls -lh ${HOME}/*tar
-    mkdir ${HOME}/calm.backup || true
-    cp ${_calm_bin}/*tar ${HOME}/calm.backup/ \
-    && genesis stop nucalm epsilon \
-    && docker rm -f "$(docker ps -aq)" || true \
-    && docker rmi -f "$(docker images -q)" || true \
-    && cp ${HOME}/*tar ${_calm_bin}/ \
-    && cluster start # ~75 seconds to start both containers
-
-    for _container in epsilon nucalm ; do
-      local _test=0
-      while (( ${_test} < 1 )); do
-        _test=$(docker ps -a | grep ${_container} | grep -i healthy | wc --lines)
-      done
-    done
-  fi
-}
 
 ###############################################################################################################################################################################
 # Routine to enable Flow
@@ -88,10 +28,10 @@ function loop(){
   local _sleep=60
   local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
 
-  # What is the progress of the taskid?? 
+  # What is the progress of the taskid??
   while true; do
     (( _loops++ ))
-    # Get the progress of the task  
+    # Get the progress of the task
     _progress=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} ${_url_progress}?filterCriteria=parent_task_uuid%3D%3D${_task_id} | jq '.entities[0].percentageCompleted' 2>nul | tr -d \")
     if (( ${_progress} == 100 )); then
       log "The step has been succesfuly run"
@@ -119,7 +59,7 @@ function lcm() {
 
   # Inventory download/run
   _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{"value":"{\".oid\":\"LifeCycleManager\",\".method\":\"lcm_framework_rpc\",\".kwargs\":{\"method_class\":\"LcmFramework\",\"method\":\"perform_inventory\",\"args\":[\"http://download.nutanix.com/lcm/2.0\"]}}"}' ${_url_lcm} | jq '.value' 2>nul | cut -d "\\" -f 4 | tr -d \")
-  
+
   # If there has been a reply (task_id) then the URL has accepted by PC
   # Changed (()) to [] so it works....
   if [ -z "$_task_id" ]; then
@@ -127,28 +67,28 @@ function lcm() {
   else
        log "LCM Inventory started.."
        set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
-      
+
        # Run the progess checker
        loop
-      
+
        #################################################################
        # Grab the json from the possible to be updated UUIDs and versions and save local in reply_json.json
        #################################################################
-       
+
        # Need loop so we can create the full json more dynamical
 
        # Run the Curl command and save the oputput in a temp file
        curl $CURL_HTTP_OPTS --user $PRISM_ADMIN:$PE_PASSWORD -X POST -d '{"entity_type": "lcm_available_version","grouping_attribute": "entity_uuid","group_member_count": 1000,"group_member_attributes": [{"attribute": "uuid"},{"attribute": "entity_uuid"},{"attribute": "entity_class"},{"attribute": "status"},{"attribute": "version"},{"attribute": "dependencies"},{"attribute": "order"}]}'  $_url_groups > reply_json.json
-       
+
        # Fill the uuid array with the correct values
        uuid_arr=($(jq '.group_results[].entity_results[].data[] | select (.name=="entity_uuid") | .values[0].values[0]' reply_json.json | sort -u | tr "\"" " " | tr -s " "))
-       
+
        # Grabbing the versions of the UUID and put them in a versions array
        for uuid in "${uuid_arr[@]}"
        do
          version_ar+=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[0]==$uuid) | select (.data[].name=="version") | .data[].values[].values[0]' reply-inventory.json | tail -4 | head -n 1 | tr -d \"))
        done
-       
+
        # Set the parameter to create the ugrade plan
        # Create the curl json string '-d blablablablabla' so we can call the string and not the full json data line
        # Begin of the JSON data payload
@@ -161,7 +101,7 @@ function lcm() {
        do
           _json_data+="[\\\"${uuid_arr[$count]}\\\",\\\"${version_ar[$count]}\\\"],"
           let count=count+1
-        done 
+        done
 
        # Remove the last "," as we don't need it.
        _json_data=${_json_data%?};
@@ -171,7 +111,7 @@ function lcm() {
 
        # Run the generate plan task
        _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm})
-       
+
        # Remove the temp json file as we don't need it anymore
        rm -rf reply_json.json
 
@@ -179,15 +119,15 @@ function lcm() {
        log "LCM Inventory has created a plan"
 
        # Reset the loop counter so we restart the amount of loops we need to run
-       set _loops=0 
-       
+       set _loops=0
+
        # As the new json for the perform the upgrade only needs to have "generate_plan" changed into "perform_update" we use sed...
        _json_data=$(echo $_json_data | sed -e 's/generate_plan/perform_update/g')
 
-      
+
        # Run the upgrade to have the latest versions
        _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm} | jq '.value' 2>nul | cut -d "\\" -f 4 | tr -d \")
-      
+
        # If there has been a reply task_id then the URL has accepted by PC
         if [ -z "$_task_id" ]; then
             # There has been an error!!!
@@ -195,7 +135,7 @@ function lcm() {
         else
             # Notify the logserver that we are starting the LCM Upgrade
             log "LCM Upgrade starting..."
-        
+
             # Run the progess checker
             loop
         fi
@@ -225,10 +165,10 @@ function karbon_enable() {
     if [[ $_response -le 0 ]]; then
       log "Unable to enable Karbon. As there are more dependencies on Karbon we stop the script....."
       exit 1
-    else 
+    else
       log "Karbon has been enabled..."
     fi
-  else 
+  else
       log "Karbon has been enabled..."
   fi
 }
@@ -621,10 +561,10 @@ EOF
     --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
     https://localhost:9440/api/nutanix/v3/services/nucalm)
   log "_test=|${_test}|"
-  
+
   # Check if Calm is enabled
   while true; do
-    # Get the progress of the task  
+    # Get the progress of the task
     _progress=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/api/nutanix/v3/services/nucalm/status | jq '.service_enablement_status' 2>nul | tr -d \")
     if [[ ${_progress} == "ENABLED" ]]; then
       log "Calm has been Enabled..."

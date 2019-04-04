@@ -488,6 +488,8 @@ function ntnx_download() {
 
       if [[ "${PC_VERSION}" == "${PC_DEV_VERSION}" ]]; then
         _meta_url="${PC_DEV_METAURL}"
+      elif [[ "${PC_VERSION}" == "${PC_CURRENT_VERSION}" ]]; then
+        _meta_url="${PC_CURRENT_METAURL}"
       else
         _meta_url="${PC_STABLE_METAURL}"
       fi

@@ -6,11 +6,10 @@ DEBUG=
 # - Calm || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
-"Calm Workshop (AOS 5.5+/AHV PC 5.8.x) = Stable (AutoDC1)" \
-"Calm Workshop (AOS 5.8.x/AHV PC 5.10.x) = Stable (AutoDC2)" \
-"Calm Workshop (AOS 5.9+/AHV PC 5.10.x) = Development" \
+"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC1)" \
+"Calm Workshop (AOS 5.10+/AHV PC 5.10+) = Stable (AutoDC2)" \
+"Citrix Desktop on AHV Workshop (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Development" \
-"Citrix Desktop on AHV Workshop (AOS/AHV 5.6)" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -29,8 +28,10 @@ function stage_clusters() {
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   # TODO: make WORKSHOPS and map a JSON configuration file?
-  if (( $(echo ${_workshop} | grep -i "PC 5.10" | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 5.11" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
+  elif (( $(echo ${_workshop} | grep -i "PC 5.10" | wc ${WC_ARG}) > 0 )); then
+    export PC_VERSION="${PC_CURRENT_VERSION}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.8" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_STABLE_VERSION}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.9" | wc ${WC_ARG}) > 0 )); then
