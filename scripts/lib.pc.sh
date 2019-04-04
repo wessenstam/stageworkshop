@@ -131,52 +131,59 @@ function lcm() {
        # Run the progess checker
        loop
       
-       # We need to get the UUIDs and the versions to be used.. so we can start the update. They are in the /home/nutanix/data/logs/lcm_ops.out AFTER an inventory run!
-       # ******!!!!!!WE ARE USING A DEBUG LINE IN THE FILE MENTIONED!!! NEED TO KEEP TRACK OF THAT IF IT CHANGES!!!!!*****
-       _full_uuids=$(cat /home/nutanix/data/logs/lcm_ops.out | grep -A 1 entity_uuid | grep -B 1 "2.6.0.3")
+       #################################################################
+       # Grab the json from the possible to be updated UUIDs and versions and save local in reply_json.json
+       #################################################################
        
-       # As we need to have the latest version from the LCM we need to reverse the string so we get the last versions/UUIDS
-       _first_uuid=$(echo $_full_uuids |rev|cut -d":" -f 4 |rev | cut -d "\"" -f2)
-       _first_version="2.6.0.3" # Setting the version number hard coded!!! This is what has been tested for the workshops.
-       _sec_uuid=$(echo $_full_uuids rev|rev | cut -d":" -f 2 |rev | cut -d "\"" -f2)
-       _sec_version=$_first_version
-      
+       # Need loop so we can create the full json more dynamical
+
+       # Run the Curl command and save the oputput in a temp file
+       curl $CURL_HTTP_OPTS --user $PRISM_ADMIN:$PE_PASSWORD -X POST -d '{"entity_type": "lcm_available_version","grouping_attribute": "entity_uuid","group_member_count": 1000,"group_member_attributes": [{"attribute": "uuid"},{"attribute": "entity_uuid"},{"attribute": "entity_class"},{"attribute": "status"},{"attribute": "version"},{"attribute": "dependencies"},{"attribute": "order"}]}'  $_url_groups > reply_json.json
+       
+       # Fill the uuid array with the correct values
+       uuid_arr=($(jq '.group_results[].entity_results[].data[] | select (.name=="entity_uuid") | .values[0].values[0]' reply_json.json | sort -u | tr "\"" " " | tr -s " "))
+       
+       # Grabbing the versions of the UUID and put them in a versions array
+       for uuid in "${uuid_arr[@]}"
+       do
+         version_ar+=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[0]==$uuid) | select (.data[].name=="version") | .data[].values[].values[0]' reply-inventory.json | tail -4 | head -n 1 | tr -d \"))
+       done
+       
        # Set the parameter to create the ugrade plan
        # Create the curl json string '-d blablablablabla' so we can call the string and not the full json data line
+       # Begin of the JSON data payload
        _json_data="-d "
-       _json_data+="{\"value\":\"{\\\".oid\\\":\\\"LifeCycleManager\\\",\\\".method\\\":\\\"lcm_framework_rpc\\\",\\\".kwargs\\\":{\\\"method_class\\\":\\\"LcmFramework\\\",\\\"method\\\":\\\"generate_plan\\\",\\\"args\\\":[\\\"http://download.nutanix.com/lcm/2.0\\\",[[\\\""
-       _json_data+=$_first_uuid
-       _json_data+="\\\",\\\""
-       _json_data+=$_first_version
-       _json_data+="\\\"],[\\\""
-       _json_data+=$_sec_uuid
-       _json_data+="\\\",\\\""
-       _json_data+=$_sec_version
-       _json_data+="\\\"]]]}}\"}"
-      
-      
+       _json_data+="{\"value\":\"{\\\".oid\\\":\\\"LifeCycleManager\\\",\\\".method\\\":\\\"lcm_framework_rpc\\\",\\\".kwargs\\\":{\\\"method_class\\\":\\\"LcmFramework\\\",\\\"method\\\":\\\"generate_plan\\\",\\\"args\\\":[\\\"http://download.nutanix.com/lcm/2.0\\\",["
+
+       # Combine the two created UUID and Version arrays to the full needed data using a loop
+       count=0
+       while [ $count -lt ${#uuid_arr[@]} ]
+       do
+          _json_data+="[\\\"${uuid_arr[$count]}\\\",\\\"${version_ar[$count]}\\\"],"
+          let count=count+1
+        done 
+
+       # Remove the last "," as we don't need it.
+       _json_data=${_json_data%?};
+
+       # Last part of the JSON data payload
+       _json_data+="]]}}\"}"
+
        # Run the generate plan task
        _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm})
-      
-       # Notify the log server that the LCM has been creating a plan
-       log "LCM Inventory has created a plan"
-       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
        
-       # As the new json only needs to have the generate_plan changed into "perform_update" we also migh tuse sed...
+       # Remove the temp json file as we don't need it anymore
+       rm -rf reply_json.json
+
+       # Notify the log server that the LCM has created a plan
+       log "LCM Inventory has created a plan"
+
+       # Reset the loop counter so we restart the amount of loops we need to run
+       set _loops=0 
+       
+       # As the new json for the perform the upgrade only needs to have "generate_plan" changed into "perform_update" we use sed...
        _json_data=$(echo $_json_data | sed -e 's/generate_plan/perform_update/g')
 
-       # Create new json data string
-       #_json_data="-d "
-       #_json_data+="{\"value\":\"{\\\".oid\\\":\\\"LifeCycleManager\\\",\\\".method\\\":\\\"lcm_framework_rpc\\\",\\\".kwargs\\\":{\\\"method_class\\\":\\\"LcmFramework\\\",\\\"method\\\":\\\"perform_update\\\",\\\"args\\\":[\\\"http://download.nutanix.com/lcm/2.0\\\",[[\\\""
-       #_json_data+=$_first_uuid
-       #_json_data+="\\\",\\\""
-       #_json_data+=$_first_version
-       #_json_data+="\\\"],[\\\""
-       #_json_data+=$_sec_uuid
-       #_json_data+="\\\",\\\""
-       #_json_data+=$_sec_version
-       #_json_data+="\\\"]]]}}\"}"
-      
       
        # Run the upgrade to have the latest versions
        _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm} | jq '.value' 2>nul | cut -d "\\" -f 4 | tr -d \")
@@ -195,6 +202,39 @@ function lcm() {
   fi
 
 }
+
+###############################################################################################################################################################################
+# Routine to enable Karbon
+###############################################################################################################################################################################
+
+function karbon_enable() {
+  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
+  local _loop=0
+  local _json_data_enable="-d '{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"enable_service_with_prechecks\\\",\\\".kwargs\\\":{\\\"service_list_json\\\":\\\"{\\\\\\\"service_list\\\\\\\":[\\\\\\\"KarbonUIService\\\\\\\",\\\\\\\"KarbonCoreService\\\\\\\"]}\\\"}}\"}'"
+  local _httpURL="https://localhost:9440/PrismGateway/services/rest/v1/genesis"
+
+  # Send the enable command to the PC IP using localhost
+  log "Enable the Karbon service on the PC..."
+
+ _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data_enable ${_httpURL}| grep true | wc -l)
+
+ if [[ $_response -le 0 ]]; then
+    log "Retrying to enable Karbon services one more time...."
+    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data_enable ${_httpURL} | grep true | wc -l)
+
+    if [[ $_response -le 0 ]]; then
+      log "Unable to enable Karbon. As there are more dependencies on Karbon we stop the script....."
+      exit 1
+    else 
+      log "Karbon has been enabled..."
+    fi
+  else 
+      log "Karbon has been enabled..."
+  fi
+}
+
+
+
 ###############################################################################################################################################################################
 # Routine for PC_Admin
 ###############################################################################################################################################################################
@@ -289,7 +329,6 @@ EOF
 
 ###############################################################################################################################################################################
 # Routine to import the images into PC
-# TODO: As we test for acli, which is not avail on the PC, we use NUCLEI. Can we make a change????
 ###############################################################################################################################################################################
 
 function pc_cluster_img_import() {
