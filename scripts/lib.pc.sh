@@ -8,14 +8,34 @@
 ###############################################################################################################################################################################
 
 function flow_enable() {
-  ## (API; Didn't work. Used nuclei instead)
-  ## https://localhost:9440/api/nutanix/v3/services/microseg
-  ## {"state":"ENABLE"}
-  # To disable flow run the following on PC: nuclei microseg.disable
+  local _attempts=30
+  local _loops=0
+  local _sleep=60
+  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
+  local _url_flow='https://localhost:9440/api/nutanix/v3/services/microseg'
+
+  # Create the JSON payload
+  _json_data='{"state":"ENABLE"}'
 
   log "Enable Nutanix Flow..."
-  nuclei microseg.enable 2>/dev/null
-  nuclei microseg.get_status 2>/dev/null
+
+  # Enabling Flow and put the task id in a variable
+  _task_id=$(curl -X POST $_json_data $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} $_url_flow)
+
+  # Try one more time then fail, but continue
+  if [ -z $_task_id ] then
+    log "Flow not yet enabled. Will retry...."
+    _task_id=$(curl -X POST $_json_data $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} $_url_flow)
+
+    if [ -z $_task_id ] then
+      log "Flow still not enabled.... ***Not retrying. Please enable via UI.***"
+    fi
+  else
+    log "Flow has been enebaled..."
+  fi
+
+
+
 }
 
 ###############################################################################################################################################################################
@@ -86,7 +106,7 @@ function lcm() {
        # Grabbing the versions of the UUID and put them in a versions array
        for uuid in "${uuid_arr[@]}"
        do
-         version_ar+=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[0]==$uuid) | select (.data[].name=="version") | .data[].values[].values[0]' reply-inventory.json | tail -4 | head -n 1 | tr -d \"))
+         version_ar+=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[0]==$uuid) | select (.data[].name=="version") | .data[].values[].values[0]' reply_json.json | tail -4 | head -n 1 | tr -d \"))
        done
 
        # Set the parameter to create the ugrade plan
@@ -101,6 +121,7 @@ function lcm() {
        do
           _json_data+="[\\\"${uuid_arr[$count]}\\\",\\\"${version_ar[$count]}\\\"],"
           let count=count+1
+          log "Found UUID ${uuid_arr[$count]} and version ${version_ar[$count]}"
         done
 
        # Remove the last "," as we don't need it.

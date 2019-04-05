@@ -102,6 +102,7 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
+    && karbon_enable \
     && lcm \
     && images \
     && prism_check 'PC'
