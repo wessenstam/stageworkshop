@@ -31,17 +31,25 @@ case ${1} in
     if (( $? == 0 )) ; then
       pc_install "${NW1_NAME}" \
       && prism_check 'PC' \
-      && pc_configure \
-      && pc_configure \
-      && dependencies 'remove' 'sshpass' && dependencies 'remove' 'jq'
 
-      log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
-      log "PE = https://${PE_HOST}:9440"
-      log "PC = https://${PC_HOST}:9440"
+      if (( $? == 0 )) ; then
+        _command="EMAIL=${EMAIL} \
+           PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
+           PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} IMAGES"
 
-      #files_install & # parallel, optional. Versus: $0 'files' &
+        cluster_check \
+        && log "Remote asynchroneous PC Image import script... ${_command}" \
+        && remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_LAUNCH%%.sh}.log 2>&1 &" &
 
-      finish
+        pc_configure \
+        && log "PC Configuration complete: Waiting for PC deployment to complete, API is up!"
+        log "PE = https://${PE_HOST}:9440"
+        log "PC = https://${PC_HOST}:9440"
+
+        files_install && sleep 30 && dependencies 'remove' 'jq' & # parallel, optional. Versus: $0 'files' &
+        #dependencies 'remove' 'sshpass'
+        finish
+      fi
     else
       finish
       _error=18
@@ -96,7 +104,7 @@ case ${1} in
     && calm_enable \
     && lcm \
     && images \
-    && pc_cluster_img_import \
+    #&& pc_cluster_img_import \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
