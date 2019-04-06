@@ -105,6 +105,7 @@ case ${1} in
     && karbon_enable \
     && lcm \
     && images \
+    && pc_cluster_img_import \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
