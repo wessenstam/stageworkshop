@@ -8,11 +8,13 @@
 # - Provide the metadata URL for the "PC 1-click deploy from PE" option to PC_*_METAURL
       PC_DEV_VERSION='5.10.2'
       PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.2/pcdeploy-5.10.2.json'
+          PC_DEV_URL=''
   PC_CURRENT_VERSION='5.10.2'
   PC_CURRENT_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
-              PC_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
+      PC_CURRENT_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
    PC_STABLE_VERSION='5.8.2'
-   PC_STABLE_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.8.2/v1/pc_deploy-5.8.2.json'
+   PC_STABLE_METAURL='http://10.42.8.50/images/pcdeploy-5.8.2.json'
+       PC_STABLE_URL='http://10.42.8.50/images/euphrates-5.8.2-stable-prism_central.tar'
 # Sync the following to lib.common.sh::ntnx_download-Case=FILES
 # Browse to: https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA
 # - Find ${FILES_VERSION} in the Additional Releases section on the lower right side
@@ -166,7 +168,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
     NW1_DHCP_START="${IPV4_PREFIX}.100"
       NW1_DHCP_END="${IPV4_PREFIX}.250"
       # PC deploy file local override, TODO:30 make an PC_URL array and eliminate
-               PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
+               PC_CURRENT_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
        PC_CURRENT_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
     PC_STABLE_METAURL=${PC_CURRENT_METAURL}
 
@@ -250,7 +252,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
     NW1_DHCP_START="${IPV4_PREFIX}.100"
       NW1_DHCP_END="${IPV4_PREFIX}.250"
       # PC deploy file local override, TODO:30 make an PC_URL array and eliminate
-               PC_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
+               PC_CURRENT_URL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy.tar
        PC_CURRENT_METAURL=http://10.132.128.50/E%3A/share/Nutanix/PrismCentral/pc-${PC_VERSION}-deploy-metadata.json
     PC_STABLE_METAURL=${PC_CURRENT_METAURL}
 
