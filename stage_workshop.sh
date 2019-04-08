@@ -3,7 +3,7 @@
 DEBUG=
 
 # For WORKSHOPS keyword mappings to scripts and variables, please use:
-# - Calm || Citrix || Summit
+# - Calm || Bootcamp || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
 "Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \

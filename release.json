@@ -28,5 +28,6 @@
   "CommitsSinceVersionSourcePadded": "0014",
   "CommitDate": "2019-03-20",
   "PrismCentralStable": "5.8.2",
+  "PrismCentralCurrent": "5.10.2",
   "PrismCentralDev": "5.10.2"
 }
