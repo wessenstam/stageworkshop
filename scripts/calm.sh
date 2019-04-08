@@ -101,8 +101,15 @@ case ${1} in
     && pc_smtp
 
     ssp_auth \
-    && calm_enable \
-    && images \
+    && calm_enable
+
+    # IF the PC_version is 5.10 then we can rnun LCM and Karbon enable
+    if [ $PC_CURRENT_VERSION=='5.10.2' ]; then
+      karbon_enable
+      lcm
+    fi
+
+    images \
     && pc_cluster_img_import \
     && prism_check 'PC'
 

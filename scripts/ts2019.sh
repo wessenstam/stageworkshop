@@ -136,10 +136,15 @@ case ${1} in
     && pc_smtp
 
     ssp_auth \
-    && calm_enable \
-    && karbon_enable \
-    && lcm \
-    && images \
+    && calm_enable
+
+    # IF the PC_version is 5.10 then we can rnun LCM and Karbon enable
+    if [ $PC_CURRENT_VERSION=='5.10.2' ]; then
+      karbon_enable
+      lcm
+    fi
+    
+    images \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
