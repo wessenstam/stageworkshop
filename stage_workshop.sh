@@ -6,8 +6,8 @@ DEBUG=
 # - Calm || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
-"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC1)" \
-"Calm Workshop (AOS 5.10+/AHV PC 5.10+) = Stable (AutoDC2)" \
+"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \
+"Bootcamp (AOS 5.10+/AHV PC 5.10+) = Current (AutoDC2)" \
 "Citrix Desktop on AHV Workshop (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Development" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
@@ -44,6 +44,11 @@ function stage_clusters() {
 
   # Map workshop to staging script(s) and libraries,
   # _pe_launch will be executed on PE
+  if (( $(echo ${_workshop} | grep -i Bootcamp | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
   if (( $(echo ${_workshop} | grep -i Calm | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='calm.sh'

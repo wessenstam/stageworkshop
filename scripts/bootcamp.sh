@@ -102,6 +102,8 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
+    && karbon_enable \
+    && lcm \
     && images \
     && pc_cluster_img_import \
     && prism_check 'PC'
