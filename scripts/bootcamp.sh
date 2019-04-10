@@ -105,12 +105,12 @@ case ${1} in
     && karbon_enable \
     && lcm \
     && images \
+    && flow_enable \
     && pc_cluster_img_import \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
     pc_project
-    flow_enable
     pc_admin
     # ntnx_download 'AOS' # function in lib.common.sh
 
