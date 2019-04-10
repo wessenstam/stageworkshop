@@ -102,7 +102,7 @@ elif [[ ! -d ${REPOSITORY}-${BRANCH} ]]; then
 fi
 
 pushd ${REPOSITORY}-${BRANCH}/ \
-  && chmod -R u+x *sh
+  && chmod -R u+x *.sh
 
 if [[ -e release.json ]]; then
  echo -e "\n${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')"

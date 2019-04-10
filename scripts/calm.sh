@@ -101,7 +101,6 @@ case ${1} in
     && pc_smtp
 
     ssp_auth \
-    && calm_enable \
     && images \
     && pc_cluster_img_import \
     && prism_check 'PC'
