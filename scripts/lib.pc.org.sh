@@ -1,4 +1,4 @@
-65#!/usr/bin/env bash
+#!/usr/bin/env bash
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 

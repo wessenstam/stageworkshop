@@ -107,7 +107,6 @@ case ${1} in
 
     log "Non-blocking functions (in development) follow."
     pc_project
-    flow_enable
     pc_admin
     # ntnx_download 'AOS' # function in lib.common.sh
 

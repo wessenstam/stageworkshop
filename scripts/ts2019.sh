@@ -137,9 +137,15 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
-    && karbon_enable \
-    && lcm \
-    && images \
+    && flow_enable
+
+    # IF the PC_version is 5.10 then we can rnun LCM and Karbon enable
+    if [ $PC_CURRENT_VERSION=='5.10.2' ]; then
+      karbon_enable
+      lcm
+    fi
+    
+    images \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
@@ -152,7 +158,6 @@ case ${1} in
     #  ts_images
     #fi
     pc_project
-    flow_enable
     pc_admin
     # ntnx_download 'AOS' # function in lib.common.sh
 
