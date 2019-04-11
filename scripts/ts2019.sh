@@ -18,14 +18,14 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    export PC_DEV_VERSION='5.10.2'
-    export PC_DEV_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
-    export         PC_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
+    #export PC_DEV_VERSION='5.10.2'
+    #export PC_DEV_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
+    #export         PC_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
     #export PC_DEV_METAURL='https://s3.amazonaws.com/get-ahv-images/pcdeploy-5.10.1.1.json'
     #export         PC_URL='https://s3.amazonaws.com/get-ahv-images/euphrates-5.10.1.1-stable-prism_central.tar'
-    export  FILES_VERSION='3.2.0.1'
-    export  FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
-    export      FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+    #export  FILES_VERSION='3.2.0.1'
+    #export  FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+    #export      FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
     #export  FILES_METAURL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
     #export      FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
     export NW2_DHCP_START="${IPV4_PREFIX}.132"
@@ -137,14 +137,14 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
-    && flow_enable
+    #&& flow_enable
 
     # IF the PC_version is 5.10 then we can rnun LCM and Karbon enable
-    if [ $PC_CURRENT_VERSION=='5.10.2' ]; then
-      karbon_enable
-      lcm
-    fi
-    
+    #if [ $PC_CURRENT_VERSION=='5.10.2' ]; then
+    #  karbon_enable
+    #  lcm
+    #fi
+
     images \
     && prism_check 'PC'
 

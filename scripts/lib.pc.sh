@@ -31,7 +31,7 @@ function flow_enable() {
       log "Flow still not enabled.... ***Not retrying. Please enable via UI.***"
     fi
   else
-    log "Flow has been enebaled..."
+    log "Flow has been Enabled..."
   fi
 
 

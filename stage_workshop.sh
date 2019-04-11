@@ -150,7 +150,7 @@ EoM
       fi
 
       log "Remote execution configuration script ${_pe_launch} on PE@${PE_HOST}"
-      remote_exec 'SSH' 'PE' "${PE_CONFIGURATION} nohup bash /home/nutanix/${_pe_launch} 'PE' >> ${_pe_launch%%.sh}.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "${PE_CONFIGURATION} nohup bash -x /home/nutanix/${_pe_launch} 'PE' >> ${_pe_launch%%.sh}.log 2>&1 &"
       unset PE_CONFIGURATION
 
       # shellcheck disable=SC2153
