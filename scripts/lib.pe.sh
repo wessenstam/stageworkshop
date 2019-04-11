@@ -54,16 +54,12 @@ function authentication_source() {
         _autodc_success=' * status: started'
 
         # REVIEW: override global.vars
-        export AUTODC_REPOS=(\
-        'http://10.42.8.50/images/AutoDC2.qcow2' \
-        'http://10.42.8.50/images/AutoDC.qcow2' \
-        'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
-        'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
-        #'http://10.132.128.50:81/share/saved-images/autodc-2.0.qcow2' \
-        #'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-        # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-        #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
-        )
+        #export AUTODC_REPOS=(\
+        #'http://10.42.8.50/images/AutoDC2.qcow2' \
+        #'http://10.42.8.50/images/AutoDC.qcow2' \
+        #'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
+        #'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+        #)
       fi
 
       dns_check "dc${_autodc_index}.${AUTH_FQDN}"
