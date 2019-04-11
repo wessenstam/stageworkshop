@@ -10,18 +10,18 @@
       PC_DEV_METAURL='http://download.nutanix.com/pc/one-click-pc-deployment/5.10.2/pcdeploy-5.10.2.json'
           PC_DEV_URL=''
   PC_CURRENT_VERSION='5.10.2'
-  PC_CURRENT_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
-      PC_CURRENT_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
+  #PC_CURRENT_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
+      #PC_CURRENT_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
    PC_STABLE_VERSION='5.8.2'
-   PC_STABLE_METAURL='http://10.42.8.50/images/pc_deploy-5.8.2.json'
-       PC_STABLE_URL='http://10.42.8.50/images/euphrates-5.8.2-stable-prism_central.tar'
+   #PC_STABLE_METAURL='http://10.42.8.50/images/pc_deploy-5.8.2.json'
+       #PC_STABLE_URL='http://10.42.8.50/images/euphrates-5.8.2-stable-prism_central.tar'
 # Sync the following to lib.common.sh::ntnx_download-Case=FILES
 # Browse to: https://portal.nutanix.com/#/page/releases/afsDetails?targetVal=GA
 # - Find ${FILES_VERSION} in the Additional Releases section on the lower right side
 # - Provide "Upgrade Metadata File" URL to FILES_METAURL
     FILES_VERSION='3.2.0.1'
-    FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
-        FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+    #FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+        #FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
     #export  FILES_METAURL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
     #export      FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
     #FILES_METAURL='http://download.nutanix.com/afs/3.2.0/v1/afs-3.2.0.json'
@@ -147,7 +147,13 @@ case "${OCTET[0]}.${OCTET[1]}" in
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.55 ) # HPOC us-east = DUR
-        JQ_REPOS=(\
+PC_CURRENT_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.10.2.json'
+   PC_CURRENT_URL='http://10.55.251.38/workshop_staging/euphrates-5.10.2-stable-prism_central.tar'
+PC_STABLE_METAURL='http://10.55.251.38/workshop_staging/pc_deploy-5.8.2.json'
+    PC_STABLE_URL='http://10.55.251.38/workshop_staging/euphrates-5.8.2-stable-prism_central.tar'
+    FILES_METAURL='http://10.55.251.38/workshop_staging/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+        FILES_URL='http://10.55.251.38/workshop_staging/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+         JQ_REPOS=(\
          'http://10.55.251.38/workshop_staging/jq-linux64.dms' \
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
          #'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
@@ -168,6 +174,12 @@ case "${OCTET[0]}.${OCTET[1]}" in
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.42 ) # HPOC us-west = PHX
+PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.10.2.json'
+   PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.10.2-stable-prism_central.tar'
+PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
+    PC_STABLE_URL='http://10.42.194.11/workshop_staging/euphrates-5.8.2-stable-prism_central.tar'
+    FILES_METAURL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+        FILES_URL='http://10.42.194.11/workshop_staging/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
         JQ_REPOS=(\
          'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
