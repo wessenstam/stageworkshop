@@ -83,9 +83,9 @@ NTNX_INIT_PASSWORD='nutanix/4u'
 
  # https://pkgs.org/download/sshpass
  # https://sourceforge.net/projects/sshpass/files/sshpass/
-   SSHPASS_REPOS=(\
-    'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
- )
+   #SSHPASS_REPOS=(\
+    #'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+ #)
 
 # shellcheck disable=2206
           OCTET=(${PE_HOST//./ }) # zero index
@@ -158,6 +158,10 @@ PC_STABLE_METAURL='http://10.55.251.38/workshop_staging/pc_deploy-5.8.2.json'
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
          #'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
    )
+      SSHPASS_REPOS=(\
+       'http://10.55.251.38/workshop_staging/sshpass-1.06-2.el7.x86_64.rpm' \
+       #'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+    )
       QCOW2_REPOS=(\
        'http://10.55.251.38/workshop_staging/' \
        'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -185,6 +189,10 @@ PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
          #'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
    )
+      SSHPASS_REPOS=(\
+       'http://10.42.194.11/workshop_staging/sshpass-1.06-2.el7.x86_64.rpm' \
+       #'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+    )
       QCOW2_REPOS=(\
        'http://10.42.194.11/workshop_staging/' \
        'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
