@@ -44,7 +44,7 @@ case ${1} in
         #   PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup ${bash_cmd} ${HOME}/${PC_LAUNCH} IMAGES"
         _command="EMAIL=${EMAIL} \
            PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
-           PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash -x ${HOME}/${PC_LAUNCH} IMAGES"
+           PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} IMAGES"
 
         cluster_check \
         && log "Remote asynchroneous PC Image import script... ${_command}" \
