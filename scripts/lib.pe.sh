@@ -240,6 +240,8 @@ function cluster_check() {
 
   if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
     log "PC>=5.10, checking multicluster state..."
+  elif (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 8 )); then
+    log "PC>=5.8, checking multicluster state..."
 
     while true ; do
       (( _loop++ ))
