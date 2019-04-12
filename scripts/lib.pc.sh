@@ -2,6 +2,12 @@
 # -x
 # Dependencies: curl, ncli, nuclei, jq
 
+###############################################################################################################################################################################
+# 12th of April 2019 - Willem Essenstam
+# Added a "-d" character in the flow_enable so the command would run.
+# Changed the Karbon Eanable function so it also checks that Karbon has been enabled.
+###############################################################################################################################################################################
+
 
 ###############################################################################################################################################################################
 # Routine to enable Flow
@@ -20,7 +26,7 @@ function flow_enable() {
   log "Enable Nutanix Flow..."
 
   # Enabling Flow and put the task id in a variable
-  _task_id=$(curl -X POST $_json_data $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} $_url_flow)
+  _task_id=$(curl -X POST -d $_json_data $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} $_url_flow)
 
   # Try one more time then fail, but continue
   if [ -z $_task_id ]; then
@@ -171,27 +177,37 @@ function lcm() {
 function karbon_enable() {
   local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
   local _loop=0
-  local _json_data_enable="-d '{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"enable_service_with_prechecks\\\",\\\".kwargs\\\":{\\\"service_list_json\\\":\\\"{\\\\\\\"service_list\\\\\\\":[\\\\\\\"KarbonUIService\\\\\\\",\\\\\\\"KarbonCoreService\\\\\\\"]}\\\"}}\"}'"
+  local _json_data_set_enable="-d '{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"enable_service_with_prechecks\\\",\\\".kwargs\\\":{\\\"service_list_json\\\":\\\"{\\\\\\\"service_list\\\\\\\":[\\\\\\\"KarbonUIService\\\\\\\",\\\\\\\"KarbonCoreService\\\\\\\"]}\\\"}}\"}'"
+  local _json_is_enable="-d '{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"is_service_enabled\\\",\\\".kwargs\\\":{\\\"service_name\\\":\\\"KarbonUIService\\\"}}\"}' "
   local _httpURL="https://localhost:9440/PrismGateway/services/rest/v1/genesis"
 
   # Send the enable command to the PC IP using localhost
   log "Enable the Karbon service on the PC..."
 
- _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data_enable ${_httpURL}| grep true | wc -l)
+  # Start the enablement process
+  _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data_set_enable ${_httpURL}| grep true | wc -l)
 
- if [[ $_response -le 0 ]]; then
-    log "Retrying to enable Karbon services one more time...."
-    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data_enable ${_httpURL} | grep true | wc -l)
-
-    if [[ $_response -le 0 ]]; then
-      log "Unable to enable Karbon. As there are more dependencies on Karbon we stop the script....."
-      exit 1
-    else
-      log "Karbon has been enabled..."
-    fi
+  # Check if we got a "1" back (start sequence received). If not, retry. If yes, check if enabled...
+  if [[ $_response -eq 1 ]]; then
+    # Check if Karbon has been enabled
+    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_is_enable ${_httpURL}| grep true | wc -l)
+    while [ $_response -ne 1 ]; do
+      _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_is_enable ${_httpURL}| grep true | wc -l)
+    done
+    log "Karbon has been enabled."
+    break
   else
-      log "Karbon has been enabled..."
-  fi
+    log "Retrying to enable Karbon one more time."
+    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data_set_enable ${_httpURL}| grep true | wc -l)
+    if [[ $_response -eq 1 ]]; then
+      _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_is_enable ${_httpURL}| grep true | wc -l)
+      if [ $_response -lt 1 ]; then
+        log "Karbon isn't enabled. Please use the UI to enable it."
+      else
+        log "Karbon has been enabled."
+      fi
+    fi
+  fi 
 }
 
 

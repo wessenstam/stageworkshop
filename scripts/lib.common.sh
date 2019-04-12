@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 # dependencies: dig
 
+##################################################################################
+# List of date, who  and change made to the file
+# --------------------------------------------------------------------------------
+# 12-04-2019 - Willem Essenstam 
+# Changed the run_once function so it checks not on lines in the log file but 
+# on if the PC is configured by trying to log in using the set password
+##################################################################################
+
+##################################################################################
+
 function args_required() {
   local _argument
   local    _error=88
@@ -23,6 +33,8 @@ function args_required() {
   fi
 }
 
+##################################################################################
+
 function begin() {
   local _release
 
@@ -32,6 +44,8 @@ function begin() {
 
   log "$(basename ${0})${_release} start._____________________"
 }
+
+##################################################################################
 
 function dependencies {
   local    _argument
@@ -136,6 +150,8 @@ function dependencies {
   esac
 }
 
+##################################################################################
+
 function dns_check() {
   local    _dns
   local  _error
@@ -157,6 +173,8 @@ function dns_check() {
     return ${_error}
   fi
 }
+
+##################################################################################
 
 function download() {
   local           _attempts=5
@@ -199,6 +217,8 @@ function download() {
     fi
   done
 }
+
+##################################################################################
 
 function fileserver() {
   local    _action=${1} # REQUIRED
@@ -245,10 +265,16 @@ function fileserver() {
   esac
 }
 
+##################################################################################
+
+
 function finish() {
   log "${0} ran for ${SECONDS} seconds._____________________"
   echo
 }
+
+##################################################################################
+
 
 function images() {
   # https://portal.nutanix.com/#/page/docs/details?targetId=Command-Ref-AOS-v59:acl-acli-image-auto-r.html
@@ -436,12 +462,18 @@ EOF
   done
 }
 
+##################################################################################
+
+
 function log() {
   local _caller
 
   _caller=$(echo -n "$(caller 0 | awk '{print $2}')")
   echo "$(date '+%Y-%m-%d %H:%M:%S')|$$|${_caller}|${1}"
 }
+
+##################################################################################
+
 
 function ntnx_cmd() {
   local _attempts=25
@@ -474,6 +506,9 @@ function ntnx_cmd() {
     fi
   done
 }
+
+##################################################################################
+
 
 function ntnx_download() {
   local          _checksum
@@ -597,6 +632,9 @@ function ntnx_download() {
   fi
 }
 
+##################################################################################
+
+
 function pe_determine() {
   # ${1} REQUIRED: run on 'PE' or 'PC'
   local _error
@@ -650,6 +688,9 @@ function pe_determine() {
     log "Success: Cluster name=${CLUSTER_NAME}, PE external IP=${PE_HOST}"
   fi
 }
+
+##################################################################################
+
 
 function prism_check {
   # Argument ${1} = REQUIRED: PE or PC
@@ -715,6 +756,9 @@ function prism_check {
     fi
   done
 }
+
+##################################################################################
+
 
 function remote_exec() {
 # Argument ${1} = REQUIRED: ssh or scp
@@ -805,6 +849,9 @@ function remote_exec() {
   done
 }
 
+##################################################################################
+
+
 function repo_source() {
   # https://stackoverflow.com/questions/1063347/passing-arrays-as-parameters-in-bash#4017175
   local _candidates=("${!1}") # REQUIRED
@@ -872,15 +919,21 @@ function repo_source() {
   fi
 }
 
+##################################################################################
+
+
 function run_once() {
-  # TODO: PC dependent
-  if [[ ! -z ${PC_LAUNCH} ]] && (( $(cat ${HOME}/${PC_LAUNCH%%.sh}.log | wc ${WC_ARG}) > 20 )); then
-    finish
+  # Try to login to the PC UI using an API and use the NEW to be password so we can check if PC config has run....
+  _Configured_PC=$(curl -X POST https://${PC_HOST}:9440/api/nutanix/v3/clusters/list --user ${PRISM_ADMIN}:${PE_PASSWORD}  -H 'Content-Type: application/json' -d '{ "kind": "cluster" }' --insecure --silent | grep "AUTHENTICATION_REQUIRED" | wc -l)
+  if [[ $_Configured_PC -lt 1 ]]; then
     _error=2
-    log "Warning ${_error}: ${PC_LAUNCH} already ran, exit!"
+    log "Warning ${_error}: ${PC_LAUNCH} already ran and configured PRISM Central, exit!"
     exit ${_error}
   fi
 }
+
+##################################################################################
+
 
 function ssh_pubkey() {
   local         _dir

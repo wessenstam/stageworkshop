@@ -35,7 +35,7 @@ case ${1} in
       if (( $? == 0 )) ; then
         _command="EMAIL=${EMAIL} \
            PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
-           PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} IMAGES"
+           PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash -x ${HOME}/${PC_LAUNCH} IMAGES"
 
         cluster_check \
         && log "Remote asynchroneous PC Image import script... ${_command}" \
