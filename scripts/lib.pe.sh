@@ -42,7 +42,7 @@ function authentication_source() {
       local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
       local _autodc_success='SubState=running'
 
-      if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
+      if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 8 )); then
         log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC-2.0..."
            _autodc_auth=" --username=${AUTH_ADMIN_USER} --password=${AUTH_ADMIN_PASS}"
           _autodc_index=''
