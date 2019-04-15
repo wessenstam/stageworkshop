@@ -6,10 +6,10 @@ DEBUG=
 # - Calm || Bootcamp || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
-"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \
 "Bootcamp (AOS 5.10+/AHV PC 5.10+) = Current (AutoDC2)" \
 "Citrix Desktop on AHV Workshop (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Development" \
+#"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
