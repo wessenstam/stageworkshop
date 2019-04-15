@@ -59,7 +59,7 @@ function authentication_source() {
         # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
          #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
         #)
-      #fi
+      fi
 
       dns_check "dc${_autodc_index}.${AUTH_FQDN}"
       _result=$?
