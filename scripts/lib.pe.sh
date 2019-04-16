@@ -234,48 +234,52 @@ function cluster_check() {
   local        _sleep=60
   local         _test=1
   local    _test_exit
+  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
 
   # shellcheck disable=2206
-  _pc_version=(${PC_VERSION//./ })
+  #_pc_version=(${PC_VERSION//./ })
 
-  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
-    log "PC>=5.10, checking multicluster state..."
-  #elif (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 8 )); then
-  #  log "PC>=5.8, checking multicluster state..."
+  #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
+  #  log "PC>=5.10, checking multicluster state..."
+  #  while true ; do
+  #    (( _loop++ ))
 
-    while true ; do
-      (( _loop++ ))
+  #    _test=$(ncli --json=true multicluster get-cluster-state | jq -r .data[0].clusterDetails.multicluster)
+  #    _test_exit=$?
+  #    log "Cluster status: |${_test}|, exit: ${_test_exit}."
 
-           _test=$(ncli --json=true multicluster get-cluster-state | \
-                   jq -r .data[0].clusterDetails.multicluster)
-      _test_exit=$?
-      log "Cluster status: |${_test}|, exit: ${_test_exit}."
+  #    if [[ ${_test} != 'true' ]]; then
+  #           _test=$(ncli multicluster add-to-multicluster \
+  #       external-ip-address-or-svm-ips=${PC_HOST} \
+  #        username=${PRISM_ADMIN} password=${PE_PASSWORD})
+  #      _test_exit=$?
+  #      log "Manual join PE to PC = |${_test}|, exit: ${_test_exit}."
+  #    fi
 
-      if [[ ${_test} != 'true' ]]; then
-             _test=$(ncli multicluster add-to-multicluster \
-          external-ip-address-or-svm-ips=${PC_HOST} \
-          username=${PRISM_ADMIN} password=${PE_PASSWORD})
-        _test_exit=$?
-        log "Manual join PE to PC = |${_test}|, exit: ${_test_exit}."
-      fi
+  #         _test=$(ncli --json=true multicluster get-cluster-state | \
+  #                 jq -r .data[0].clusterDetails.multicluster)
+  #    _test_exit=$?
+  #    log "Cluster status: |${_test}|, exit: ${_test_exit}."
 
-           _test=$(ncli --json=true multicluster get-cluster-state | \
-                   jq -r .data[0].clusterDetails.multicluster)
-      _test_exit=$?
-      log "Cluster status: |${_test}|, exit: ${_test_exit}."
-
-      if [[ ${_test} == 'true' ]]; then
-        log "PE to PC = cluster registration: successful."
-        return 0
-      elif (( ${_loop} > ${_attempts} )); then
-        log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
-        return ${_error}
-      else
-        log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
-        sleep ${_sleep}
-      fi
-    done
-  fi
+  #   if [[ ${_test} == 'true' ]]; then
+  #      log "PE to PC = cluster registration: successful."
+  #      return 0
+  #    elif (( ${_loop} > ${_attempts} )); then
+  #      log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
+  #      return ${_error}
+  #    else
+  #      log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
+  #     sleep ${_sleep}
+  #    fi
+  #  done
+  #fi
+  
+  #if (( ${_pc_version[0]} -ge 5 && ${_pc_version[1]} -eq 8 )); then
+    log "PC is version 5.8, enabling and checking"
+    # Enable the PE to PC registration
+    _json_data="{\"ipAddresses\":[\"${PC_HOST}\"],\"username\":\"${PRISM_ADMIN}\",\"password\":\"${PE_PASSWORD}\",\"port\":null}"
+    _response=$(curl -X POST $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/add_to_multicluster -d $_json_data | jq '.value')
+  #fi
 
 }
 
@@ -322,7 +326,7 @@ function pc_configure() {
   ## TODO: If DEBUG is set, we run the below command with bash -x
   _command="EMAIL=${EMAIL} \
     PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
-    PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} PC"
+    PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash -x ${HOME}/${PC_LAUNCH} PC"
   log "Remote asynchroneous launch PC configuration script... ${_command}"
   remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_LAUNCH%%.sh}.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."

@@ -278,20 +278,20 @@ function finish() {
 
 function images() {
   # https://portal.nutanix.com/#/page/docs/details?targetId=Command-Ref-AOS-v59:acl-acli-image-auto-r.html
-  local         _cli='acli'
+  local         _cli='nuclei'
   local     _command
   local   _http_body
   local       _image
   local  _image_type
   local        _name
-  local      _source='source_url'
+  local      _source='source_uri'
   local        _test
 
-  which "$_cli"
-  if (( $? > 0 )); then
-         _cli='nuclei'
-      _source='source_uri'
-  fi
+  #which "$_cli"
+  #if (( $? > 0 )); then
+  #       _cli='nuclei'
+  #    _source='source_uri'
+  #fi
 
 #######################################
 # For doing Disk IMAGES
@@ -305,10 +305,10 @@ function images() {
         && ${_cli} image.list 2>&1 \
         | grep -i complete \
         | grep "${_image}")
-    else
-      _test=$(source /etc/profile.d/nutanix_env.sh \
-        && ${_cli} image.list 2>&1 \
-        | grep "${_image}")
+    #else
+    #  _test=$(source /etc/profile.d/nutanix_env.sh \
+    #    && ${_cli} image.list 2>&1 \
+    #    | grep "${_image}")
     fi
 
     if [[ ! -z ${_test} ]]; then

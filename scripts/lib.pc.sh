@@ -580,6 +580,15 @@ function calm_enable() {
   local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
 
   log "Enable Nutanix Calm..."
+  # Need to check if the PE to PC registration has been done before we move forward to enable Calm. If we've done that, move on.
+  _json_data="{\"perform_validation_only\":true}"
+  _response=($(curl $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d "${_json_data}" https://localhost:9440/api/nutanix/v3/services/nucalm | jq '.validation_result_list[].has_passed'))
+  while [ ${#_response[@]} -lt 4 ]; do
+    _response=($(curl $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d "${_json_data}" https://localhost:9440/api/nutanix/v3/services/nucalm | jq '.validation_result_list[].has_passed'))
+    sleep 10
+  done
+
+
   _http_body='{"enable_nutanix_apps":true,"state":"ENABLE"}'
   _test=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d "${_http_body}" https://localhost:9440/api/nutanix/v3/services/nucalm)
 
