@@ -9,7 +9,7 @@ WORKSHOPS=(\
 "Bootcamp (AOS 5.10+/AHV PC 5.10+) = Current (AutoDC2)" \
 "Citrix Desktop on AHV Workshop (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Development" \
-"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \
+#"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -151,7 +151,7 @@ EoM
 
       log "Remote execution configuration script ${_pe_launch} on PE@${PE_HOST}"
       ## TODO: If DEBUG is set, we run the below command with bash -x
-      remote_exec 'SSH' 'PE' "${PE_CONFIGURATION} nohup bash -x /home/nutanix/${_pe_launch} 'PE' >> ${_pe_launch%%.sh}.log 2>&1 &"
+      remote_exec 'SSH' 'PE' "${PE_CONFIGURATION} nohup bash /home/nutanix/${_pe_launch} 'PE' >> ${_pe_launch%%.sh}.log 2>&1 &"
       unset PE_CONFIGURATION
 
       # shellcheck disable=SC2153
