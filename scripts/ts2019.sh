@@ -73,10 +73,10 @@ case ${1} in
   PC | pc )
     . lib.pc.sh
 
-    export QCOW2_REPOS=(\
-     'http://10.42.8.50/images/' \
-     'https://s3.amazonaws.com/get-ahv-images/' \
-    ) # talk to Nathan.C to populate S3, Sharon.S to populate Daisy File Share
+    #export QCOW2_REPOS=(\
+     #'http://10.42.8.50/images/' \
+     #'https://s3.amazonaws.com/get-ahv-images/' \
+    #) # talk to Nathan.C to populate S3, Sharon.S to populate Daisy File Share
     export QCOW2_IMAGES=(\
       CentOS7.qcow2 \
       Windows2016.qcow2 \
