@@ -33,6 +33,15 @@ case ${1} in
       && prism_check 'PC' \
 
       if (( $? == 0 )) ; then
+        ## TODO: If Debug is set we should run with bash -x. Maybe this???? Or are we going to use a fourth parameter
+        # if [ ! -z DEBUG ]; then
+        #    bash_cmd='bash'
+        # else
+        #    bash_cmd='bash -x'
+        # fi
+        # _command="EMAIL=${EMAIL} \
+        #   PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
+        #   PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup ${bash_cmd} ${HOME}/${PC_LAUNCH} IMAGES"
         _command="EMAIL=${EMAIL} \
            PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
            PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} IMAGES"
@@ -102,7 +111,10 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
+    && karbon_enable \
+    && lcm \
     && images \
+    && flow_enable \
     && pc_cluster_img_import \
     && prism_check 'PC'
 

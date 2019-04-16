@@ -7,7 +7,7 @@
 # curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
 if [[ -z ${SOURCE} ]]; then
-  ORGANIZATION=nutanixworkshops
+  ORGANIZATION=jncox
     REPOSITORY=stageworkshop
         BRANCH=master
 else
@@ -102,7 +102,7 @@ elif [[ ! -d ${REPOSITORY}-${BRANCH} ]]; then
 fi
 
 pushd ${REPOSITORY}-${BRANCH}/ \
-  && chmod -R u+x *sh
+  && chmod -R u+x *.sh
 
 if [[ -e release.json ]]; then
  echo -e "\n${ARCHIVE}::$(basename $0) release: $(grep FullSemVer release.json | awk -F\" '{print $4}')"
@@ -131,7 +131,7 @@ cat <<EOM
 Optional: Please consider running ${0} clean.
 
 Watch progress with:
-          tail -f calm.log &
+          tail -f bootcamp.log &
 or login to PE to see tasks in flight and eventual PC registration:
           https://${PE_HOST}:9440/
 EOM

@@ -2,6 +2,9 @@
 # -x
 # Dependencies: acli, ncli, jq, sshpass, curl, md5sum, pgrep, wc, tr, pkill
 
+###############################################################################################################################################################################
+# Routine to set the acli command
+###############################################################################################################################################################################
 function acli() {
   local _cmd
 
@@ -10,6 +13,9 @@ function acli() {
   # DEBUG=1 && if [[ ${DEBUG} ]]; then log "$@"; fi
 }
 
+###############################################################################################################################################################################
+# Routine to install the AutoDC and join the Domain
+###############################################################################################################################################################################
 function authentication_source() {
   local   _attempts
   local      _error=13
@@ -42,8 +48,10 @@ function authentication_source() {
       local  _autodc_status="systemctl show ${_autodc_service} --property=SubState"
       local _autodc_success='SubState=running'
 
+      #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
       if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 8 )); then
-        log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC-2.0..."
+        log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC2..."
+
            _autodc_auth=" --username=${AUTH_ADMIN_USER} --password=${AUTH_ADMIN_PASS}"
           _autodc_index=''
         _autodc_release=2
@@ -54,10 +62,10 @@ function authentication_source() {
 
         # REVIEW: override global.vars
         #export AUTODC_REPOS=(\
-         #'http://10.132.128.50:81/share/saved-images/autodc-2.0.qcow2' \
-         #'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-        # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
-         #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+        #'http://10.42.8.50/images/AutoDC2.qcow2' \
+        #'http://10.42.8.50/images/AutoDC.qcow2' \
+        #'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
+        #'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
         #)
       fi
 
@@ -156,6 +164,10 @@ function authentication_source() {
   esac
 }
 
+###############################################################################################################################################################################
+# Routine to get the Nutanix Files injected
+###############################################################################################################################################################################
+
 function files_install() {
   local  _ncli_softwaretype='FILE_SERVER'
   local _ncli_software_type='afs'
@@ -177,10 +189,19 @@ function files_install() {
   fi
 }
 
+###############################################################################################################################################################################
+# Routine to crerate the networks
+###############################################################################################################################################################################
 function network_configure() {
+  local _network_name="${NW1_NAME}"
 
-  if [[ ! -z $(acli "net.list" | grep ${NW1_NAME}) ]]; then
-    log "IDEMPOTENCY: ${NW1_NAME} network set, skip."
+  if [[ ! -z "${NW2_NAME}" ]]; then
+    #TODO: accommodate for X networks!
+    _network_name="${NW2_NAME}"
+  fi
+
+  if [[ ! -z $(acli "net.list" | grep ${_network_name}) ]]; then
+    log "IDEMPOTENCY: ${_network_name} network set, skip."
   else
     args_required 'AUTH_DOMAIN IPV4_PREFIX AUTH_HOST'
 
@@ -203,11 +224,82 @@ function network_configure() {
   fi
 }
 
+###############################################################################################################################################################################
+# Routine to check if the registration of PE was successful
+###############################################################################################################################################################################
+
+function cluster_check() {
+  local     _attempts=20
+  local         _loop=0
+  local   _pc_version
+  local        _sleep=60
+  local         _test=1
+  local    _test_exit
+  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
+
+  # shellcheck disable=2206
+  #_pc_version=(${PC_VERSION//./ })
+
+  #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
+  #  log "PC>=5.10, checking multicluster state..."
+  #  while true ; do
+  #    (( _loop++ ))
+
+  #    _test=$(ncli --json=true multicluster get-cluster-state | jq -r .data[0].clusterDetails.multicluster)
+  #    _test_exit=$?
+  #    log "Cluster status: |${_test}|, exit: ${_test_exit}."
+
+  #    if [[ ${_test} != 'true' ]]; then
+  #           _test=$(ncli multicluster add-to-multicluster \
+  #       external-ip-address-or-svm-ips=${PC_HOST} \
+  #        username=${PRISM_ADMIN} password=${PE_PASSWORD})
+  #      _test_exit=$?
+  #      log "Manual join PE to PC = |${_test}|, exit: ${_test_exit}."
+  #    fi
+
+  #         _test=$(ncli --json=true multicluster get-cluster-state | \
+  #                 jq -r .data[0].clusterDetails.multicluster)
+  #    _test_exit=$?
+  #    log "Cluster status: |${_test}|, exit: ${_test_exit}."
+
+  #   if [[ ${_test} == 'true' ]]; then
+  #      log "PE to PC = cluster registration: successful."
+  #      return 0
+  #    elif (( ${_loop} > ${_attempts} )); then
+  #      log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
+  #      return ${_error}
+  #    else
+  #      log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
+  #     sleep ${_sleep}
+  #    fi
+  #  done
+  #fi
+  
+  #if (( ${_pc_version[0]} -ge 5 && ${_pc_version[1]} -eq 8 )); then
+    log "PC is version 5.8, enabling and checking"
+    # Enable the PE to PC registration
+    _json_data="{\"ipAddresses\":[\"${PC_HOST}\"],\"username\":\"${PRISM_ADMIN}\",\"password\":\"${PE_PASSWORD}\",\"port\":null}"
+    _response=$(curl -X POST $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/add_to_multicluster -d $_json_data | jq '.value')
+  #fi
+
+}
+
+###############################################################################################################################################################################
+# Routine to configure the PC and handoff to the PC local installation
+###############################################################################################################################################################################
+
 function pc_configure() {
   args_required 'PC_LAUNCH RELEASE'
   local      _command
   local    _container
-  local _dependencies="global.vars.sh lib.common.sh lib.pc.sh ${PC_LAUNCH}"
+  local _dependencies="global.vars.sh lib.pc.sh ${PC_LAUNCH}"
+
+  # If we are being called via the we-*.sh, we need to change the lib.common.sh to we-lib.common.sh
+  if [[ ${PC_LAUNCH} != *"we-"* ]]; then
+    _dependencies+=" lib.common.sh"
+  else
+    _dependencies+=" we-lib.common.sh"
+  fi
 
   if [[ -e ${RELEASE} ]]; then
     _dependencies+=" ${RELEASE}"
@@ -215,9 +307,9 @@ function pc_configure() {
     log 'Warning: did NOT find '${RELEASE}
   fi
   log "Send configuration scripts to PC and remove: ${_dependencies}"
-  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies}
+  remote_exec 'scp' 'PC' "${_dependencies}" && rm -f ${_dependencies} lib.pe.sh
 
-  _dependencies="${JQ_PACKAGE} ${SSHPASS_PACKAGE} id_rsa.pub"
+  _dependencies="bin/${JQ_REPOS[0]##*/} ${SSHPASS_REPOS[0]##*/} id_rsa.pub"
 
   log "OPTIONAL: Send binary dependencies to PC: ${_dependencies}"
   remote_exec 'scp' 'PC' "${_dependencies}" 'OPTIONAL'
@@ -228,19 +320,28 @@ function pc_configure() {
       remote_exec 'SCP' 'PC' ${_container}.tar 'OPTIONAL' &
     fi
   done
+  #####################################################################################
+  ### Handing of to the PC for rest of the installation
+  #####################################################################################
 
+  ## TODO: If DEBUG is set, we run the below command with bash -x
   _command="EMAIL=${EMAIL} \
     PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
-    PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} PC"
+    PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} PC"
   log "Remote asynchroneous launch PC configuration script... ${_command}"
   remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_LAUNCH%%.sh}.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."
 }
 
+###############################################################################################################################################################################
+# Routine to install the PC in the PE
+###############################################################################################################################################################################
 function pc_install() {
   local    _ncli_softwaretype='PRISM_CENTRAL_DEPLOY'
   local              _nw_name="${1}"
   local              _nw_uuid
+  local           _pc_version
+  local _should_auto_register
   local _storage_default_uuid
   local                 _test
 
@@ -270,6 +371,12 @@ function pc_install() {
       log "IDEMPOTENCY: PC-${PC_VERSION} upload already completed."
     fi
 
+    # shellcheck disable=2206
+    _pc_version=(${PC_VERSION//./ })
+    if (( ${_pc_version[0]} == 5 && ${_pc_version[1]} <= 6 )); then
+      _should_auto_register='"should_auto_register":true,'
+    fi
+
     log "Deploy Prism Central (typically takes 17+ minutes)..."
     # TODO:160 make scale-out & dynamic, was: 4vCPU/16GB = 17179869184, 8vCPU/40GB = 42949672960
     # Sizing suggestions, certified configurations:
@@ -279,7 +386,7 @@ function pc_install() {
     HTTP_BODY=$(cat <<EOF
 {
   "resources": {
-    "should_auto_register":true,
+    ${_should_auto_register}
     "version":"${PC_VERSION}",
     "pc_vm_list":[{
       "data_disk_size_bytes":536870912000,
@@ -309,6 +416,9 @@ EOF
   fi
 }
 
+###############################################################################################################################################################################
+# Routine to set the PE to use the AutoDC for authentication
+###############################################################################################################################################################################
 function pe_auth() {
   local           _aos
   local   _aos_version
@@ -320,6 +430,7 @@ function pe_auth() {
   if [[ -z $(ncli authconfig list-directory name=${AUTH_DOMAIN} | grep Error) ]]; then
     log "IDEMPOTENCY: ${AUTH_DOMAIN} directory set, skip."
   else
+    # https://portal.nutanix.com/kb/1005
     _aos=$(ncli --json=true cluster info | jq -r .data.version)
 
     if [[ ! -z ${_aos} ]]; then
@@ -351,6 +462,9 @@ function pe_auth() {
   fi
 }
 
+###############################################################################################################################################################################
+# Routine set PE's initial configuration
+###############################################################################################################################################################################
 function pe_init() {
   args_required 'DATA_SERVICE_IP EMAIL \
     SMTP_SERVER_ADDRESS SMTP_SERVER_FROM SMTP_SERVER_PORT \
@@ -394,7 +508,11 @@ function pe_init() {
   fi
 }
 
+###############################################################################################################################################################################
+# Routine to accept the EULA and disable pulse
+###############################################################################################################################################################################
 function pe_license() {
+  local _test
   args_required 'CURL_POST_OPTS PE_PASSWORD'
 
   log "IDEMPOTENCY: Checking PC API responds, curl failures are acceptable..."
@@ -403,15 +521,14 @@ function pe_license() {
   if (( $? == 0 )) ; then
     log "IDEMPOTENCY: PC API responds, skip"
   else
-    log "Validate EULA on PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
+    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{
       "username": "SE with $(basename ${0})",
       "companyName": "Nutanix",
       "jobTitle": "SE"
-    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept
+    }' https://localhost:9440/PrismGateway/services/rest/v1/eulas/accept)
+    log "Validate EULA on PE: _test=|${_test}|"
 
-    log "Disable Pulse in PE"
-    curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
+    _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data '{
       "defaultNutanixEmail": null,
       "emailContactList": null,
       "enable": false,
@@ -420,7 +537,8 @@ function pe_license() {
       "nosVersion": null,
       "remindLater": null,
       "verbosityType": null
-    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse
+    }' https://localhost:9440/PrismGateway/services/rest/v1/pulse)
+    log "Disable Pulse in PE: _test=|${_test}|"
 
     #echo; log "Create PE Banner Login" # TODO: for PC, login banner
     # https://portal.nutanix.com/#/page/docs/details?targetId=Prism-Central-Guide-Prism-v56:mul-welcome-banner-configure-pc-t.html
@@ -431,4 +549,51 @@ function pe_license() {
     #  '{type: "welcome_banner", key: "welcome_banner_content", value: "HPoC '${OCTET[2]}' password = '${PE_PASSWORD}'"}' \
     #  https://localhost:9440/PrismGateway/services/rest/v1/application/system_data
   fi
+}
+
+###############################################################################################################################################################################
+# Routine to unregister PE from PC
+###############################################################################################################################################################################
+function pc_unregister {
+  local _cluster_uuid
+  local      _pc_uuid
+  # https://portal.nutanix.com/kb/4944
+
+  # PE:
+  cluster status # check
+  ncli -h true multicluster remove-from-multicluster \
+    external-ip-address-or-svm-ips=${PC_HOST} \
+    username=${PRISM_ADMIN} password=${PE_PASSWORD} force=true
+    # Error: This cluster was never added to Prism Central
+  ncli multicluster get-cluster-state # check for none
+  _cluster_uuid=$(ncli cluster info | grep -i uuid | awk -F: '{print $2}' | tr -d '[:space:]')
+
+  exit 0
+  # PC: remote_exec 'PC'
+  chmod u+x /home/nutanix/bin/unregistration_cleanup.py \
+  && python /home/nutanix/bin/unregistration_cleanup.py ${_cluster_uuid}
+  # Uuid of current cluster cannot be passed to cleanup
+  _pc_uuid=$(cluster info) # no such command!
+  # PE:
+  chmod u+x /home/nutanix/bin/unregistration_cleanup.py \
+  && python /home/nutanix/bin/unregistration_cleanup.py ${_pc_uuid}
+
+  # Troubleshooting
+  cat ~/data/logs/unregistration_cleanup.log
+
+  pc_destroy
+}
+
+###############################################################################################################################################################################
+# Routine to destroy the PC VM
+###############################################################################################################################################################################
+function pc_destroy() {
+  local _vm
+
+  dependencies 'install' 'jq' || exit 13
+
+  for _vm in $(acli -o json vm.list | jq -r '.data[] | select(.name | contains("Prism Central")) | .uuid'); do
+    log "PC vm.uuid=${_vm}"
+    acli vm.off ${_vm} && acli -y vm.delete ${_vm}
+  done
 }
