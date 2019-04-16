@@ -137,26 +137,14 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
-    #&& flow_enable
-
-    # IF the PC_version is 5.10 then we can rnun LCM and Karbon enable
-    #if [ $PC_CURRENT_VERSION=='5.10.2' ]; then
-    #  karbon_enable
-    #  lcm
-    #fi
-
-    images \
+    && lcm \
+    && images \
+    && karbon_enable \
+    && flow_enable \
+    && pc_cluster_img_import \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
-    # shellcheck disable=2206
-    _pc_version=(${PC_VERSION//./ })
-
-    #commenting out to take images back to prevuous update
-    #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} <= 8 )); then
-    #  log "PC<=5.8, Image imports..."
-    #  ts_images
-    #fi
     pc_project
     pc_admin
     # ntnx_download 'AOS' # function in lib.common.sh
