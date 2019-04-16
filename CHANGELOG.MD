@@ -6,6 +6,24 @@
 
 <H2>Changes made</H2>
 
+* 2019-04-12 willem@nutanix.com
+
+<H3>Stageworkshop part</H3>
+  * Changed the following files:
+    * scripts/lib.pe.sh;      Changed the way we check if the PC is running
+                              Changed the PE to PC registration
+                          
+    * scripts/lib.pc.sh;      Before we can enable calm we need to make sure the system is ready for it.
+    * scripts/lib.common.sh;  Removed the acli as 5.8.2 has an error on that. All on nuclei now.
+    * stage_workshop.sh;      Re-enabled calm workshop (AOS and PC 5.8.2)
+
+<H3>Call back server part</H3>
+  
+  * No changes
+
+
+<H2>Changes made</H2>
+
 
 * 2019-04-04 willem@nutanix.com
 
