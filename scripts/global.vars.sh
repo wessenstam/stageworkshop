@@ -210,7 +210,7 @@ PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
     NW2_DHCP_START="${IPV4_PREFIX}.132"
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
-    10.38 ) # HPOC us-west = PHX
+    10.38 ) # HPOC us-west = PHX 1-Node Clusters
   PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.10.2.json'
      PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.10.2-stable-prism_central.tar'
   PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
