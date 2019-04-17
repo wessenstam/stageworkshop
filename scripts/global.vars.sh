@@ -208,6 +208,37 @@ PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
     NW2_DHCP_START="${IPV4_PREFIX}.132"
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
+    10.38 ) # HPOC us-west = PHX
+  PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.10.2.json'
+     PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.10.2-stable-prism_central.tar'
+  PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
+      PC_STABLE_URL='http://10.42.194.11/workshop_staging/euphrates-5.8.2-stable-prism_central.tar'
+      FILES_METAURL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+          FILES_URL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+          JQ_REPOS=(\
+           'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
+           'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
+           #'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
+     )
+        SSHPASS_REPOS=(\
+         'http://10.42.194.11/workshop_staging/sshpass-1.06-2.el7.x86_64.rpm' \
+         #'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+      )
+        QCOW2_REPOS=(\
+         'http://10.42.194.11/workshop_staging/' \
+         'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
+      )
+        AUTODC_REPOS=(\
+       'http://10.42.194.11/workshop_staging/AutoDC2.qcow2' \
+       'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+     )
+         DNS_SERVERS='10.42.196.10,10.42.194.10 '
+            NW2_NAME='Secondary'
+            NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+          NW2_SUBNET="${IPV4_PREFIX}.129/25"
+      NW2_DHCP_START="${IPV4_PREFIX}.132"
+        NW2_DHCP_END="${IPV4_PREFIX}.253"
+      ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
         JQ_REPOS=(\
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
