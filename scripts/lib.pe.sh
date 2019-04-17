@@ -51,6 +51,7 @@ function authentication_source() {
       #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
       if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 8 )); then
         log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC2..."
+
            _autodc_auth=" --username=${AUTH_ADMIN_USER} --password=${AUTH_ADMIN_PASS}"
           _autodc_index=''
         _autodc_release=2

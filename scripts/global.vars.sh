@@ -51,6 +51,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
  # - or full package filename.
 
  # https://stedolan.github.io/jq/download/#checksums_and_signatures
+
       #JQ_REPOS=(\
        #'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
        #'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -60,6 +61,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
     #'http://10.42.8.50/images/' \
     #'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
  #)
+
   QCOW2_IMAGES=(\
    CentOS7.qcow2 \
    Windows2016.qcow2 \
@@ -287,9 +289,11 @@ AUTH_ADMIN_GROUP='SSP Admins'
   'http://10.42.8.50/images/AutoDC2.qcow2' \
   'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
   'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+
   #'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
  # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
   #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+
 )
 
 # For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55, 10.42)
