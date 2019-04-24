@@ -304,7 +304,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
     NW2_DHCP_START="${IPV4_PREFIX}.132"
-      NW2_DHCP_END="${IPV4_PREFIX}.254"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
