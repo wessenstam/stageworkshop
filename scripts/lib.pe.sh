@@ -51,6 +51,7 @@ function authentication_source() {
       #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
       if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 8 )); then
         log "PC_VERSION ${PC_VERSION} >= 5.9, setting AutoDC2..."
+
            _autodc_auth=" --username=${AUTH_ADMIN_USER} --password=${AUTH_ADMIN_PASS}"
           _autodc_index=''
         _autodc_release=2
@@ -285,7 +286,7 @@ function pc_configure() {
   ## TODO: If DEBUG is set, we run the below command with bash -x
   _command="EMAIL=${EMAIL} \
     PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
-    PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash -x ${HOME}/${PC_LAUNCH} PC"
+    PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} PC"
   log "Remote asynchroneous launch PC configuration script... ${_command}"
   remote_exec 'ssh' 'PC' "${_command} >> ${HOME}/${PC_LAUNCH%%.sh}.log 2>&1 &"
   log "PC Configuration complete: try Validate Staged Clusters now."

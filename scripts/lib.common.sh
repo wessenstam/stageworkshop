@@ -4,8 +4,8 @@
 ##################################################################################
 # List of date, who  and change made to the file
 # --------------------------------------------------------------------------------
-# 12-04-2019 - Willem Essenstam 
-# Changed the run_once function so it checks not on lines in the log file but 
+# 12-04-2019 - Willem Essenstam
+# Changed the run_once function so it checks not on lines in the log file but
 # on if the PC is configured by trying to log in using the set password
 ##################################################################################
 
@@ -389,10 +389,10 @@ EOF
         && ${_cli} image.list 2>&1 \
         | grep -i complete \
         | grep "${_image}")
-    else
-      _test=$(source /etc/profile.d/nutanix_env.sh \
-        && ${_cli} image.list 2>&1 \
-        | grep "${_image}")
+    #else
+    #  _test=$(source /etc/profile.d/nutanix_env.sh \
+    #    && ${_cli} image.list 2>&1 \
+    #    | grep "${_image}")
     fi
 
     if [[ ! -z ${_test} ]]; then

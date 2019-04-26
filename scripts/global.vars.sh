@@ -51,6 +51,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
  # - or full package filename.
 
  # https://stedolan.github.io/jq/download/#checksums_and_signatures
+
       #JQ_REPOS=(\
        #'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
        #'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -60,6 +61,7 @@ NTNX_INIT_PASSWORD='nutanix/4u'
     #'http://10.42.8.50/images/' \
     #'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
  #)
+
   QCOW2_IMAGES=(\
    CentOS7.qcow2 \
    Windows2016.qcow2 \
@@ -208,6 +210,40 @@ PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
     NW2_DHCP_START="${IPV4_PREFIX}.132"
       NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
+    10.38 ) # HPOC us-west = PHX 1-Node Clusters
+  PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.10.2.json'
+     PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.10.2-stable-prism_central.tar'
+  PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pc_deploy-5.8.2.json'
+      PC_STABLE_URL='http://10.42.194.11/workshop_staging/euphrates-5.8.2-stable-prism_central.tar'
+      FILES_METAURL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
+          FILES_URL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
+          JQ_REPOS=(\
+           'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
+           'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
+           #'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
+     )
+        SSHPASS_REPOS=(\
+         'http://10.42.194.11/workshop_staging/sshpass-1.06-2.el7.x86_64.rpm' \
+         #'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+      )
+        QCOW2_REPOS=(\
+         'http://10.42.194.11/workshop_staging/' \
+         'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
+      )
+        AUTODC_REPOS=(\
+       'http://10.42.194.11/workshop_staging/AutoDC2.qcow2' \
+       'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+     )
+         NW1_SUBNET="${IPV4_PREFIX}.$((${OCTET[3]} - 6))/26"
+        NW1_DHCP_START=${IPV4_PREFIX}.$((${OCTET[3]} + 33))
+         NW1_DHCP_END=${IPV4_PREFIX}.$((${OCTET[3]} + 53))
+         DNS_SERVERS="10.42.196.10,10.42.194.10,${AUTH_HOST}"
+            #NW2_NAME='Secondary'
+            #NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
+          #NW2_SUBNET="${IPV4_PREFIX}.129/25"
+      #NW2_DHCP_START="${IPV4_PREFIX}.132"
+        #NW2_DHCP_END="${IPV4_PREFIX}.253"
+      ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
         JQ_REPOS=(\
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -256,9 +292,11 @@ AUTH_ADMIN_GROUP='SSP Admins'
   'http://10.42.8.50/images/AutoDC2.qcow2' \
   'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
   'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+
   #'nfs://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
  # 'smb://pocfs.nutanixdc.local/images/CorpSE_Calm/autodc-2.0.qcow2' \
   #'http://10.59.103.143:8000/autodc-2.0.qcow2' \
+
 )
 
 # For Nutanix HPOC/Marketing clusters (10.20, 10.21, 10.55, 10.42)
@@ -300,7 +338,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
           NW2_VLAN=$(( ${OCTET[2]} * 10 + 1 ))
         NW2_SUBNET="${IPV4_PREFIX}.129/25"
     NW2_DHCP_START="${IPV4_PREFIX}.132"
-      NW2_DHCP_END="${IPV4_PREFIX}.254"
+      NW2_DHCP_END="${IPV4_PREFIX}.253"
     ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
        DNS_SERVERS='10.132.71.40'
