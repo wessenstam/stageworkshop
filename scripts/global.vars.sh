@@ -14,6 +14,15 @@ SSH_PUBKEY="${HOME}/.ssh/id_rsa.pub"
 STORAGE_POOL='SP01'
 STORAGE_DEFAULT='Default'
 STORAGE_IMAGES='Images'
+ATTEMPTS=40
+SLEEP=60
+
+# Curl and SSH settings
+CURL_OPTS='--insecure --silent --show-error' # --verbose'
+CURL_POST_OPTS="${CURL_OPTS} --max-time 5 --header Content-Type:application/json --header Accept:application/json --output /dev/null"
+CURL_HTTP_OPTS="${CURL_POST_OPTS} --write-out %{http_code}"
+SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile=/dev/null'
+SSH_OPTS+=' -q' # -v'
 
 ##################################
 #
