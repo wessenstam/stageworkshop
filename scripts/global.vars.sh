@@ -385,7 +385,7 @@ elif [[ $(uname -s) == 'Darwin' ]]; then
   OS_NAME='Darwin'
 fi
 
-WC_ARG='--lines'
+WC_ARG='-l'
 if [[ ${OS_NAME} == 'Darwin' ]]; then
   WC_ARG='-l'
 fi
