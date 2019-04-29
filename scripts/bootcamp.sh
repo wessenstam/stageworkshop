@@ -106,8 +106,10 @@ case ${1} in
     pc_init \
     && pc_dns_add \
     && pc_ui \
-    && pc_auth \
-    && pc_smtp
+    && pc_auth 
+    if [[ ! -z ${SMTP_SERVER_ADDRESS}  ]]; then
+      pc_smtp
+    fi
 
     ssp_auth \
     && calm_enable \
