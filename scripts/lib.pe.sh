@@ -59,14 +59,6 @@ function authentication_source() {
         _autodc_restart="sleep 2 && service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
-
-        # REVIEW: override global.vars
-        #export AUTODC_REPOS=(\
-        #'http://10.42.8.50/images/AutoDC2.qcow2' \
-        #'http://10.42.8.50/images/AutoDC.qcow2' \
-        #'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
-        #'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
-        #)
       fi
 
       dns_check "dc${_autodc_index}.${AUTH_FQDN}"
@@ -444,7 +436,7 @@ function pe_init() {
     # If we are running in HPOC so email can be send and defined
     if [[ ! -z ${SMTP_SERVER_ADDRESS} ]]; then
       log "Configure SMTP"
-      
+
       ncli cluster set-smtp-server port=${SMTP_SERVER_PORT} \
       from-email-address=${SMTP_SERVER_FROM} address=${SMTP_SERVER_ADDRESS}
       ${HOME}/serviceability/bin/email-alerts --to_addresses="${EMAIL}" \
