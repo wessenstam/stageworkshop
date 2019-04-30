@@ -112,7 +112,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
      'http://10.55.251.38/workshop_staging/AutoDC2.qcow2' \
      'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
    )
-    DNS_SERVERS='10.55.251.10,10.55.251.11'
+    DNS_SERVERS='10.55.251.10,10.55.251.11,${AUTH_HOST}'
     ;;
   10.42 ) # HPOC us-west = PHX
     PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.10.2.json'
@@ -138,7 +138,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
      'http://10.42.194.11/workshop_staging/AutoDC2.qcow2' \
      'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
    )
-    DNS_SERVERS='10.42.196.10,10.42.194.10 '
+    DNS_SERVERS='10.42.196.10,10.42.194.10,${AUTH_HOST}'
     ;;
   10.38 ) # HPOC us-west = PHX 1-Node Clusters
     PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.10.2.json'
@@ -160,7 +160,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
          'http://10.42.194.11/workshop_staging/' \
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
       )
-    UTODC_REPOS=(\
+    AUTODC_REPOS=(\
        'http://10.42.194.11/workshop_staging/AutoDC2.qcow2' \
        'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
      )
