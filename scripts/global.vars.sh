@@ -35,7 +35,7 @@ QCOW2_IMAGES=(\
    Windows10-1709.qcow2 \
    ToolsVM.qcow2 \
    ERA-Server-build-1.0.1.qcow2 \
-   'https://download.nutanix.com/karbon/centos/0.0/centos7-0.0.qcow2' \
+   #'https://download.nutanix.com/karbon/centos/0.0/centos7-0.0.qcow2' \
    #'http://download.nutanix.com/karbon/0.8/acs-centos7.qcow2' \
  )
 
