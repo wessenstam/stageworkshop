@@ -113,6 +113,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
      'http://10.55.251.38/workshop_staging/AutoDC2.qcow2' \
      'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
    )
+    PC_DATA='http://10.55.251.38/workshop_staging/seedPC.zip'
     DNS_SERVERS='10.55.251.10,10.55.251.11,${AUTH_HOST}'
     ;;
   10.42 ) # HPOC us-west = PHX
@@ -141,6 +142,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
      'http://10.42.194.11/workshop_staging/AutoDC2.qcow2' \
      'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
    )
+    PC_DATA='http://10.42.194.11/workshop_staging/seedPC.zip'
     DNS_SERVERS='10.42.196.10,10.42.194.10,${AUTH_HOST}'
     ;;
   10.38 ) # HPOC us-west = PHX 1-Node Clusters
@@ -169,6 +171,7 @@ case "${OCTET[0]}.${OCTET[1]}" in
        'http://10.42.194.11/workshop_staging/AutoDC2.qcow2' \
        'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
      )
+    PC_DATA='http://10.42.194.11/workshop_staging/seedPC.zip'
     NW1_SUBNET="${IPV4_PREFIX}.$((${OCTET[3]} - 6))/26"
     NW1_DHCP_START=${IPV4_PREFIX}.$((${OCTET[3]} + 33))
     NW1_DHCP_END=${IPV4_PREFIX}.$((${OCTET[3]} + 53))

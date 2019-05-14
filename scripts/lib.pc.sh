@@ -215,7 +215,7 @@ function karbon_image_download() {
   local _loop=0
   local _json_data_set_enable="{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"enable_service_with_prechecks\\\",\\\".kwargs\\\":{\\\"service_list_json\\\":\\\"{\\\\\\\"service_list\\\\\\\":[\\\\\\\"KarbonUIService\\\\\\\",\\\\\\\"KarbonCoreService\\\\\\\"]}\\\"}}\"}"
   local _json_is_enable="{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"is_service_enabled\\\",\\\".kwargs\\\":{\\\"service_name\\\":\\\"KarbonUIService\\\"}}\"} "
-  local _httpURL="https://localhost:9440/PrismGateway/services/rest/v1/genesis"
+  local _httpURL="https://localhost:7050/acs/image/download"
 
   # Start the enablement process
   _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d $_json_data_set_enable ${_httpURL}| grep "[true, null]" | wc -l)
@@ -234,9 +234,9 @@ function karbon_image_download() {
     if [[ $_response -eq 1 ]]; then
       _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d $_json_is_enable ${_httpURL}| grep "[true, null]" | wc -l)
       if [ $_response -lt 1 ]; then
-        log "Karbon isn't enabled. Please use the UI to enable it."
+        log "Karbon CentOS image has not been downloaded."
       else
-        log "Karbon has been enabled."
+        log "Karbon CentOS image has been downloaded."
       fi
     fi
   fi
@@ -461,6 +461,25 @@ function pc_passwd() {
   # _test=$(curl ${CURL_HTTP_OPTS} --user "${PRISM_ADMIN}:${_old_pw}" -X POST --data "${_http_body}" \
   #     https://localhost:9440/PrismGateway/services/rest/v1/utils/change_default_system_password)
   # log "cURL reset password _test=${_test}"
+}
+
+###############################################################################################################################################################################
+# Seed PC data for Prism Pro Labs
+###############################################################################################################################################################################
+
+function seedPC() {
+    local _test
+    local _setup
+
+    _test=$(curl -L ${PC_DATA} -o /home/nutanix/seedPC.zip)
+    log "Pulling Prism Data| PC_DATA ${PC_DATA}|${_test}"
+    unzip /home/nutanix/seedPC.zip
+    pushd /home/nutanix/lab/
+
+    _setup=$(/home/nutanix/lab/setupEnv.sh ${PC_HOST} > /dev/null 2>&1)
+    log "Running Setup Script|$_setup"
+
+    popd
 }
 
 ###############################################################################################################################################################################
