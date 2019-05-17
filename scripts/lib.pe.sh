@@ -59,14 +59,6 @@ function authentication_source() {
         _autodc_restart="sleep 2 && service ${_autodc_service} stop && sleep 5 && service ${_autodc_service} start"
          _autodc_status="service ${_autodc_service} status"
         _autodc_success=' * status: started'
-
-        # REVIEW: override global.vars
-        #export AUTODC_REPOS=(\
-        #'http://10.42.8.50/images/AutoDC2.qcow2' \
-        #'http://10.42.8.50/images/AutoDC.qcow2' \
-        #'https://s3.amazonaws.com/get-ahv-images/AutoDC.qcow2' \
-        #'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
-        #)
       fi
 
       dns_check "dc${_autodc_index}.${AUTH_FQDN}"
@@ -237,51 +229,10 @@ function cluster_check() {
   local    _test_exit
   local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
 
-  # shellcheck disable=2206
-  #_pc_version=(${PC_VERSION//./ })
-
-  #if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 10 )); then
-  #  log "PC>=5.10, checking multicluster state..."
-  #  while true ; do
-  #    (( _loop++ ))
-
-  #    _test=$(ncli --json=true multicluster get-cluster-state | jq -r .data[0].clusterDetails.multicluster)
-  #    _test_exit=$?
-  #    log "Cluster status: |${_test}|, exit: ${_test_exit}."
-
-  #    if [[ ${_test} != 'true' ]]; then
-  #           _test=$(ncli multicluster add-to-multicluster \
-  #       external-ip-address-or-svm-ips=${PC_HOST} \
-  #        username=${PRISM_ADMIN} password=${PE_PASSWORD})
-  #      _test_exit=$?
-  #      log "Manual join PE to PC = |${_test}|, exit: ${_test_exit}."
-  #    fi
-
-  #         _test=$(ncli --json=true multicluster get-cluster-state | \
-  #                 jq -r .data[0].clusterDetails.multicluster)
-  #    _test_exit=$?
-  #    log "Cluster status: |${_test}|, exit: ${_test_exit}."
-
-  #   if [[ ${_test} == 'true' ]]; then
-  #      log "PE to PC = cluster registration: successful."
-  #      return 0
-  #    elif (( ${_loop} > ${_attempts} )); then
-  #      log "Warning ${_error} @${1}: Giving up after ${_loop} tries."
-  #      return ${_error}
-  #    else
-  #      log "@${1} ${_loop}/${_attempts}=${_test}: sleep ${_sleep} seconds..."
-  #     sleep ${_sleep}
-  #    fi
-  #  done
-  #fi
-  
-  #if (( ${_pc_version[0]} -ge 5 && ${_pc_version[1]} -eq 8 )); then
-    log "PC is version 5.8, enabling and checking"
-    # Enable the PE to PC registration
-    _json_data="{\"ipAddresses\":[\"${PC_HOST}\"],\"username\":\"${PRISM_ADMIN}\",\"password\":\"${PE_PASSWORD}\",\"port\":null}"
-    _response=$(curl -X POST $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/add_to_multicluster -d $_json_data | jq '.value')
-  #fi
-
+  log "PC is version 5.8, enabling and checking"
+   # Enable the PE to PC registration
+   _json_data="{\"ipAddresses\":[\"${PC_HOST}\"],\"username\":\"${PRISM_ADMIN}\",\"password\":\"${PE_PASSWORD}\",\"port\":null}"
+   _response=$(curl -X POST $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/add_to_multicluster -d $_json_data | jq '.value')
 }
 
 ###############################################################################################################################################################################

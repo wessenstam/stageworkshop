@@ -83,7 +83,7 @@ if [[ -z ${EMAIL} ]]; then
   read -p "REQUIRED: Email address for cluster admin? " EMAIL
 fi
 
-_WC_ARG='--list'
+_WC_ARG='--lines'
 if [[ $(uname -s) == 'Darwin' ]]; then
   _WC_ARG='-l'
 fi
