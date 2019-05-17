@@ -83,7 +83,7 @@ if [[ -z ${EMAIL} ]]; then
   read -p "REQUIRED: Email address for cluster admin? " EMAIL
 fi
 
-_WC_ARG='-l'
+_WC_ARG='--list'
 if [[ $(uname -s) == 'Darwin' ]]; then
   _WC_ARG='-l'
 fi
@@ -123,7 +123,7 @@ fi
     PE_HOST=${PE_HOST} \
 PRISM_ADMIN=${PRISM_ADMIN} \
 PE_PASSWORD=${PE_PASSWORD} \
-./stage_workshop.sh -f - ${MY_WORKSHOP} # \
+bash -x ./stage_workshop.sh -f ${MY_WORKSHOP} # \
 #  && popd || exit
 
 echo -e "\n    DONE: ${0} ran for ${SECONDS} seconds."
