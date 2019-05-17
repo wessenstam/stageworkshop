@@ -251,6 +251,11 @@ function fileserver() {
 
       remote_exec 'ssh' ${_host} \
         "python -m SimpleHTTPServer ${_port} || python -m http.server ${_port}"
+
+      # acli image.create AutoDC2 image_type=kDiskImage wait=true container=Images \
+      # source_url=http://10.4.150.64:8181/autodc-2.0.qcow2
+      #AutoDC2: pending
+      #AutoDC2: UploadFailure: Could not access the URL, please check the URL and make sure the hostname is resolvable
       popd || exit
       ;;
     'stop' )
@@ -282,6 +287,11 @@ function images() {
   local      _source='source_uri'
   local        _test
 
+  #which "$_cli"
+  #if (( $? > 0 )); then
+  #       _cli='nuclei'
+  #    _source='source_uri'
+  #fi
 
 #######################################
 # For doing Disk IMAGES
@@ -295,7 +305,10 @@ function images() {
         && ${_cli} image.list 2>&1 \
         | grep -i complete \
         | grep "${_image}")
-
+    #else
+    #  _test=$(source /etc/profile.d/nutanix_env.sh \
+    #    && ${_cli} image.list 2>&1 \
+    #    | grep "${_image}")
     fi
 
     if [[ ! -z ${_test} ]]; then
