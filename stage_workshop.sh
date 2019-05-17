@@ -7,7 +7,7 @@ DEBUG=
 # - PC #.#
 WORKSHOPS=(\
 "Bootcamp (AOS 5.10+/AHV PC 5.10+) = Current (AutoDC2)" \
-"Citrix Desktop on AHV Workshop (AOS 5.10+/AHV PC 5.10+) = Development" \
+#"Citrix Desktop on AHV Workshop (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Development" \
 "Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable (AutoDC2)" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
@@ -267,10 +267,10 @@ function select_workshop() {
         get_file
         break
         ;;
-      "Validate Staged Clusters")
-        validate_clusters
-        break
-        ;;
+      #"Validate Staged Clusters")
+      #  validate_clusters
+      #  break
+      #  ;;
       "Quit")
         exit
         ;;
@@ -310,14 +310,14 @@ function select_workshop() {
 . scripts/global.vars.sh
 begin
 
-    _VALIDATE='Validate Staged Clusters'
+#    _VALIDATE='Validate Staged Clusters'
 _CLUSTER_FILE='Cluster Input File'
  CLUSTER_LIST=
 
 # NONWORKSHOPS appended to WORKSHOPS
              WORKSHOP_COUNT=${#WORKSHOPS[@]}
 WORKSHOPS[${#WORKSHOPS[@]}]="Change ${_CLUSTER_FILE}"
-WORKSHOPS[${#WORKSHOPS[@]}]=${_VALIDATE}
+#WORKSHOPS[${#WORKSHOPS[@]}]=${_VALIDATE}
 WORKSHOPS[${#WORKSHOPS[@]}]="Quit"
            let NONWORKSHOPS=${#WORKSHOPS[@]}-${WORKSHOP_COUNT}
 
