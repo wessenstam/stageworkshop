@@ -188,10 +188,8 @@ case "${OCTET[0]}.${OCTET[1]}" in
     AUTODC_REPOS=(\
      'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
    )
-
-  10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
-       DNS_SERVERS='10.132.71.40'
-        NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
+    DNS_SERVERS='10.132.71.40'
+    NW1_SUBNET="${IPV4_PREFIX%.*}.128.4/17"
     NW1_DHCP_START="${IPV4_PREFIX}.100"
     NW1_DHCP_END="${IPV4_PREFIX}.250"
       # PC deploy file local override, TODO:30 make an PC_URL array and eliminate
