@@ -428,7 +428,26 @@ function pc_passwd() {
 }
 
 ###############################################################################################################################################################################
-# Routine to setp up the SSP authentication to use the AutoDC1 or 2 server
+# Seed PC data for Prism Pro Labs
+###############################################################################################################################################################################
+
+function seedPC() {
+    local _test
+    local _setup
+
+    _test=$(curl -L ${PC_DATA} -o /home/nutanix/seedPC.zip)
+    log "Pulling Prism Data| PC_DATA ${PC_DATA}|${_test}"
+    unzip /home/nutanix/seedPC.zip
+    pushd /home/nutanix/lab/
+
+    _setup=$(/home/nutanix/lab/setupEnv.sh ${PC_HOST} > /dev/null 2>&1)
+    log "Running Setup Script|$_setup"
+
+    popd
+}
+
+###############################################################################################################################################################################
+# Routine to setp up the SSP authentication to use the AutoDC server
 ###############################################################################################################################################################################
 
 function ssp_auth() {
