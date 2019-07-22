@@ -3,6 +3,9 @@
 # Example use from a Nutanix CVM:
 # curl --remote-name --location https://raw.githubusercontent.com/nutanixworkshops/stageworkshop/master/bootstrap.sh && sh ${_##*/}
 #
+# Development/Beta version
+# curl --remote-name --location https://raw.githubusercontent.com/jncox/stageworkshop/master/bootstrap.sh && sh ${_##*/}
+#
 # For testing:
 # curl --remote-name --location https://raw.githubusercontent.com/mlavi/stageworkshop/master/bootstrap.sh && SOURCE=${_} sh ${_##*/}
 
@@ -48,6 +51,16 @@ _ERROR=0
 if (( ${_ERROR} == 1 )); then
   echo "Error ${_ERROR}: This script should be run on a Nutanix CVM!"
   #echo RESTORE:
+
+#########################################################################
+### Added to verify user is Nutanix 7/22/2019 from mlavi version of file.
+#########################################################################
+
+  exit ${_ERROR}
+elif [[ $(whoami) != 'nutanix' ]]; then
+  _ERROR=50
+  echo "PBC-50: This guardrail can be relaxed with proper testing for the future."
+  echo "Error ${_ERROR}: This script should be run as user nutanix!"
   exit ${_ERROR}
 fi
 
@@ -131,7 +144,7 @@ cat <<EOM
 Optional: Please consider running ${0} clean.
 
 Watch progress with:
-          tail -f bootcamp.log &
+          tail -f *.log &
 or login to PE to see tasks in flight and eventual PC registration:
           https://${PE_HOST}:9440/
 EOM
