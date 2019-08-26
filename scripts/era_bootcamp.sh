@@ -117,8 +117,8 @@ case ${1} in
     && calm_enable \
     && karbon_enable \
     && lcm \
+    && karbon_image_download \
     && images \
-    && seedPC \
     && flow_enable \
     && pc_cluster_img_import \
     && prism_check 'PC'
