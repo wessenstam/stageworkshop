@@ -121,7 +121,7 @@ function lcm() {
 
               # Fill the uuid array with the correct values
               uuid_arr=($(jq '.group_results[].entity_results[].data[] | select (.name=="entity_uuid") | .values[0].values[0]' reply_json.json | sort -u | tr "\"" " " | tr -s " "))
-              
+
               # Grabbing the versions of the UUID and put them in a versions array
               for uuid in "${uuid_arr[@]}"
               do
@@ -170,7 +170,7 @@ function lcm() {
 
        # Run the generate plan task
        _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST $_json_data ${_url_lcm})
-       
+
        # Notify the log server that the LCM has created a plan
        log "LCM Inventory has created a plan"
 
@@ -214,10 +214,10 @@ function karbon_enable() {
   local _json_data_set_enable="{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"enable_service_with_prechecks\\\",\\\".kwargs\\\":{\\\"service_list_json\\\":\\\"{\\\\\\\"service_list\\\\\\\":[\\\\\\\"KarbonUIService\\\\\\\",\\\\\\\"KarbonCoreService\\\\\\\"]}\\\"}}\"}"
   local _json_is_enable="{\"value\":\"{\\\".oid\\\":\\\"ClusterManager\\\",\\\".method\\\":\\\"is_service_enabled\\\",\\\".kwargs\\\":{\\\"service_name\\\":\\\"KarbonUIService\\\"}}\"} "
   local _httpURL="https://localhost:9440/PrismGateway/services/rest/v1/genesis"
-  
+
   # Start the enablement process
   _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d $_json_data_set_enable ${_httpURL}| grep "[true, null]" | wc -l)
-  
+
   # Check if we got a "1" back (start sequence received). If not, retry. If yes, check if enabled...
   if [[ $_response -eq 1 ]]; then
     # Check if Karbon has been enabled
@@ -268,6 +268,42 @@ function karbon_image_download() {
     fi
   else
     log "Download of CentOS image for Karbon has started..."
+  fi
+}
+
+###############################################################################################################################################################################
+# Routine to enable Objects
+###############################################################################################################################################################################
+
+function objects_enable() {
+  local CURL_HTTP_OPTS=' --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure '
+  local _loops=0
+  local _json_data_set_enable="{\"state\":\"ENABLE\"}"
+  local _json_data_check="{\"entity_type\":\"objectstore\"}"
+  local _httpURL_check="https://localhost:9440/oss/api/nutanix/v3/groups"
+  local _httpURL="https://localhost:9440/api/nutanix/v3/services/oss"
+
+  # Start the enablement process
+  _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d $_json_data_set_enable ${_httpURL})
+  log "Enabling Objects....."
+  
+  # The response should be a Task UUID
+  if [[ ! -z $_response ]]; then
+    # Check if OSS has been enabled
+    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d $_json_data_check ${_httpURL_check}| grep "objectstore" | wc -l)
+    while [ $_response -ne 1 ]; do
+        _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d $_json_data_check ${_httpURL_check}| grep "objectstore" | wc -l)
+        if [[ $loops -ne 30 ]]; then
+          sleep 10
+          (( _loops++ ))
+        else
+          log "Objects isn't enabled. Please use the UI to enable it."
+          break
+        fi
+    done
+    log "Objects has been enabled."
+  else
+    log "Objects isn't enabled. Please use the UI to enable it."
   fi
 }
 

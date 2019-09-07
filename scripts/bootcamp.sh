@@ -117,6 +117,8 @@ case ${1} in
     && calm_enable \
     && karbon_enable \
     && lcm \
+    && objects_enable \
+    && karbon_image_download \
     && images \
     && seedPC \
     && flow_enable \
