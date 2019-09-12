@@ -118,7 +118,6 @@ case ${1} in
     && karbon_enable \
     && lcm \
     && objects_enable \
-    && karbon_image_download \
     && images \
     && seedPC \
     && flow_enable \
