@@ -47,8 +47,6 @@ ISO_IMAGES=(\
    Windows2012R2.iso \
    Windows10.iso \
    Nutanix-VirtIO-1.1.3.iso \
-   SQLServer2014SP3.iso \
-   XenApp_and_XenDesktop_7_18.iso \
    VeeamBR_9.5.4.2615.Update4.iso \
 )
 
