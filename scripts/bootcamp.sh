@@ -26,6 +26,7 @@ case ${1} in
     && pe_init \
     && network_configure \
     && authentication_source \
+    && prism_pro_server_deploy \
     && pe_auth
 
     if (( $? == 0 )) ; then
@@ -118,6 +119,8 @@ case ${1} in
     && karbon_enable \
     && lcm \
     && objects_enable \
+    && object_store \
+    && karbon_image_download \
     && images \
     && seedPC \
     && flow_enable \
