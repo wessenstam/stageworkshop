@@ -162,7 +162,7 @@ function authentication_source() {
 
 function prism_pro_server_deploy() {
 
-VMNAME='PrismProServer'
+VMNAME='PrismProLabUtilityServer'
 
 ### Import Image ###
 
@@ -241,6 +241,122 @@ function file_analytics_install() {
     log "IDEMPOTENCY: Files ${FILE_ANALYTICS_VERSION} already completed."
   fi
 }
+
+###############################################################################################################################################################################
+# Create File Server
+###############################################################################################################################################################################
+
+function create_file_server() {
+  #local CURL_HTTP_OPTS=' --max-time 25 --silent --show-error --header Content-Type:application/json --header Accept:application/json --insecure '
+  local      _fileserver_name="BootcampFS"
+  local     _internal_nw_name="${1}"
+  local     _internal_nw_uuid
+  local     _external_nw_name="${2}"
+  local     _external_nw_uuid
+  local                 _test
+  local     _maxtries=5
+  local     _tries=0
+  local _httpURL="https://localhost:9440/PrismGateway/services/rest/v1/vfilers"
+  local _ntp_formatted="$(echo $NTP_SERVERS | sed -r 's/[^,]+/'\"'&'\"'/g')"
+
+
+  echo "Get cluster network and storage container UUIDs..."
+  _internal_nw_uuid=$(acli net.get ${_internal_nw_name} \
+    | grep "uuid" | cut -f 2 -d ':' | xargs)
+  _external_nw_uuid=$(acli net.get ${_external_nw_name} \
+    | grep "uuid" | cut -f 2 -d ':' | xargs)
+  _storage_default_uuid=$(ncli container ls name=${STORAGE_DEFAULT} \
+    | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+  echo "${_internal_nw_name} network UUID: ${_internal_nw_uuid}"
+  echo "${_external_nw_name} network UUID: ${_external_nw_uuid}"
+  echo "${STORAGE_DEFAULT} storage container UUID: ${_storage_default_uuid}"
+
+  HTTP_JSON_BODY=$(cat <<EOF
+  {
+   "name":"${_fileserver_name}",
+   "numCalculatedNvms":"1",
+   "numVcpus":"4",
+   "memoryGiB":"12",
+   "internalNetwork":{
+      "subnetMask":"",
+      "defaultGateway":"",
+      "uuid":"${_internal_nw_uuid}",
+      "pool":[
+
+      ]
+   },
+   "externalNetworks":[
+      {
+         "subnetMask":"",
+         "defaultGateway":"",
+         "uuid":"${_external_nw_uuid}",
+         "pool":[
+
+         ]
+      }
+   ],
+   "windowsAdDomainName":"${AUTH_FQDN}",
+   "windowsAdUsername":"${AUTH_ADMIN_USER}",
+   "windowsAdPassword":"${AUTH_ADMIN_PASS}",
+   "dnsServerIpAddresses":[
+      "${AUTH_HOST}"
+   ],
+   "ntpServers":[
+      ${_ntp_formatted}
+   ],
+   "sizeGib":"1024",
+   "version":"${FILES_VERSION}",
+   "dnsDomainName":"${AUTH_FQDN}",
+   "nameServicesDTO":{
+      "adDetails":{
+         "windowsAdDomainName":"${AUTH_FQDN}",
+         "windowsAdUsername":"${AUTH_ADMIN_USER}",
+         "windowsAdPassword":"${AUTH_ADMIN_PASS}",
+         "addUserAsFsAdmin":true,
+         "organizationalUnit":"",
+         "preferredDomainController":"",
+         "overwriteUserAccount":false,
+         "rfc2307Enabled":false,
+         "useSameCredentialsForDns":false,
+         "protocolType":"1"
+      }
+   },
+   "addUserAsFsAdmin":true,
+   "organizationalUnit":"",
+   "preferredDomainController":"",
+   "fsDnsOperationsDTO":{
+      "dnsOpType":"MS_DNS",
+      "dnsServer":"",
+      "dnsUserName":"${AUTH_ADMIN_USER}",
+      "dnsPassword":"${AUTH_ADMIN_PASS}"
+   },
+   "pdName":"NTNX-${_fileserver_name}"
+}
+EOF
+)
+
+  # Start the create process
+  #_response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL}| grep "taskUuid" | wc -l)
+echo $HTTP_JSON_BODY
+
+  _response=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" ${_httpURL} | grep "taskUuid" | wc -l)
+
+#curl $CURL_HTTP_OPTS --user $PRISM_ADMIN:$PE_PASSWORD -X POST -d $HTTP_JSON_BODY $_httpURL
+
+  # Check if we got a "1" back (start sequence received). If not, retry. If yes, check if enabled...
+  if [[ $_response -lt 1 ]]; then
+#    # Check if Files has been enabled
+    #_response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL} | grep "taskUuid" | wc -l)
+    #while [[ $_response -ne 1 || $_tries -lt $_maxtries ]]; do
+    #    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL} | grep "taskUuid" | wc -l)
+    #    ((_tries=_tries+1))
+    #done
+    echo "File Server has been created."
+  else
+    echo "File Server is not being created, check the echos."
+  fi
+}
+
 
 
 ###############################################################################################################################################################################
