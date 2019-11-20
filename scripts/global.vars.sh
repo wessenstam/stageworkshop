@@ -56,12 +56,13 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
 PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
 DNS_SERVERS='8.8.8.8'
 NTP_SERVERS='0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org'
-
+SUBNET_MASK="255.255.255.128"
 
 
 NW1_NAME='Primary'
 NW1_VLAN=0
 NW1_SUBNET="${IPV4_PREFIX}.1/25"
+NW1_GATEWAY="${IPV4_PREFIX}.1"
 NW1_DHCP_START="${IPV4_PREFIX}.50"
 NW1_DHCP_END="${IPV4_PREFIX}.125"
 
