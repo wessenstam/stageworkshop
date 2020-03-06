@@ -11,17 +11,16 @@ begin
 # - Calm || Bootcamp || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
-"Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2) = Current" \
-"SNC (1-Node) Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2) = Current" \
-"Previous Bootcamp Staging (AOS 5.11/AHV PC 5.11) = Stable" \
-"Previous SNC (1-Node) Bootcamp Staging (AOS 5.11/AHV PC 5.11) = Stable" \
-#"In Development Bootcamp Staging (AOS 5.11+/AHV PC 5.16 RC2) = Development" \
-#In Development SNC (1-Node) Bootcamp Staging (AOS 5.11+/AHV PC 5.16 RC2) = Development" \
-#"Tech Summit 2019 (AOS 5.10+/AHV PC 5.10+) = Stable" \
-#"Era Bootcamp (AOS 5.11+/AHV PC 5.11+) = Development" \
-#"Files Bootcamp (AOS 5.11+/AHV PC 5.11+) = Development" \
-#"Citrix Bootcamp (AOS 5.11+/AHV PC 5.11+) = Development" \
-#"Calm Workshop (AOS 5.8.x/AHV PC 5.8.x) = Stable" \
+"Bootcamp Staging (AOS 5.11+/AHV PC 5.11.2.1) = Current" \
+"SNC (1-Node) Bootcamp Staging (AOS 5.11+/AHV PC 5.11.2.1) = Current" \
+"Previous Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2) = Stable" \
+"Previous SNC (1-Node) Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2) = Stable" \
+"Basic / API Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
+"Private Cloud Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
+"Databases with Era Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
+"Files Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
+"Calm Workshop (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
+"Citrix Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -41,49 +40,69 @@ function stage_clusters() {
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   # TODO: make WORKSHOPS and map a JSON configuration file?
-  if (( $(echo ${_workshop} | grep -i "PC 5.16" | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 5.11.2.1" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.11.2" | wc ${WC_ARG}) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.11.2.1" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_CURRENT_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.11" | wc ${WC_ARG}) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.11.2" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_STABLE_VERSION}"
   fi
 
   # Map workshop to staging script(s) and libraries,
   # _pe_launch will be executed on PE
-  if (( $(echo ${_workshop} | grep -i Bootcamp | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "^Bootcamp Staging" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
-  if (( $(echo ${_workshop} | grep -i SNC | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "^SNC" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='snc_bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
-  if (( $(echo ${_workshop} | grep -i Calm | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "^Basic / API Bootcamp" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
-    _pe_launch='calm.sh'
+    _pe_launch='basic_bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
-  if (( $(echo ${_workshop} | grep -i Citrix | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "^Private Cloud" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='privatecloud_bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^Databases" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='era_bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^Files" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='files_bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^Calm" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='calm_bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^Citrix" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='citrix_bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
-  if (( $(echo ${_workshop} | grep -i Era | wc ${WC_ARG}) > 0 )); then
-    _libraries+='lib.pe.sh'
-    _pe_launch='era_bootcamp.sh'
-    _pc_launch=${_pe_launch}
-  fi
-  if (( $(echo ${_workshop} | grep -i Files | wc ${WC_ARG}) > 0 )); then
-    _libraries+='lib.pe.sh'
-    _pe_launch='files_bootcamp.sh'
+  if (( $(echo ${_workshop} | grep -i "^Frame" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='frame_bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
   if (( $(echo ${_workshop} | grep -i Summit | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
-    _pe_launch='ts2019.sh'
+    _pe_launch='ts2020.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^SNC_GTS" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='snc_ts2020.sh'
     _pc_launch=${_pe_launch}
   fi
 

@@ -36,8 +36,75 @@ function authentication_source() {
   _pc_version=(${PC_VERSION//./ })
 
   case "${AUTH_SERVER}" in
-    'ActiveDirectory')
-      log "Manual setup = https://github.com/nutanixworkshops/labs/blob/master/setup/active_directory/active_directory_setup.rst"
+    'AutoAD')
+      local    _autoad_auth
+      local   _autoad_index=1
+      local _autoad_release=1
+      local _autoad_service='samba-ad-dc'
+      local _autoad_restart="service ${_autoad_service} restart"
+      local  _autoad_status="AD Is Running"
+      local _autoad_success="AD Is Running"
+
+
+      dns_check "dc.${AUTH_FQDN}"
+      _result=$?
+
+      if (( ${_result} == 0 )); then
+        log "${AUTH_SERVER}.IDEMPOTENCY: dc.${AUTH_FQDN} set, skip. ${_result}"
+      else
+        log "${AUTH_SERVER}.IDEMPOTENCY failed, no DNS record dc.${AUTH_FQDN}"
+
+        _error=12
+         _loop=0
+        _sleep=${SLEEP}
+
+        repo_source AUTOAD_REPOS[@]
+
+        if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${AUTH_SERVER}| wc --lines) == 0 )); then
+          log "Import ${AUTH_SERVER} image from ${SOURCE_URL}..."
+          acli image.create ${AUTH_SERVER} \
+            image_type=kDiskImage wait=true \
+            container=${STORAGE_IMAGES} source_url=${SOURCE_URL}
+        else
+          log "Image found, assuming ready. Skipping ${AUTH_SERVER} import."
+        fi
+
+        log "Create ${AUTH_SERVER} VM based on ${AUTH_SERVER} image"
+        acli "vm.create ${AUTH_SERVER} num_vcpus=2 num_cores_per_vcpu=1 memory=4G"
+        # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
+        #acli "vm.disk_create ${AUTH_SERVER}${_autodc_release} cdrom=true empty=true"
+        acli "vm.disk_create ${AUTH_SERVER} clone_from_image=${AUTH_SERVER}"
+        acli "vm.nic_create ${AUTH_SERVER} network=${NW1_NAME} ip=${AUTH_HOST}"
+
+        log "Power on ${AUTH_SERVER} VM..."
+        acli "vm.on ${AUTH_SERVER}"
+
+        _attempts=45
+            _loop=0
+           _sleep=60
+
+      while true ; do
+        (( _loop++ ))
+
+        _test=$(curl ${CURL_OPTS} -X GET http://${AUTH_HOST}:8000/ | grep "${_autoad_success}")
+        if [[ "${_test}" == "${_autoad_success}" ]]; then
+          log "${AUTH_SERVER} is ready."
+          sleep ${_sleep}
+          break
+        elif (( ${_loop} > ${_attempts} )); then
+          log "Error ${_error}: ${AUTH_SERVER} VM running: giving up after ${_loop} tries."
+          #_result=$(source /etc/profile.d/nutanix_env.sh \
+          #  && for _vm in $(source /etc/profile.d/nutanix_env.sh && acli vm.list | grep ${AUTH_SERVER}) ; do acli -y vm.delete $_vm; done)
+          # acli image.delete ${AUTH_SERVER}${_autodc_release}
+          #log "Remediate by deleting the ${AUTH_SERVER} VM from PE (just attempted by this script: ${_result}) and then running acli $_"
+          exit ${_error}
+        else
+          log "_test ${_loop}/${_attempts}=|${_test}|: sleep ${_sleep} seconds..."
+          sleep ${_sleep}
+        fi
+      done
+
+      fi
       ;;
     'AutoDC')
       local    _autodc_auth
@@ -162,31 +229,29 @@ function authentication_source() {
 
 function prism_pro_server_deploy() {
 
-VMNAME='PrismProLabUtilityServer'
-
 ### Import Image ###
 
-if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${VMNAME} | wc --lines) == 0 )); then
-  log "Import ${VMNAME} image from ${QCOW2_REPOS}..."
-  acli image.create ${VMNAME} \
+if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${PrismOpsServer} | wc --lines) == 0 )); then
+  log "Import ${PrismOpsServer} image from ${QCOW2_REPOS}..."
+  acli image.create ${PrismOpsServer} \
     image_type=kDiskImage wait=true \
-    container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}${VMNAME}.qcow2"
+    container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}${PrismOpsServer}.qcow2"
 else
-  log "Image found, assuming ready. Skipping ${VMNAME} import."
+  log "Image found, assuming ready. Skipping ${PrismOpsServer} import."
 fi
 
 ### Deploy PrismProServer ###
 
-log "Create ${VMNAME} VM based on ${VMNAME} image"
-acli "vm.create ${VMNAME} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
+log "Create ${PrismOpsServer} VM based on ${PrismOpsServer} image"
+acli "vm.create ${PrismOpsServer} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
 # vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
 #acli "vm.disk_create ${VMNAME} cdrom=true empty=true"
-acli "vm.disk_create ${VMNAME} clone_from_image=${VMNAME}"
-acli "vm.nic_create ${VMNAME} network=${NW1_NAME}"
-#acli "vm.nic_create ${VMNAME} network=${NW1_NAME} ip=${AUTH_HOST}"
+acli "vm.disk_create ${PrismOpsServer} clone_from_image=${PrismOpsServer}"
+#acli "vm.nic_create ${PrismOpsServer} network=${NW1_NAME}"
+acli "vm.nic_create ${PrismOpsServer} network=${NW1_NAME} ip=${PrismOpsServer_HOST}"
 
-log "Power on ${VMNAME} VM..."
-acli "vm.on ${VMNAME}"
+log "Power on ${PrismOpsServer} VM..."
+acli "vm.on ${PrismOpsServer}"
 
 
 
@@ -254,11 +319,16 @@ function create_file_server() {
   local     _external_nw_name="${2}"
   local     _external_nw_uuid
   local                 _test
-  local     _maxtries=5
+  local     _maxtries=30
   local     _tries=0
   local _httpURL="https://localhost:9440/PrismGateway/services/rest/v1/vfilers"
+  local _grab_afs_version="https://localhost:9440/PrismGateway/services/rest/v1/upgrade/afs/softwares"
   local _ntp_formatted="$(echo $NTP_SERVERS | sed -r 's/[^,]+/'\"'&'\"'/g')"
 
+  # Get dynamically the version of the AFS that has been installed
+  afs_version=$(curl ${CURL_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X GET ${_grab_afs_version} | jq '.entities[] | select (.status=="COMPLETED") .version' | tr -d \")
+
+  log "Found installed version: $afs_version of Nutanix Files..."
 
   echo "Get cluster network and storage container UUIDs..."
   _internal_nw_uuid=$(acli net.get ${_internal_nw_name} \
@@ -305,7 +375,7 @@ function create_file_server() {
       ${_ntp_formatted}
    ],
    "sizeGib":"1024",
-   "version":"${FILES_VERSION}",
+   "version":"${afs_version}",
    "dnsDomainName":"${AUTH_FQDN}",
    "nameServicesDTO":{
       "adDetails":{
@@ -339,29 +409,127 @@ EOF
   #_response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL}| grep "taskUuid" | wc -l)
 echo $HTTP_JSON_BODY
 
+# execute the API call to create the file server
   _response=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" ${_httpURL} | grep "taskUuid" | wc -l)
 
 #curl $CURL_HTTP_OPTS --user $PRISM_ADMIN:$PE_PASSWORD -X POST -d $HTTP_JSON_BODY $_httpURL
 
-  # Check if we got a "1" back (start sequence received). If not, retry. If yes, check if enabled...
-  if [[ $_response -lt 1 ]]; then
+  # Check to ensure we get a response back, then start checking for the file server creation
+  if [[ ! -z $_response ]]; then
 #    # Check if Files has been enabled
-    #_response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL} | grep "taskUuid" | wc -l)
-    #while [[ $_response -ne 1 || $_tries -lt $_maxtries ]]; do
-    #    _response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL} | grep "taskUuid" | wc -l)
-    #    ((_tries=_tries+1))
-    #done
-    echo "File Server has been created."
+    _checkresponse=$(curl ${CURL_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X GET ${_httpURL}| grep $_fileserver_name | wc -l)
+    while [[ $_checkresponse -ne 1 && $_tries -lt $_maxtries ]]; do
+      log "File Server Not yet created. $_tries/$_maxtries... sleeping 1 minute"
+      sleep 1m
+      _checkresponse=$(curl ${CURL_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X GET ${_httpURL}| grep $_fileserver_name | wc -l)
+      ((_tries++))
+    done
+    if [[ $_checkresponse -eq 1 ]]; then
+      echo "File Server has been created."
+    else
+      echo "File Server creation failed. Check the staging logs."
+    fi
   else
-    echo "File Server is not being created, check the echos."
+    echo "File Server is not being created, check the staging logs."
   fi
 }
 
+###############################################################################################################################################################################
+# Create File Analytics Server
+###############################################################################################################################################################################
+
+function create_file_analytics_server() {
+  #local CURL_HTTP_OPTS=' --max-time 25 --silent --show-error --header Content-Type:application/json --header Accept:application/json --insecure '
+  local _file_analytics_server_name="BootcampFileAnalytics"
+  local _nw_name="${NW1_NAME}"
+  local _nw_uuid
+  local _test
+  local _maxtries=30
+  local _tries=0
+  local _ntp_formatted="$(echo $NTP_SERVERS | sed -r 's/[^,]+/'\"'&'\"'/g')"
+  local CURL_HTTP_OPTS=" --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure "
+
+  log "Installing File Analytics version: ${FILE_ANALYTICS_VERSION}"
+
+  echo "Get cluster network and storage container UUIDs..."
+
+  # Get the Network UUIDs
+  #_nw_uuid=$(acli net.get ${_nw_name} | grep "uuid" | cut -f 2 -d ':' | xargs)
+  log "Get cluster network UUID"
+
+  #_nw_uuid=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"subnet","filter": "name==Primary"}' 'https://localhost:9440/api/nutanix/v3/subnets/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+
+  #_nw_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/subnets/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{"kind":"subnet","filter": "name==Secondary"}' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+
+  _nw_uuid=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"subnet","filter": "name==Secondary"}' 'https://localhost:9440/api/nutanix/v3/subnets/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+
+  # Get the Container UUIDs
+  log "Get ${STORAGE_DEFAULT} Container UUID"
+  _storage_default_uuid=$(ncli container ls name=${STORAGE_DEFAULT} | grep Uuid | grep -v Pool | cut -f 2 -d ':' | xargs)
+
+  echo "Secondary network UUID: ${_nw_uuid}"
+  echo "${STORAGE_DEFAULT} storage container UUID: ${_storage_default_uuid}"
 
 
+HTTP_JSON_BODY=$(cat <<EOF
+{
+                "image_version": "${FILE_ANALYTICS_VERSION}",
+                "vm_name": "${_file_analytics_server_name}",
+                "container_uuid": "${_storage_default_uuid}",
+                "container_name": "${STORAGE_DEFAULT}",
+                "network": {
+                                "uuid": "${_nw_uuid}",
+                                "ip": "",
+                                "netmask": "",
+                                "gateway": ""
+                },
+                "resource": {
+                                "memory": "24",
+                                "cores": "2",
+                                "vcpu": "4"
+                },
+                "dns_servers": ["${AUTH_HOST}"],
+                "ntp_servers": [${_ntp_formatted}],
+                "disk_size": "3"
+}
+EOF
+)
+
+  # Start the create process
+  #_response=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d ${HTTP_JSON_BODY} ${_httpURL}| grep "taskUuid" | wc -l)
+
+  # execute the API call to create the file analytics server
+  #_response=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" 'https://localhost:9440/PrismGateway/services/rest/v2.0/analyticsplatform' | grep "taskUuid" | wc -l)
+  echo "Creating File Anlytics Server Now"
+  echo $HTTP_JSON_BODY
+
+  #curl ${CURL_HTTP_OPTS} --request POST 'https://localhost:9440/PrismGateway/services/rest/v2.0/analyticsplatform' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data "${HTTP_JSON_BODY}"
+
+  #sleep 300
+
+  _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" 'https://localhost:9440/PrismGateway/services/rest/v2.0/analyticsplatform' | jq -r '.task_uuid' | tr -d \")
+
+  log "Task uuid for the FileAnalytics server is " $_task_id " ....."
+
+  # If there has been a reply (task_id) then the URL has accepted by PC
+  # Changed (()) to [] so it works....
+
+  if [ -z "$_task_id" ]; then
+       log "File Analytics Deploy has encountered an eror..."
+  else
+       log "File Analytics Deploy started.."
+       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
+      # Run the progess checker
+       loop
+  fi
+
+}
+
 ###############################################################################################################################################################################
-# Routine to crerate the networks
+# Routine to create the networks
 ###############################################################################################################################################################################
+
+
 function network_configure() {
   local _network_name="${NW1_NAME}"
 
@@ -382,14 +550,172 @@ function network_configure() {
 
     log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${AUTH_DOMAIN}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
     acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
-    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_DOMAIN}"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
     acli "  net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
 
     if [[ ! -z "${NW2_NAME}" ]]; then
       log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
       acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
-      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_DOMAIN}"
+      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
       acli "  net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
+    fi
+  fi
+}
+
+###############################################################################################################################################################################
+# Routine to create the networks for Era bootcamp
+###############################################################################################################################################################################
+
+
+function era_network_configure() {
+  local _network_name="${NW1_NAME}"
+
+  if [[ ! -z "${NW3_NAME}" ]]; then
+    #TODO: accommodate for X networks!
+    _network_name="${NW3_NAME}"
+  fi
+
+  if [[ ! -z $(acli "net.list" | grep ${_network_name}) ]]; then
+    log "IDEMPOTENCY: ${_network_name} network set, skip."
+  else
+    args_required 'AUTH_DOMAIN IPV4_PREFIX AUTH_HOST'
+
+    if [[ ! -z $(acli "net.list" | grep 'Rx-Automation-Network') ]]; then
+      log "Remove Rx-Automation-Network..."
+      acli "-y net.delete Rx-Automation-Network"
+    fi
+
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${AUTH_DOMAIN}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
+    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+    acli "  net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
+
+    if [[ ! -z "${NW2_NAME}" ]]; then
+      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
+      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
+      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      acli "  net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
+    fi
+
+    if [[ ! -z "${NW3_NAME}" ]]; then
+      log "Create EraManaged network: Name: ${NW3_NAME}, VLAN: ${NW3_VLAN}, Subnet: ${NW3_SUBNET}"
+      acli "net.create ${NW3_NAME} vlan=${NW3_VLAN} ip_config=${NW3_SUBNET}"
+      #acli "net.update_dhcp_dns ${NW3_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+    fi
+  fi
+}
+
+###############################################################################################################################################################################
+# Routine to create the networks for frame bootcamp
+###############################################################################################################################################################################
+
+
+function frame_network_configure() {
+  local _network_name="${NW1_NAME}"
+
+  if [[ ! -z "${NW2_NAME}" ]]; then
+    #TODO: accommodate for X networks!
+    _network_name="${NW2_NAME}"
+  fi
+
+  if [[ ! -z $(acli "net.list" | grep ${_network_name}) ]]; then
+    log "IDEMPOTENCY: ${_network_name} network set, skip."
+  else
+    args_required 'AUTH_DOMAIN IPV4_PREFIX AUTH_HOST'
+
+    if [[ ! -z $(acli "net.list" | grep 'Rx-Automation-Network') ]]; then
+      log "Remove Rx-Automation-Network..."
+      acli "-y net.delete Rx-Automation-Network"
+    fi
+
+    log "Create primary network: Name: ${NW1_NAME}, VLAN: ${NW1_VLAN}, Subnet: ${NW1_SUBNET}, Domain: ${AUTH_DOMAIN}, Pool: ${NW1_DHCP_START} to ${NW1_DHCP_END}"
+    acli "net.create ${NW1_NAME} vlan=${NW1_VLAN} ip_config=${NW1_SUBNET}"
+    acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+    acli "  net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
+
+    if [[ ! -z "${NW2_NAME}" ]]; then
+      log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}, Pool: ${NW2_DHCP_START} to ${NW2_DHCP_END}"
+      acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
+      acli "net.update_dhcp_dns ${NW2_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      acli "  net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START} end=${NW2_DHCP_END}"
+      acli "  net.add_dhcp_pool ${NW2_NAME} start=${NW2_DHCP_START2} end=${NW2_DHCP_END2}"
+    fi
+
+    if [[ ! -z "${USERNW01_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW01_NAME}, VLAN: ${USERNW01_VLAN}, Subnet: ${USERNW01_SUBNET}, Pool: ${USERNW01_DHCP_START} to ${USERNW01_DHCP_END}"
+      acli "net.create ${USERNW01_NAME} vlan=${USERNW01_VLAN} ip_config=${USERNW01_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW01_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW01_NAME} start=${USERNW01_DHCP_START} end=${USERNW01_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW02_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW02_NAME}, VLAN: ${USERNW02_VLAN}, Subnet: ${USERNW02_SUBNET}, Pool: ${USERNW02_DHCP_START} to ${USERNW02_DHCP_END}"
+      acli "net.create ${USERNW02_NAME} vlan=${USERNW02_VLAN} ip_config=${USERNW02_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW02_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW02_NAME} start=${USERNW02_DHCP_START} end=${USERNW02_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW03_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW03_NAME}, VLAN: ${USERNW03_VLAN}, Subnet: ${USERNW03_SUBNET}, Pool: ${USERNW03_DHCP_START} to ${USERNW03_DHCP_END}"
+      acli "net.create ${USERNW03_NAME} vlan=${USERNW03_VLAN} ip_config=${USERNW03_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW03_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW03_NAME} start=${USERNW03_DHCP_START} end=${USERNW03_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW04_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW04_NAME}, VLAN: ${USERNW04_VLAN}, Subnet: ${USERNW04_SUBNET}, Pool: ${USERNW04_DHCP_START} to ${USERNW04_DHCP_END}"
+      acli "net.create ${USERNW04_NAME} vlan=${USERNW04_VLAN} ip_config=${USERNW04_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW04_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW04_NAME} start=${USERNW04_DHCP_START} end=${USERNW04_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW05_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW05_NAME}, VLAN: ${USERNW05_VLAN}, Subnet: ${USERNW05_SUBNET}, Pool: ${USERNW05_DHCP_START} to ${USERNW05_DHCP_END}"
+      acli "net.create ${USERNW05_NAME} vlan=${USERNW05_VLAN} ip_config=${USERNW05_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW05_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW05_NAME} start=${USERNW05_DHCP_START} end=${USERNW05_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW06_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW06_NAME}, VLAN: ${USERNW06_VLAN}, Subnet: ${USERNW06_SUBNET}, Pool: ${USERNW06_DHCP_START} to ${USERNW06_DHCP_END}"
+      acli "net.create ${USERNW06_NAME} vlan=${USERNW06_VLAN} ip_config=${USERNW06_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW06_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW06_NAME} start=${USERNW06_DHCP_START} end=${USERNW06_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW07_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW07_NAME}, VLAN: ${USERNW07_VLAN}, Subnet: ${USERNW07_SUBNET}, Pool: ${USERNW07_DHCP_START} to ${USERNW07_DHCP_END}"
+      acli "net.create ${USERNW07_NAME} vlan=${USERNW07_VLAN} ip_config=${USERNW07_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW07_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW07_NAME} start=${USERNW07_DHCP_START} end=${USERNW07_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW08_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW08_NAME}, VLAN: ${USERNW08_VLAN}, Subnet: ${USERNW08_SUBNET}, Pool: ${USERNW08_DHCP_START} to ${USERNW08_DHCP_END}"
+      acli "net.create ${USERNW08_NAME} vlan=${USERNW08_VLAN} ip_config=${USERNW08_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW08_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW08_NAME} start=${USERNW08_DHCP_START} end=${USERNW08_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW09_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW09_NAME}, VLAN: ${USERNW09_VLAN}, Subnet: ${USERNW09_SUBNET}, Pool: ${USERNW09_DHCP_START} to ${USERNW09_DHCP_END}"
+      acli "net.create ${USERNW09_NAME} vlan=${USERNW09_VLAN} ip_config=${USERNW09_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW09_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW09_NAME} start=${USERNW09_DHCP_START} end=${USERNW09_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW10_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW10_NAME}, VLAN: ${USERNW10_VLAN}, Subnet: ${USERNW10_SUBNET}, Pool: ${USERNW10_DHCP_START} to ${USERNW10_DHCP_END}"
+      acli "net.create ${USERNW10_NAME} vlan=${USERNW10_VLAN} ip_config=${USERNW10_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW10_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW10_NAME} start=${USERNW10_DHCP_START} end=${USERNW10_DHCP_END}"
+    fi
+
+    if [[ ! -z "${USERNW11_NAME}" ]]; then
+      log "Create User network: Name: ${USERNW11_NAME}, VLAN: ${USERNW11_VLAN}, Subnet: ${USERNW11_SUBNET}, Pool: ${USERNW11_DHCP_START} to ${USERNW11_DHCP_END}"
+      acli "net.create ${USERNW11_NAME} vlan=${USERNW11_VLAN} ip_config=${USERNW11_SUBNET}"
+      #acli "net.update_dhcp_dns ${USERNW11_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
+      #acli "  net.add_dhcp_pool ${USERNW11_NAME} start=${USERNW11_DHCP_START} end=${USERNW11_DHCP_END}"
     fi
   fi
 }
@@ -727,4 +1053,74 @@ function pc_destroy() {
     log "PC vm.uuid=${_vm}"
     acli vm.off ${_vm} && acli -y vm.delete ${_vm}
   done
+}
+
+###############################################################################################################################################################################
+# Routine to deploy the Peer Management Center
+###############################################################################################################################################################################
+# MTM TODO When integrating with Nutanix scripts, need to change echo to log and put quotes around text after all acli commands
+function deploy_peer_mgmt_server() {
+
+  if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${PeerMgmtServer} | wc --lines) == 0 )); then
+    log "Import ${PeerMgmtServer} image from ${QCOW2_REPOS}..."
+    acli image.create ${PeerMgmtServer} \
+      image_type=kDiskImage wait=true \
+      container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}peer/${PeerMgmtServer}.qcow2"
+  else
+    log "Image found, assuming ready. Skipping ${PeerMgmtServer} import."
+  fi
+  echo "Creating temp folder and applying perms..."
+  mkdir /home/nutanix/peer_staging/
+  VMNAME=$1
+  ### Get sysyprep config file ready ###
+  echo "${VMNAME} - Prepping sysprep config..."
+  wget http://10.42.194.11/workshop_staging/peer/unattend-pmc.xml -P /home/nutanix/peer_staging/
+  mv /home/nutanix/peer_staging/unattend-pmc.xml /home/nutanix/peer_staging/unattend_${VMNAME}.xml
+  chmod 777 /home/nutanix/peer_staging/unattend_${VMNAME}.xml
+  sed -i "s/<ComputerName>.*<\/ComputerName>/<ComputerName>${VMNAME}<\/ComputerName>/g" /home/nutanix/peer_staging/unattend_${VMNAME}.xml
+  ### Deploy PMC Server ###
+  echo "${VMNAME} - Deploying VM..."
+  #log "Create ${VMNAME} VM based on ${IMAGENAME} image"
+  acli "uhura.vm.create_with_customize ${VMNAME} num_vcpus=2 num_cores_per_vcpu=2 memory=4G sysprep_config_path=file:///home/nutanix/peer_staging/unattend_${VMNAME}.xml"
+  acli "vm.disk_create ${VMNAME} clone_from_image=${PeerMgmtServer}"
+  # MTM TODO replace net1 with appropriate variable
+  acli "vm.nic_create ${VMNAME} network=${NW2_NAME}"
+  #log "Power on ${VMNAME} VM..."
+  echo "${VMNAME} - Powering on..."
+  acli "vm.on ${VMNAME}"
+  echo "${VMNAME} - Deployed."
+}
+
+###############################################################################################################################################################################
+# Routine to deploy a Peer Agent
+###############################################################################################################################################################################
+# MTM TODO When integrating with Nutanix scripts, need to change echo to log and put quotes around text after all acli commands
+function deploy_peer_agent_server() {
+
+  if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${PeerAgentServer} | wc --lines) == 0 )); then
+    log "Import ${PeerAgentServer} image from ${QCOW2_REPOS}..."
+    acli image.create ${PeerAgentServer} \
+      image_type=kDiskImage wait=true \
+      container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}peer/${PeerAgentServer}.qcow2"
+  else
+    log "Image found, assuming ready. Skipping ${PeerAgentServer} import."
+  fi
+  VMNAME=$1
+  ### Get sysyprep config file ready ###
+  echo "${VMNAME} - Prepping sysprep config..."
+  wget http://10.42.194.11/workshop_staging/peer/unattend-agent.xml -P /home/nutanix/peer_staging/
+  mv /home/nutanix/peer_staging/unattend-agent.xml /home/nutanix/peer_staging/unattend_${VMNAME}.xml
+  chmod 777 /home/nutanix/peer_staging/unattend_${VMNAME}.xml
+  sed -i "s/<ComputerName>.*<\/ComputerName>/<ComputerName>${VMNAME}<\/ComputerName>/g" /home/nutanix/peer_staging/unattend_${VMNAME}.xml
+  ### Deploy Agent Server ###
+  echo "${VMNAME} - Deploying VM..."
+  #log "Create ${VMNAME} VM based on ${IMAGENAME} image"
+  acli "uhura.vm.create_with_customize ${VMNAME} num_vcpus=2 num_cores_per_vcpu=2 memory=4G sysprep_config_path=file:///home/nutanix/peer_staging/unattend_${VMNAME}.xml"
+  acli "vm.disk_create ${VMNAME} clone_from_image=${PeerAgentServer}"
+  # MTM TODO replace net1 with appropriate variable
+  acli "vm.nic_create ${VMNAME} network=${NW2_NAME}"
+  #log "Power on ${VMNAME} VM..."
+  echo "${VMNAME} - Powering on..."
+  acli "vm.on ${VMNAME}"
+  echo "${VMNAME} - Deployed."
 }

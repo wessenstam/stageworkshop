@@ -3,7 +3,7 @@
 
 #__main()__________
 
-# Source Nutanix environment (PATH + aliases), then Workshop common routines + global variables
+# Source Nutanix environment (PATH + aliases), then common routines + global variables
 . /etc/profile.d/nutanix_env.sh
 . lib.common.sh
 . global.vars.sh
@@ -22,13 +22,85 @@ case ${1} in
     export PrismOpsServer='GTSPrismOpsLabUtilityServer'
     export SeedPC='GTSseedPC.zp'
 
-    args_required 'EMAIL PE_HOST PE_PASSWORD PC_VERSION'
+    # Networking needs for Frame Bootcamp
+    export NW2_DHCP_START="${IPV4_PREFIX}.132"
+    export NW2_DHCP_END="${IPV4_PREFIX}.139"
+    export NW2_DHCP_START2="${IPV4_PREFIX}.250"
+    export NW2_DHCP_END2="${IPV4_PREFIX}.253"
+
+    export USERNW01_NAME='User01-Network'
+    export USERNW01_VLAN=$((OCTET[2]*10+1))
+    export USERNW01_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW01_DHCP_START="${IPV4_PREFIX}.140"
+    export USERNW01_DHCP_END="${IPV4_PREFIX}.149"
+
+    export USERNW02_NAME='User02-Network'
+    export USERNW02_VLAN=$((OCTET[2]*10+1))
+    export USERNW02_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW02_DHCP_START="${IPV4_PREFIX}.150"
+    export USERNW02_DHCP_END="${IPV4_PREFIX}.159"
+
+    export USERNW03_NAME='User03-Network'
+    export USERNW03_VLAN=$((OCTET[2]*10+1))
+    export USERNW03_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW03_DHCP_START="${IPV4_PREFIX}.160"
+    export USERNW03_DHCP_END="${IPV4_PREFIX}.169"
+
+    export USERNW04_NAME='User04-Network'
+    export USERNW04_VLAN=$((OCTET[2]*10+1))
+    export USERNW04_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW04_DHCP_START="${IPV4_PREFIX}.170"
+    export USERNW04_DHCP_END="${IPV4_PREFIX}.179"
+
+    export USERNW05_NAME='User05-Network'
+    export USERNW05_VLAN=$((OCTET[2]*10+1))
+    export USERNW05_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW05_DHCP_START="${IPV4_PREFIX}.180"
+    export USERNW05_DHCP_END="${IPV4_PREFIX}.189"
+
+    export USERNW06_NAME='User06-Network'
+    export USERNW06_VLAN=$((OCTET[2]*10+1))
+    export USERNW06_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW06_DHCP_START="${IPV4_PREFIX}.190"
+    export USERNW06_DHCP_END="${IPV4_PREFIX}.199"
+
+    export USERNW07_NAME='User07-Network'
+    export USERNW07_VLAN=$((OCTET[2]*10+1))
+    export USERNW07_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW07_DHCP_START="${IPV4_PREFIX}.200"
+    export USERNW07_DHCP_END="${IPV4_PREFIX}.209"
+
+    export USERNW08_NAME='User08-Network'
+    export USERNW08_VLAN=$((OCTET[2]*10+1))
+    export USERNW08_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW08_DHCP_START="${IPV4_PREFIX}.210"
+    export USERNW08_DHCP_END="${IPV4_PREFIX}.219"
+
+    export USERNW09_NAME='User09-Network'
+    export USERNW09_VLAN=$((OCTET[2]*10+1))
+    export USERNW09_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW09_DHCP_START="${IPV4_PREFIX}.220"
+    export USERNW09_DHCP_END="${IPV4_PREFIX}.229"
+
+    export USERNW10_NAME='User10-Network'
+    export USERNW10_VLAN=$((OCTET[2]*10+1))
+    export USERNW10_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW10_DHCP_START="${IPV4_PREFIX}.230"
+    export USERNW10_DHCP_END="${IPV4_PREFIX}.239"
+
+    export USERNW11_NAME='User11-Network'
+    export USERNW11_VLAN=$((OCTET[2]*10+1))
+    export USERNW11_SUBNET="${IPV4_PREFIX}.129/25"
+    export USERNW11_DHCP_START="${IPV4_PREFIX}.240"
+    export USERNW11_DHCP_END="${IPV4_PREFIX}.249"
+
+    args_required 'PE_HOST PC_LAUNCH'
     ssh_pubkey & # non-blocking, parallel suitable
 
     dependencies 'install' 'sshpass' && dependencies 'install' 'jq' \
     && pe_license \
     && pe_init \
-    && network_configure \
+    && frame_network_configure \
     && authentication_source \
     && pe_auth \
     && prism_pro_server_deploy \
@@ -46,6 +118,15 @@ case ${1} in
       && prism_check 'PC' \
 
       if (( $? == 0 )) ; then
+        ## TODO: If Debug is set we should run with bash -x. Maybe this???? Or are we going to use a fourth parameter
+        # if [ ! -z DEBUG ]; then
+        #    bash_cmd='bash'
+        # else
+        #    bash_cmd='bash -x'
+        # fi
+        # _command="EMAIL=${EMAIL} \
+        #   PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
+        #   PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup ${bash_cmd} ${HOME}/${PC_LAUNCH} IMAGES"
         _command="EMAIL=${EMAIL} \
            PC_HOST=${PC_HOST} PE_HOST=${PE_HOST} PE_PASSWORD=${PE_PASSWORD} \
            PC_LAUNCH=${PC_LAUNCH} PC_VERSION=${PC_VERSION} nohup bash ${HOME}/${PC_LAUNCH} IMAGES"
@@ -59,10 +140,7 @@ case ${1} in
         log "PE = https://${PE_HOST}:9440"
         log "PC = https://${PC_HOST}:9440"
 
-        deploy_peer_mgmt_server "${PMC}" \
-        && deploy_peer_agent_server "${AGENTA}" \
-        && deploy_peer_agent_server "${AGENTB}"
-        #&& dependencies 'remove' 'jq' & # parallel, optional. Versus: $0 'files' &
+        # parallel, optional. Versus: $0 'files' &
         #dependencies 'remove' 'sshpass'
         finish
       fi
@@ -72,7 +150,6 @@ case ${1} in
       log "Error ${_error}: in main functional chain, exit!"
       exit ${_error}
     fi
-
   ;;
   PC | pc )
     . lib.pc.sh
@@ -88,7 +165,8 @@ case ${1} in
       WinToolsVM.qcow2 \
     )
     export ISO_IMAGES=(\
-      Citrix_Virtual_Apps_and_Desktops_7_1912.iso \
+      FrameCCA-2.1.0.iso \
+      FrameGuestAgentInstaller_1.0.2.2_7930.iso \
       Nutanix-VirtIO-1.1.5.iso \
     )
 
@@ -134,13 +212,10 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
-    && objects_enable \
     && lcm \
     && pc_project \
-    && object_store \
     && images \
     && flow_enable \
-    && pc_cluster_img_import \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
@@ -165,30 +240,3 @@ case ${1} in
     files_install
   ;;
 esac
-#!/usr/bin/env bash
-# -x
-
-#__main()__________
-
-# Source Nutanix environment (PATH + aliases), then common routines + global variables
-. /etc/profile.d/nutanix_env.sh
-. lib.common.sh
-. global.vars.sh
-begin
-
-args_required 'PE_PASSWORD'
-
-case ${1} in
-  PE | pe )
-    . lib.pe.sh
-
-    args_required 'PE_HOST'
-
-    dependencies 'install' 'jq' \
-    && files_install
-
-    log "PE = https://${PE_HOST}:9440"
-  ;;
-esac
-
-finish
