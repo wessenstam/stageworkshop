@@ -313,16 +313,16 @@ function object_store() {
 
 
     # Enable Dark Site Repo and wait 3 seconds
-    #mspctl airgap --enable --lcm-server=${OBJECTS_OFFLINE_REPO}
-    #sleep 3
+    mspctl airgap --enable --lcm-server=${OBJECTS_OFFLINE_REPO}
+    sleep 3
     # Confirm airgap is enabled
-    #_response=$(mspctl airgap --status | grep "\"enable\":true" | wc -l)
+    _response=$(mspctl airgap --status | grep "\"enable\":true" | wc -l)
 
-    #if [ $_response -eq 1 ]; then
-    #  log "Objects dark site staging successfully enabled. Response is $_response. "
-    #else
-    #  log "Objects failed to enable dark site staging. Will use standard WAN download (this will take longer). Response is $_response."
-    #fi
+    if [ $_response -eq 1 ]; then
+      log "Objects dark site staging successfully enabled. Response is $_response. "
+    else
+      log "Objects failed to enable dark site staging. Will use standard WAN download (this will take longer). Response is $_response."
+    fi
 
     # Payload for the _json_data
     _json_data='{"kind":"subnet"}'
@@ -1325,17 +1325,17 @@ function upload_era_calm_blueprint() {
   _loops="0"
   _maxtries="75"
 
-  ERA_IMAGE_UUID_CHECK=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{}' 'https://localhost:9440/api/nutanix/v3/images/list' | grep 'ERA-Server-build-1.2.0.1.qcow2' | wc -l)
+  ERA_IMAGE_UUID_CHECK=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{}' 'https://localhost:9440/api/nutanix/v3/images/list' | grep 'ERA-Server-build-1.2.1.qcow2' | wc -l)
   # The response should be a Task UUID
   while [[ $ERA_IMAGE_UUID_CHECK -ne 1 && $_loops -lt $_maxtries ]]; do
       log "Image not yet uploaded. $_loops/$_maxtries... sleeping 60 seconds"
       sleep 60
-      ERA_IMAGE_UUID_CHECK=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{}' 'https://localhost:9440/api/nutanix/v3/images/list' | grep 'ERA-Server-build-1.2.0.1.qcow2' | wc -l)
+      ERA_IMAGE_UUID_CHECK=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST -d '{}' 'https://localhost:9440/api/nutanix/v3/images/list' | grep 'ERA-Server-build-1.2.1.qcow2' | wc -l)
       (( _loops++ ))
   done
   if [[ $_loops -lt $_maxtries ]]; then
       log "Image has been uploaded."
-      ERA_IMAGE_UUID=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"image","filter": "name==ERA-Server-build-1.2.0.1.qcow2"}' 'https://localhost:9440/api/nutanix/v3/images/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+      ERA_IMAGE_UUID=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"image","filter": "name==ERA-Server-build-1.2.1.qcow2"}' 'https://localhost:9440/api/nutanix/v3/images/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
   else
       log "Image is not upload, please check."
   fi
@@ -1496,7 +1496,7 @@ function upload_karbon_calm_blueprint() {
   local DIRECTORY="/home/nutanix/karbon"
   local BLUEPRINT=${Karbon_Blueprint}
   local CALM_PROJECT="BootcampInfra"
-  local KARBON_IMAGE='ntnx-0.2'
+  local KARBON_IMAGE='ntnx-0.4'
   local PE_IP=${PE_HOST}
   local CLSTR_NAME="none"
   local CTR_UUID=${_storage_default_uuid}

@@ -11,16 +11,17 @@ begin
 # - Calm || Bootcamp || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
-"Bootcamp Staging (AOS 5.11+/AHV PC 5.11.2.1) = Current" \
-"SNC (1-Node) Bootcamp Staging (AOS 5.11+/AHV PC 5.11.2.1) = Current" \
-"Previous Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2) = Stable" \
-"Previous SNC (1-Node) Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2) = Stable" \
-"Basic / API Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
-"Private Cloud Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
-"Databases with Era Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
-"Files Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
-"Calm Workshop (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
-"Citrix Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Current" \
+"Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
+"SNC (1-Node) Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
+"Previous Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
+"Previous SNC (1-Node) Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
+"Basic / API Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
+"Private Cloud Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
+"Databases with Era Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
+"Files Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
+"Calm Workshop (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
+"Frame Bootcamp Staging (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
+"Citrix Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
 function stage_clusters() {
@@ -40,11 +41,11 @@ function stage_clusters() {
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   # TODO: make WORKSHOPS and map a JSON configuration file?
-  if (( $(echo ${_workshop} | grep -i "PC 5.11.2.1" | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 5.16.1.2" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.11.2.1" | wc ${WC_ARG}) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.16.1.2" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_CURRENT_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.11.2" | wc ${WC_ARG}) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.11.2.1" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_STABLE_VERSION}"
   fi
 
@@ -141,7 +142,13 @@ ______Warning -- curl time out indicates either:
       - Foundation and initialization (Cluster IP API response) hasn't completed.
 EoM
 
-      prism_check 'PE' 60
+      _error=$(prism_check 'PE' '1')
+      # If we were unable to connect to the PRISM UI, send a message to the console and move to the next
+      if [[ ${_error} != *"successful"* ]]; then
+        log "We were unable to connect to the PRISM UI on ${PE_HOST}..."
+        continue
+      fi
+
 
       if [[ -d cache ]]; then
         pushd cache || true
