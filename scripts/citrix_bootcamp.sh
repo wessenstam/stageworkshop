@@ -137,6 +137,7 @@ case ${1} in
     && calm_enable \
     && lcm \
     && pc_project \
+    && priority_images \
     && images \
     && flow_enable \
     && pc_cluster_img_import \
