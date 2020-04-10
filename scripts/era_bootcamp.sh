@@ -76,8 +76,8 @@ case ${1} in
     export OBJECTS_NW_END="${IPV4_PREFIX}.21"
 
     export _prio_images_arr=(\
-            ERA-Server-build-1.2.1.qcow2 \
-            )
+      ERA-Server-build-1.2.1.qcow2 \
+    )
 
     export QCOW2_IMAGES=(\
       MSSQL-2016-VM.qcow2 \
@@ -134,6 +134,7 @@ case ${1} in
     && calm_enable \
     && lcm \
     && pc_project \
+    && priority_images \
     && images \
     && flow_enable \
     && pc_cluster_img_import \
