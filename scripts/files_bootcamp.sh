@@ -86,6 +86,7 @@ case ${1} in
       Windows2016.qcow2 \
       Win10v1903.qcow2 \
       WinToolsVM.qcow2 \
+      Linux_ToolsVM.qcow2 \
       CentOS7.qcow2 \
     )
     export ISO_IMAGES=(\
