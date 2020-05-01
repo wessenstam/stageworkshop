@@ -34,10 +34,7 @@ case ${1} in
     && era_network_configure \
     && authentication_source \
     && pe_auth \
-    && deploy_era \
-    && deploy_mssql \
-    && deploy_oracle_19c
-
+    && deploy_era
 
     if (( $? == 0 )) ; then
       pc_install "${NW1_NAME}" \
@@ -82,6 +79,8 @@ case ${1} in
     )
 
     export QCOW2_IMAGES=(\
+      Windows2016.qcow2 \
+      CentOS7.qcow2 \
       WinToolsVM.qcow2 \
       Linux_ToolsVM.qcow2 \
     )
@@ -132,6 +131,7 @@ case ${1} in
     ssp_auth \
     && calm_enable \
     && lcm \
+    && sleep 30 \
     && pc_project \
     && priority_images \
     && images \

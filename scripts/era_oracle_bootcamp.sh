@@ -35,8 +35,8 @@ case ${1} in
     && authentication_source \
     && pe_auth \
     && deploy_era \
-    && deploy_mssql \
     && deploy_oracle_19c
+
 
 
     if (( $? == 0 )) ; then
@@ -132,6 +132,7 @@ case ${1} in
     ssp_auth \
     && calm_enable \
     && lcm \
+    && sleep 30 \
     && pc_project \
     && priority_images \
     && images \

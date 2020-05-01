@@ -19,10 +19,11 @@ case ${1} in
     . lib.pe.sh
 
     export AUTH_SERVER='AutoAD'
-    # Networking needs for Era Bootcamp
-	  #export NW2_NAME='EraManaged'
+    export PrismOpsServer='GTSPrismOpsLabUtilityServer'
+    export SeedPC='GTSseedPC.zp'
     export NW2_DHCP_START="${IPV4_PREFIX}.132"
     export NW2_DHCP_END="${IPV4_PREFIX}.219"
+    export _external_nw_name="${1}"
 
     args_required 'PE_HOST PC_LAUNCH'
     ssh_pubkey & # non-blocking, parallel suitable
@@ -34,10 +35,18 @@ case ${1} in
     && era_network_configure \
     && authentication_source \
     && pe_auth \
+    && prism_pro_server_deploy \
+    && files_install \
+    && sleep 30 \
+    && create_file_server "${NW1_NAME}" "${NW2_NAME}" \
+    && sleep 30 \
+    && file_analytics_install \
+    && sleep 30 \
+    && create_file_analytics_server \
+    && sleep 30 \
     && deploy_era \
     && deploy_mssql \
     && deploy_oracle_19c
-
 
     if (( $? == 0 )) ; then
       pc_install "${NW1_NAME}" \
@@ -57,8 +66,9 @@ case ${1} in
         log "PE = https://${PE_HOST}:9440"
         log "PC = https://${PC_HOST}:9440"
 
-
-        #&& dependencies 'remove' 'jq' & # parallel, optional. Versus: $0 'files' &
+        deploy_peer_mgmt_server "${PMC}" \
+        && deploy_peer_agent_server "${AGENTA}" \
+        && deploy_peer_agent_server "${AGENTB}"
         #dependencies 'remove' 'sshpass'
         finish
       fi
@@ -78,15 +88,21 @@ case ${1} in
     export OBJECTS_NW_END="${IPV4_PREFIX}.21"
 
     export _prio_images_arr=(\
-      ERA-Server-build-1.2.1.qcow2 \
-    )
+            Windows2016.qcow2 \
+            Citrix_Virtual_Apps_and_Desktops_7_1912.iso \
+            )
 
     export QCOW2_IMAGES=(\
+      CentOS7.qcow2 \
+      Win10v1903.qcow2 \
       WinToolsVM.qcow2 \
       Linux_ToolsVM.qcow2 \
+      HYCU/Mine/HYCU-4.0.3-Demo.qcow2 \
+      veeam/VeeamAHVProxy2.0.404.qcow2 \
     )
     export ISO_IMAGES=(\
       Nutanix-VirtIO-1.1.5.iso \
+      veeam/VBR_10.0.0.4442.iso \
     )
 
     run_once
@@ -131,17 +147,23 @@ case ${1} in
 
     ssp_auth \
     && calm_enable \
+    && karbon_enable \
+    && objects_enable \
     && lcm \
     && pc_project \
-    && priority_images \
-    && images \
+    && object_store \
+    && karbon_image_download \
     && flow_enable \
     && pc_cluster_img_import \
     && configure_era \
+    && upload_citrix_calm_blueprint \
+    && sleep 30 \
+    && images \
+    && seedPC \
     && prism_check 'PC'
 
     log "Non-blocking functions (in development) follow."
-    #pc_project
+    pc_project
     pc_admin
     # ntnx_download 'AOS' # function in lib.common.sh
 

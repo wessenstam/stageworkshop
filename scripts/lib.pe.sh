@@ -224,40 +224,6 @@ function authentication_source() {
 }
 
 ###############################################################################################################################################################################
-# Routine to deploy PrismProServer
-###############################################################################################################################################################################
-
-function prism_pro_server_deploy() {
-
-### Import Image ###
-
-if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${PrismOpsServer} | wc --lines) == 0 )); then
-  log "Import ${PrismOpsServer} image from ${QCOW2_REPOS}..."
-  acli image.create ${PrismOpsServer} \
-    image_type=kDiskImage wait=true \
-    container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}${PrismOpsServer}.qcow2"
-else
-  log "Image found, assuming ready. Skipping ${PrismOpsServer} import."
-fi
-
-### Deploy PrismProServer ###
-
-log "Create ${PrismOpsServer} VM based on ${PrismOpsServer} image"
-acli "vm.create ${PrismOpsServer} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
-# vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
-#acli "vm.disk_create ${VMNAME} cdrom=true empty=true"
-acli "vm.disk_create ${PrismOpsServer} clone_from_image=${PrismOpsServer}"
-#acli "vm.nic_create ${PrismOpsServer} network=${NW1_NAME}"
-acli "vm.nic_create ${PrismOpsServer} network=${NW1_NAME} ip=${PrismOpsServer_HOST}"
-
-log "Power on ${PrismOpsServer} VM..."
-acli "vm.on ${PrismOpsServer}"
-
-
-
-}
-
-###############################################################################################################################################################################
 # Routine to get the Nutanix Files injected
 ###############################################################################################################################################################################
 
@@ -563,6 +529,58 @@ function network_configure() {
 }
 
 ###############################################################################################################################################################################
+# Create the Secondary network based on the 3rd OCTET of the cluster for SNCs
+###############################################################################################################################################################################
+
+function secondary_network_SNC(){
+    # Set some needed parameters
+    local SEC_NETW=${OCTET[3]}
+    local SEC_NETW_VLAN=${OCTET[3]}
+    local CURL_HTTP_OPTS=" --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure "
+
+    # Get the last OCTET from the IP address of the AutoAD server
+    #payload='{"filter": "vm_name==AutoAD","kind": "vm"}'
+    #url="https://localhost:9440/api/nutanix/v3/vms/list"
+    #autoad_ip=$(curl -X POST ${url} -d "${payload}" ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} | jq '.entities[].status.resources.nic_list[].ip_endpoint_list[0].ip' | tr -d \"| cut -d '.' -f 4)
+
+    # Get UUID of the AutoAD
+    #autoad_uuid=$(curl -X POST ${url} -d "${payload}" ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} | jq '.entities[].metadata.uuid' | tr -d \")
+
+    # Set the right information for the network
+    json_payload='{"name":"Secondary","vlanId":"'${SEC_NETW_VLAN}'","ipConfig":{"dhcpOptions":{"domainNameServers":"'${AUTH_HOST}'","domainSearch":"ntxlab.local","domainName":"ntnxlab.local"},"networkAddress":"10.10.'${SEC_NETW_VLAN}'.0","prefixLength":"24","defaultGateway":"10.10.'${SEC_NETW_VLAN}'.1","pool":[
+                {
+                    "range":"10.10.'${SEC_NETW_VLAN}'.90 10.10.'${SEC_NETW_VLAN}'.200"
+                }
+                ]
+            }
+        }
+    }'
+    echo ${json_payload}
+
+    # Create the network
+    url="https://localhost:9440/api/nutanix/v0.8/networks"
+    network_uuid=$(curl -X POST ${url} -d "${json_payload}" ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD})
+    echo ${network_uuid}
+    if [[ -z ${network_uuid} ]]; then
+      log "The secondary network has not been created..."
+    else
+      log "The secondary network has been created..."
+    fi
+
+    # Add second nic into the AutoAD VM
+    #url="https://localhost:9440/PrismGateway/services/rest/v2.0/vms/${autoad_uuid}/nics"
+    #json_payload='{"spec_list":[{"network_uuid":"'${network_uuid}'","requested_ip_address":"10.10.'${SEC_NETW_VLAN}'.'${autoad_ip}'","is_connected":true,"vlan_id":"'${SEC_NETW_VLAN}'"}]}'
+
+    #task_uuid=$(curl -X POST ${url} -d "${json_payload}" ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} | jq '.task_uuid' | tr -d \")
+    #if [[ -z ${task_uuid} ]]; then
+    #    log "The AutoAD didn't receive the second network card..."
+    #else
+    #    log "The AutoAD has it's second network card assigned..."
+    #fi
+
+}
+
+###############################################################################################################################################################################
 # Routine to create the networks for Era bootcamp
 ###############################################################################################################################################################################
 
@@ -586,7 +604,7 @@ function era_network_configure() {
     acli "net.update_dhcp_dns ${NW1_NAME} servers=${AUTH_HOST},${DNS_SERVERS} domains=${AUTH_FQDN}"
     acli "  net.add_dhcp_pool ${NW1_NAME} start=${NW1_DHCP_START} end=${NW1_DHCP_END}"
 
-    # NW2 is EraManaged, so we do not need DHCP
+    # so we do not need DHCP
     if [[ ! -z "${NW2_NAME}" ]]; then
       log "Create secondary network: Name: ${NW2_NAME}, VLAN: ${NW2_VLAN}, Subnet: ${NW2_SUBNET}"
       acli "net.create ${NW2_NAME} vlan=${NW2_VLAN} ip_config=${NW2_SUBNET}"
@@ -1063,7 +1081,189 @@ function pc_destroy() {
   done
 }
 
-###############################################################################################################################################################################
+###################################################################################################################################################
+# Routine to deploy PrismProServer
+###################################################################################################################################################
+
+function prism_pro_server_deploy() {
+
+### Import Image ###
+
+if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${PrismOpsServer} | wc --lines) == 0 )); then
+  log "Import ${PrismOpsServer} image from ${QCOW2_REPOS}..."
+  acli image.create ${PrismOpsServer} \
+    image_type=kDiskImage wait=true \
+    container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}${PrismOpsServer}.qcow2"
+else
+  log "Image found, assuming ready. Skipping ${PrismOpsServer} import."
+fi
+
+### Deploy PrismProServer ###
+
+log "Create ${PrismOpsServer} VM based on ${PrismOpsServer} image"
+acli "vm.create ${PrismOpsServer} num_vcpus=2 num_cores_per_vcpu=1 memory=2G"
+# vmstat --wide --unit M --active # suggests 2G sufficient, was 4G
+#acli "vm.disk_create ${VMNAME} cdrom=true empty=true"
+acli "vm.disk_create ${PrismOpsServer} clone_from_image=${PrismOpsServer}"
+#acli "vm.nic_create ${PrismOpsServer} network=${NW1_NAME}"
+acli "vm.nic_create ${PrismOpsServer} network=${NW1_NAME} ip=${PrismOpsServer_HOST}"
+
+log "Power on ${PrismOpsServer} VM..."
+acli "vm.on ${PrismOpsServer}"
+
+}
+
+###################################################################################################################################################
+# Routine create the Era Storage container for the Era Bootcamps.
+###################################################################################################################################################
+
+function create_era_container() {
+
+  log "Creating Era Storage Container"
+  ncli container create name="${STORAGE_ERA}" rf=2 sp-name="${STORAGE_POOL}" enable-compression=true compression-delay=60
+
+}
+
+#########################################################################################################################################
+# Routine to Create Era  Server
+#########################################################################################################################################
+
+function deploy_era() {
+
+### Import Image ###
+
+if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${ERAServerImage} | wc --lines) == 0 )); then
+  log "Import ${ERAServerImage} image from ${QCOW2_REPOS}..."
+  acli image.create ${ERAServerImage} \
+    image_type=kDiskImage wait=true \
+    container=${STORAGE_IMAGES} source_url="${QCOW2_REPOS}${ERAServerImage}"
+else
+  log "Image found, assuming ready. Skipping ${ERAServerImage} import."
+fi
+
+### Deploy PrismProServer ###
+
+log "Create ${ERAServerName} VM based on ${ERAServerImage} image"
+acli "vm.create ${ERAServerName} num_vcpus=1 num_cores_per_vcpu=4 memory=4G"
+acli "vm.disk_create ${ERAServerName} clone_from_image=${ERAServerImage}"
+acli "vm.nic_create ${ERAServerName} network=${NW1_NAME} ip=${ERA_HOST}"
+
+log "Power on ${ERAServerName} VM..."
+acli "vm.on ${ERAServerName}"
+
+}
+
+
+#########################################################################################################################################
+# Routine to Create Era Bootcamp PreProvisioned MSSQL Server
+#########################################################################################################################################
+
+function deploy_mssql() {
+
+  num_sql_vms=3
+
+  if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${MSSQL_SourceVM_Image} | wc --lines) == 0 )); then
+    log "Import ${MSSQL_SourceVM_Image} image from ${QCOW2_REPOS}..."
+
+    acli image.create ${MSSQL_SourceVM_Image1} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/SQLServer/${MSSQL_SourceVM_Image1}.qcow2"
+    acli image.create ${MSSQL_SourceVM_Image2} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/SQLServer/${MSSQL_SourceVM_Image2}.qcow2"
+  else
+    log "Image found, assuming ready. Skipping ${MSSQL_SourceVM} import."
+  fi
+
+  echo "## SQLVM_Creation_INPROGRESS ##"
+  acli "vm.create ${MSSQL_SourceVM} memory=2046M num_cores_per_vcpu=1 num_vcpus=2"
+  acli "vm.disk_create ${MSSQL_SourceVM} clone_from_image=${MSSQL_SourceVM_Image1}"
+  acli "vm.disk_create ${MSSQL_SourceVM} clone_from_image=${MSSQL_SourceVM_Image2}"
+  acli "vm.nic_create ${MSSQL_SourceVM} network=${NW2_NAME}"
+  echo "## ${MSSQL_SourceVM} - Powering On ##"
+  acli "vm.on ${MSSQL_SourceVM}"
+  echo "## SQLVM_Creation_COMPLETE ##"
+
+  #echo "## SQLVM_Clone_Creation_INPROGRESS ##"
+  #acli "vm.clone $MSSQL_SourceVM_User[01..$num_sql_vms] clone_from_vm=${MSSQL_SourceVM}"
+  #echo "## SQLVM_Clone_Creation_COMPLETE ##"
+
+}
+
+#########################################################################################################################################
+# Routine to Create Era Bootcamp PreProvisioned Oracle Server
+#########################################################################################################################################
+
+function deploy_oracle_12c() {
+
+  if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${Oracle_12c_SourceVM_BootImage} | wc --lines) == 0 )); then
+    log "Import ${Oracle_12c_SourceVM_BootImage} image from ${QCOW2_REPOS}..."
+    acli image.create ${Oracle_12c_SourceVM_BootImage} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_BootImage}.qcow2"
+    acli image.create ${Oracle_12c_SourceVM_Image1} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_Image1}.qcow2"
+    acli image.create ${Oracle_12c_SourceVM_Image2} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_Image2}.qcow2"
+    acli image.create ${Oracle_12c_SourceVM_Image3} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_Image3}.qcow2"
+    acli image.create ${Oracle_12c_SourceVM_Image4} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_Image4}.qcow2"
+    acli image.create ${Oracle_12c_SourceVM_Image5} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_Image5}.qcow2"
+    acli image.create ${Oracle_12c_SourceVM_Image6} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle12cSIHA/${Oracle_12c_SourceVM_Image6}.qcow2"
+  else
+    log "Image found, assuming ready. Skipping ${Oracle_SourceVM} import."
+  fi
+
+  echo "## Oracle12cVM_Creation_INPROGRESS ##"
+  acli "vm.create ${Oracle_12c_SourceVM} memory=4G num_cores_per_vcpu=2 num_vcpus=2"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_BootImage}"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image1}"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image2}"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image3}"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image4}"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image5}"
+  acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image6}"
+  acli "vm.nic_create ${Oracle_12c_SourceVM} network=${NW2_NAME}"
+  echo "## ${Oracle_12c_SourceVM} - Powering On ##"
+  acli "vm.on ${Oracle_12c_SourceVM}"
+  echo "### Oracle12cVM_Creation_COMPLETE ##"
+
+
+}
+
+#########################################################################################################################################
+# Routine to Upload Era Bootcamp Patch images for Oracle
+#########################################################################################################################################
+
+function deploy_oracle_19c() {
+
+  if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${Oracle_19c_SourceVM_BootImage} | wc --lines) == 0 )); then
+    log "Import ${Oracle_19c_SourceVM_BootImage} image from ${QCOW2_REPOS}..."
+    acli image.create ${Oracle_19c_SourceVM_BootImage} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_BootImage}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image1} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image1}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image2} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image2}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image3} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image3}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image4} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image4}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image5} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image5}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image6} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image6}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image7} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image7}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image8} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image8}.qcow2"
+    acli image.create ${Oracle_19c_SourceVM_Image9} image_type=kDiskImage wait=true container=${STORAGE_ERA} source_url="${QCOW2_REPOS}era/oracle19cSIHA/${Oracle_19c_SourceVM_Image9}.qcow2"
+  else
+    log "Image found, assuming ready. Skipping ${Oracle_19c_SourceVM_BootImage} import."
+  fi
+
+  echo "## Oracle19cVM_Creation_INPROGRESS ##"
+  acli "vm.create ${Oracle_19c_SourceVM} memory=8G num_cores_per_vcpu=1 num_vcpus=2"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_BootImage}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image1}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image2}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image3}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image4}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image5}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image6}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image7}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image8}"
+  acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image9}"
+  acli "vm.nic_create ${Oracle_19c_SourceVM} network=${NW2_NAME}"
+  echo "## ${Oracle_19c_SourceVM} - Powering On ##"
+  acli "vm.on ${Oracle_19c_SourceVM}"
+  echo "### Oracle19cVM_Creation_COMPLETE ##"
+
+}
+
+###################################################################################################################################################
 # Routine to deploy the Peer Management Center
 ###############################################################################################################################################################################
 # MTM TODO When integrating with Nutanix scripts, need to change echo to log and put quotes around text after all acli commands
@@ -1099,9 +1299,9 @@ function deploy_peer_mgmt_server() {
   echo "${VMNAME} - Deployed."
 }
 
-###############################################################################################################################################################################
+###################################################################################################################################################
 # Routine to deploy a Peer Agent
-###############################################################################################################################################################################
+###################################################################################################################################################
 # MTM TODO When integrating with Nutanix scripts, need to change echo to log and put quotes around text after all acli commands
 function deploy_peer_agent_server() {
 

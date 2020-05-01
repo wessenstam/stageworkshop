@@ -24,6 +24,7 @@ case ${1} in
     export NW2_DHCP_START="${IPV4_PREFIX}.132"
     export NW2_DHCP_END="${IPV4_PREFIX}.219"
 
+
     args_required 'PE_HOST PC_LAUNCH'
     ssh_pubkey & # non-blocking, parallel suitable
 
@@ -35,9 +36,7 @@ case ${1} in
     && authentication_source \
     && pe_auth \
     && deploy_era \
-    && deploy_mssql \
-    && deploy_oracle_19c
-
+    && deploy_mssql
 
     if (( $? == 0 )) ; then
       pc_install "${NW1_NAME}" \
@@ -78,7 +77,7 @@ case ${1} in
     export OBJECTS_NW_END="${IPV4_PREFIX}.21"
 
     export _prio_images_arr=(\
-      ERA-Server-build-1.2.1.qcow2 \
+      #ERA-Server-build-1.2.1.qcow2 \
     )
 
     export QCOW2_IMAGES=(\
@@ -132,6 +131,7 @@ case ${1} in
     ssp_auth \
     && calm_enable \
     && lcm \
+    && sleep 30 \
     && pc_project \
     && priority_images \
     && images \

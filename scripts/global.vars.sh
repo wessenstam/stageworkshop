@@ -2,7 +2,7 @@
 
 # shellcheck disable=SC2034
 RELEASE='release.json'
-PC_DEV_VERSION='5.16.1.2'
+PC_DEV_VERSION='5.17'
 PC_CURRENT_VERSION='5.16.1.2'
 PC_STABLE_VERSION='5.11.2.1'
 FILES_VERSION='3.6.1.2'
@@ -13,12 +13,13 @@ SSH_PUBKEY="${HOME}/.ssh/id_rsa.pub"
 STORAGE_POOL='SP01'
 STORAGE_DEFAULT='Default'
 STORAGE_IMAGES='Images'
+STORAGE_ERA='Era'
 ATTEMPTS=40
 SLEEP=60
 PrismOpsServer='PrismProLabUtilityServer'
 SeedPC='seedPC.zip'
 CALM_RSA_KEY_FILE='calm_rsa_key.env'
-ERA_Blueprint='EraServerDeployment.json'
+
 Citrix_Blueprint='CitrixBootcampInfra.json'
 Beam_Blueprint=''
 Karbon_Blueprint='KarbonClusterDeployment.json'
@@ -32,9 +33,43 @@ SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserK
 SSH_OPTS+=' -q' # -v'
 
 ####################################################
-#
+# Era VARs
+###################################################
+
+ERA_Blueprint='EraServerDeployment.json'
+ERAServerImage='ERA-Server-build-1.2.1.qcow2'
+ERAServerName='EraServer'
+ERA_USER="admin"
+ERA_PASSWORD="nutanix/4u"
+ERA_Default_PASSWORD="Nutanix/4u"
+
+MSSQL_SourceVM="Win2016SQLSource"
+MSSQL_SourceVM_Image1="MSSQL_1"
+MSSQL_SourceVM_Image2="MSSQL_2"
+
+Oracle_12c_SourceVM="Oracle12cSource"
+Oracle_12c_SourceVM_BootImage="12c_bootdisk"
+Oracle_12c_SourceVM_Image1="12c_disk1"
+Oracle_12c_SourceVM_Image2="12c_disk2"
+Oracle_12c_SourceVM_Image3="12c_disk3"
+Oracle_12c_SourceVM_Image4="12c_disk4"
+Oracle_12c_SourceVM_Image5="12c_disk5"
+Oracle_12c_SourceVM_Image6="12c_disk6"
+
+Oracle_19c_SourceVM="Oracle19cSource"
+Oracle_19c_SourceVM_BootImage="19c-bootdisk"
+Oracle_19c_SourceVM_Image1="19c-disk1"
+Oracle_19c_SourceVM_Image2="19c-disk2"
+Oracle_19c_SourceVM_Image3="19c-disk3"
+Oracle_19c_SourceVM_Image4="19c-disk4"
+Oracle_19c_SourceVM_Image5="19c-disk5"
+Oracle_19c_SourceVM_Image6="19c-disk6"
+Oracle_19c_SourceVM_Image7="19c-disk7"
+Oracle_19c_SourceVM_Image8="19c-disk8"
+Oracle_19c_SourceVM_Image9="19c-disk9"
+
+####################################################
 # 3rd Party images used at GTS or Add-On Labs
-#
 ###################################################
 #Peer Software
 PeerMgmtServer='Windows2016-PeerMgmt-18feb20'
@@ -145,8 +180,15 @@ case "${OCTET[3]}" in
     NW2_NAME='Secondary'
     NW2_VLAN=$((OCTET[2]*10+1))
     NW2_SUBNET="${IPV4_PREFIX}.129/25"
+    NW2_GATEWAY="${IPV4_PREFIX}.129"
     NW2_DHCP_START="${IPV4_PREFIX}.132"
     NW2_DHCP_END="${IPV4_PREFIX}.253"
+
+    NW3_NAME='EraManaged'
+    NW3_VLAN=${NW2_VLAN}
+    NW3_NETMASK='255.255.255.128'
+    NW3_START="${IPV4_PREFIX}.220"
+    NW3_END="${IPV4_PREFIX}.253"
     ;;
 
 esac
@@ -175,8 +217,8 @@ AUTH_ADMIN_GROUP='SSP Admins'
 case "${OCTET[0]}.${OCTET[1]}" in
 
   10.55 ) # HPOC us-east = DUR
-    PC_DEV_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.16.1.2.json'
-    PC_DEV_URL='http://10.55.251.38/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.55.251.38/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
+    PC_DEV_URL='http://10.55.251.38/workshop_staging/euphrates-5.17-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.55.251.38/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.11.2.1.json'
@@ -209,11 +251,13 @@ case "${OCTET[0]}.${OCTET[1]}" in
     PC_DATA='http://10.55.251.38/workshop_staging/seedPC.zip'
     BLUEPRINT_URL='http://10.55.251.38/workshop_staging/CalmBlueprints/'
     DNS_SERVERS='10.55.251.10,10.55.251.11'
-	OBJECTS_OFFLINE_REPO='http://10.55.251.38/workshop_staging/objects'
+    ERA_PRIMARY_DNS='10.55.251.10'
+    ERA_SECONDARY_DNS='10.55.251.11'
+	  OBJECTS_OFFLINE_REPO='http://10.55.251.38/workshop_staging/objects'
     ;;
   10.42 ) # HPOC us-west = PHX
-    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.16.1.2.json'
-    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
+    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.11.2.1.json'
@@ -246,11 +290,13 @@ case "${OCTET[0]}.${OCTET[1]}" in
     PC_DATA='http://10.42.194.11/workshop_staging/seedPC.zip'
     BLUEPRINT_URL='http://10.42.194.11/workshop_staging/CalmBlueprints/'
     DNS_SERVERS='10.42.196.10,10.42.194.10'
+    ERA_PRIMARY_DNS='10.42.196.10'
+    ERA_SECONDARY_DNS='10.42.194.10'
     OBJECTS_OFFLINE_REPO='http://10.42.194.11/workshop_staging/objects'
     ;;
   10.38 ) # HPOC us-west = PHX 1-Node Clusters
-    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.16.1.2.json'
-    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
+    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.11.2.1.json'
@@ -283,13 +329,54 @@ case "${OCTET[0]}.${OCTET[1]}" in
     PC_DATA='http://10.42.194.11/workshop_staging/seedPC.zip'
     BLUEPRINT_URL='http://10.42.194.11/workshop_staging/CalmBlueprints/'
     DNS_SERVERS="10.42.196.10,10.42.194.10"
-	OBJECTS_OFFLINE_REPO='http://10.42.194.11/workshop_staging/objects'
+    ERA_PRIMARY_DNS='10.42.196.10'
+    ERA_SECONDARY_DNS='10.42.194.10'
+	  OBJECTS_OFFLINE_REPO='http://10.42.194.11/workshop_staging/objects'
 
     # If the third OCTET is between 170 and 199, we need to have the +3 vlan for the secondary
     if [[ ${OCTET[2]} -gt 169 ]]; then
       NW2_VLAN=$((OCTET[2]*10+3))
     fi
       ;;
+  10.136 ) # HPOC us-west = BLR
+    PC_DEV_METAURL='http://10.136.239.13/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
+    PC_DEV_URL='http://10.136.239.13/workshop_staging/euphrates-5.17-stable-prism_central.tar'
+    PC_CURRENT_METAURL='http://10.136.239.13/workshop_staging/pcdeploy-5.16.1.2.json'
+    PC_CURRENT_URL='http://10.136.239.13/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
+    PC_STABLE_METAURL='http://10.136.239.13/workshop_staging/pcdeploy-5.11.2.1.json'
+    PC_STABLE_URL='http://10.136.239.13/workshop_staging/euphrates-5.11.2.1-stable-prism_central.tar'
+    FILES_METAURL='http://10.136.239.13/workshop_staging/afs-3.6.1.2.json'
+    FILES_URL='http://10.136.239.13/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.1.2-stable.qcow2'
+    FILE_ANALYTICS_METAURL='http://10.136.239.13/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0-metadata.json'
+    FILE_ANALYTICS_URL='http://10.136.239.13/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0.qcow2'
+    JQ_REPOS=(\
+         'http://10.136.239.13/workshop_staging/jq-linux64.dms' \
+         'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
+         #'https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64' \
+   )
+    SSHPASS_REPOS=(\
+       'http://10.136.239.131/workshop_staging/sshpass-1.06-2.el7.x86_64.rpm' \
+       #'http://mirror.centos.org/centos/7/extras/x86_64/Packages/sshpass-1.06-2.el7.x86_64.rpm' \
+    )
+    QCOW2_REPOS=(\
+       'http://10.136.239.13/workshop_staging/' \
+       'https://s3.amazonaws.com/get-ahv-images/' \
+    )
+    AUTODC_REPOS=(\
+     'http://10.136.239.13/workshop_staging/AutoDC2.qcow2' \
+     'https://s3.amazonaws.com/get-ahv-images/AutoDC2.qcow2' \
+    )
+    AUTOAD_REPOS=(\
+     'http://10.136.239.13/workshop_staging/AutoAD.qcow2' \
+     'https://s3.amazonaws.com/get-ahv-images/AutoAD.qcow2' \
+    )
+    PC_DATA='http://10.136.239.13/workshop_staging/seedPC.zip'
+    BLUEPRINT_URL='http:/10.136.239.13/workshop_staging/CalmBlueprints/'
+    DNS_SERVERS='10.136.239.10,10.136.239.11'
+    ERA_PRIMARY_DNS='10.136.239.10'
+    ERA_SECONDARY_DNS='10.136.239.11'
+    OBJECTS_OFFLINE_REPO='http://10.136.239.13/workshop_staging/objects'
+    ;;
   10.132 ) # https://sewiki.nutanix.com/index.php/SH-COLO-IP-ADDR
     JQ_REPOS=(\
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
