@@ -11,18 +11,19 @@ begin
 # - Calm || Bootcamp || Citrix || Summit
 # - PC #.#
 WORKSHOPS=(\
-"Basic / API Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
-"Private Cloud Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
-"Databases Era with MSSQL Bootcamp (AOS 5.11.x/AHV PC 5.16.1.2) = Current" \
-"Databases Era with Oracle Bootcamp (AOS 5.11.x/AHV PC 5.16.1.2) = Current" \
-"Databases Era with Postgres Bootcamp (AOS 5.11.x/AHV PC 5.16.1.2) = Current" \
-"Databases Era -Stage All- Bootcamp (AOS 5.11.x/AHV PC 5.16.1.2) = Current" \
-"Files Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
-"Calm Bootcamp (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
-"Frame Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
-"Citrix Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
-"Private Cloud Splunk on AHV with Objects Bootcamp (AOS 5.11.x/AHV PC 5.16.1.2) = Current" \
-"Stage-All Bootcamps (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.16.1.2) = Current" \
+"Basic / API Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Private Cloud Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Leap Add-On Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Databases Era with MSSQL Bootcamp (AOS 5.11.x/AHV PC 5.17.0.3) = Current" \
+"Databases Era with Oracle Bootcamp (AOS 5.11.x/AHV PC 5.17.0.3) = Current" \
+"Databases Era with Postgres Bootcamp (AOS 5.11.x/AHV PC 5.17.0.3) = Current" \
+"Databases Era -Stage All- Bootcamp (AOS 5.11.x/AHV PC 5.17.0.3) = Current" \
+"Files Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Calm Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Frame Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Citrix Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Private Cloud Splunk on AHV with Objects Bootcamp (AOS 5.11.x/AHV PC 5.17.0.3) = Current" \
+"Stage-All Bootcamps (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
 "Legacy Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
 
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
@@ -44,9 +45,9 @@ function stage_clusters() {
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   # TODO: make WORKSHOPS and map a JSON configuration file?
-  if (( $(echo ${_workshop} | grep -i "PC 5.17" | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 5.17.0.3" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
-  elif (( $(echo ${_workshop} | grep -i "PC 5.16.1.2" | wc ${WC_ARG}) > 0 )); then
+  elif (( $(echo ${_workshop} | grep -i "PC 5.17.0.3" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_CURRENT_VERSION}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.11.2.1" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_STABLE_VERSION}"
@@ -77,6 +78,11 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i "^Private Cloud" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='privatecloud_bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^Leap Add-On" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='leap_addon_bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
   if (( $(echo ${_workshop} | grep -i "^Databases Era -Stage All- Bootcamp" | wc ${WC_ARG}) > 0 )); then

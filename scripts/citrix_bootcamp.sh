@@ -19,8 +19,6 @@ case ${1} in
     . lib.pe.sh
 
     export AUTH_SERVER='AutoAD'
-    export PrismOpsServer='GTSPrismOpsLabUtilityServer'
-    export SeedPC='GTSseedPC.zp'
 
     args_required 'EMAIL PE_HOST PE_PASSWORD PC_VERSION'
     ssh_pubkey & # non-blocking, parallel suitable
@@ -34,7 +32,7 @@ case ${1} in
     && prism_pro_server_deploy \
     && files_install \
     && sleep 30 \
-    && create_file_server "${NW1_NAME}" "${NW2_NAME}" \
+    && create_file_server "${NW1_NAME}" "${NW1_NAME}" \
     && sleep 30 \
     && file_analytics_install \
     && sleep 30 \
@@ -75,10 +73,10 @@ case ${1} in
   PC | pc )
     . lib.pc.sh
 
-    export BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
-    export BUCKETS_VIP="${IPV4_PREFIX}.17"
-    export OBJECTS_NW_START="${IPV4_PREFIX}.18"
-    export OBJECTS_NW_END="${IPV4_PREFIX}.21"
+    #export BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
+    #export BUCKETS_VIP="${IPV4_PREFIX}.17"
+    #export OBJECTS_NW_START="${IPV4_PREFIX}.18"
+    #export OBJECTS_NW_END="${IPV4_PREFIX}.21"
 
     export _prio_images_arr=(\
             Windows2016.qcow2 \

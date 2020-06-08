@@ -2,11 +2,11 @@
 
 # shellcheck disable=SC2034
 RELEASE='release.json'
-PC_DEV_VERSION='5.17'
-PC_CURRENT_VERSION='5.16.1.2'
+PC_DEV_VERSION='5.17.0.3'
+PC_CURRENT_VERSION='5.17.0.3'
 PC_STABLE_VERSION='5.11.2.1'
-FILES_VERSION='3.6.1.2'
-FILE_ANALYTICS_VERSION='2.1.0'
+FILES_VERSION='3.6.3'
+FILE_ANALYTICS_VERSION='2.1.1.1'
 NTNX_INIT_PASSWORD='nutanix/4u'
 PRISM_ADMIN='admin'
 SSH_PUBKEY="${HOME}/.ssh/id_rsa.pub"
@@ -16,7 +16,7 @@ STORAGE_IMAGES='Images'
 STORAGE_ERA='Era'
 ATTEMPTS=40
 SLEEP=60
-PrismOpsServer='PrismProLabUtilityServer'
+PrismOpsServer='PrismOpsServer'
 SeedPC='seedPC.zip'
 CALM_RSA_KEY_FILE='calm_rsa_key.env'
 
@@ -33,6 +33,12 @@ SSH_OPTS='-o StrictHostKeyChecking=no -o GlobalKnownHostsFile=/dev/null -o UserK
 SSH_OPTS+=' -q' # -v'
 
 ####################################################
+# OBJECTS VARs
+###################################################
+
+
+
+####################################################
 # Era VARs
 ###################################################
 
@@ -42,6 +48,8 @@ ERAServerName='EraServer'
 ERA_USER="admin"
 ERA_PASSWORD="nutanix/4u"
 ERA_Default_PASSWORD="Nutanix/4u"
+ERA_NETWORK="Secondary"
+ERA_Container_RF="2"
 
 MSSQL_SourceVM="Win2016SQLSource"
 MSSQL_SourceVM_Image1="MSSQL_1"
@@ -126,8 +134,12 @@ DATA_SERVICE_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 1))
 PC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 2))
 FILE_ANALYTICS_HOST=${IPV4_PREFIX}.$((${OCTET[3]} - 22))
 PrismOpsServer_HOST="${IPV4_PREFIX}.$((${OCTET[3]} + 5))"
-ERA_HOST=${IPV4_PREFIX}.$((${OCTET[3]} - 15))
+ERA_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 7))
 CITRIX_DDC_HOST=${IPV4_PREFIX}.$((${OCTET[3]} + 8))
+BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
+BUCKETS_VIP="${IPV4_PREFIX}.17"
+OBJECTS_NW_START="${IPV4_PREFIX}.18"
+OBJECTS_NW_END="${IPV4_PREFIX}.21"
 DNS_SERVERS='8.8.8.8'
 NTP_SERVERS='0.us.pool.ntp.org,1.us.pool.ntp.org,2.us.pool.ntp.org,3.us.pool.ntp.org'
 SUBNET_MASK="255.255.255.128"
@@ -147,6 +159,21 @@ case "${OCTET[3]}" in
     NW1_GATEWAY="${IPV4_PREFIX}.1"
     NW1_DHCP_START="${IPV4_PREFIX}.38"
     NW1_DHCP_END="${IPV4_PREFIX}.58"
+    NW2_NAME=''
+    NW2_VLAN=''
+    NW2_SUBNET=''
+    NW2_DHCP_START=''
+    NW2_DHCP_END=''
+    NW3_NAME=''
+    NW3_NETMASK=''
+    NW3_START=""
+    NW3_END=""
+    ERA_NETWORK="Primary"
+    ERA_Container_RF="1"
+    BUCKETS_DNS_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 25))
+    BUCKETS_VIP=${IPV4_PREFIX}.$((${OCTET[3]} + 26))
+    OBJECTS_NW_START=${IPV4_PREFIX}.$((${OCTET[3]} + 27))
+    OBJECTS_NW_END=${IPV4_PREFIX}.$((${OCTET[3]} + 30))
     ;;
 
   71 ) # We are in Partition 2
@@ -154,6 +181,21 @@ case "${OCTET[3]}" in
     NW1_GATEWAY="${IPV4_PREFIX}.65"
     NW1_DHCP_START="${IPV4_PREFIX}.102"
     NW1_DHCP_END="${IPV4_PREFIX}.122"
+    NW2_NAME=''
+    NW2_VLAN=''
+    NW2_SUBNET=''
+    NW2_DHCP_START=''
+    NW2_DHCP_END=''
+    NW3_NAME=''
+    NW3_NETMASK=''
+    NW3_START=""
+    NW3_END=""
+    ERA_NETWORK="Primary"
+    ERA_Container_RF="1"
+    BUCKETS_DNS_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 25))
+    BUCKETS_VIP=${IPV4_PREFIX}.$((${OCTET[3]} + 26))
+    OBJECTS_NW_START=${IPV4_PREFIX}.$((${OCTET[3]} + 27))
+    OBJECTS_NW_END=${IPV4_PREFIX}.$((${OCTET[3]} + 30))
     ;;
 
   135 ) # We are in Partition 3
@@ -161,6 +203,21 @@ case "${OCTET[3]}" in
     NW1_GATEWAY="${IPV4_PREFIX}.129"
     NW1_DHCP_START="${IPV4_PREFIX}.166"
     NW1_DHCP_END="${IPV4_PREFIX}.186"
+    NW2_NAME=''
+    NW2_VLAN=''
+    NW2_SUBNET=''
+    NW2_DHCP_START=''
+    NW2_DHCP_END=''
+    NW3_NAME=''
+    NW3_NETMASK=''
+    NW3_START=""
+    NW3_END=""
+    ERA_NETWORK="Primary"
+    ERA_Container_RF="1"
+    BUCKETS_DNS_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 25))
+    BUCKETS_VIP=${IPV4_PREFIX}.$((${OCTET[3]} + 26))
+    OBJECTS_NW_START=${IPV4_PREFIX}.$((${OCTET[3]} + 27))
+    OBJECTS_NW_END=${IPV4_PREFIX}.$((${OCTET[3]} + 30))
     ;;
 
   199 ) # We are in Partition 4
@@ -168,6 +225,21 @@ case "${OCTET[3]}" in
     NW1_GATEWAY="${IPV4_PREFIX}.193"
     NW1_DHCP_START="${IPV4_PREFIX}.230"
     NW1_DHCP_END="${IPV4_PREFIX}.250"
+    NW2_NAME=''
+    NW2_VLAN=''
+    NW2_SUBNET=''
+    NW2_DHCP_START=''
+    NW2_DHCP_END=''
+    NW3_NAME=''
+    NW3_NETMASK=''
+    NW3_START=""
+    NW3_END=""
+    ERA_NETWORK="Primary"
+    ERA_Container_RF="1"
+    BUCKETS_DNS_IP=${IPV4_PREFIX}.$((${OCTET[3]} + 25))
+    BUCKETS_VIP=${IPV4_PREFIX}.$((${OCTET[3]} + 26))
+    OBJECTS_NW_START=${IPV4_PREFIX}.$((${OCTET[3]} + 27))
+    OBJECTS_NW_END=${IPV4_PREFIX}.$((${OCTET[3]} + 30))
     ;;
 
 
@@ -216,16 +288,16 @@ AUTH_ADMIN_GROUP='SSP Admins'
 case "${OCTET[0]}.${OCTET[1]}" in
 
   10.55 ) # HPOC us-east = DUR
-    PC_DEV_METAURL='http://10.55.251.38/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
-    PC_DEV_URL='http://10.55.251.38/workshop_staging/euphrates-5.17-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.17.0.3.json'
+    PC_DEV_URL='http://10.55.251.38/workshop_staging/euphrates-5.17.0.3-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.55.251.38/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.55.251.38/workshop_staging/pcdeploy-5.11.2.1.json'
     PC_STABLE_URL='http://10.55.251.38/workshop_staging/euphrates-5.11.2.1-stable-prism_central.tar'
-    FILES_METAURL='http://10.55.251.38/workshop_staging/afs-3.6.1.2.json'
-    FILES_URL='http://10.55.251.38/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.1.2-stable.qcow2'
-    FILE_ANALYTICS_METAURL='http://10.55.251.38/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0-metadata.json'
-    FILE_ANALYTICS_URL='http://10.55.251.38/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0.qcow2'
+    FILES_METAURL='http://10.55.251.38/workshop_staging/afs-3.6.3.json'
+    FILES_URL='http://10.55.251.38/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.3-stable.qcow2'
+    FILE_ANALYTICS_METAURL='http://10.55.251.38/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1-metadata.json'
+    FILE_ANALYTICS_URL='http://10.55.251.38/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1.qcow2'
     JQ_REPOS=(\
          'http://10.55.251.38/workshop_staging/jq-linux64.dms' \
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -255,16 +327,16 @@ case "${OCTET[0]}.${OCTET[1]}" in
 	  OBJECTS_OFFLINE_REPO='http://10.55.251.38/workshop_staging/objects'
     ;;
   10.42 ) # HPOC us-west = PHX
-    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
-    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.17.0.3.json'
+    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.17.0.3-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.11.2.1.json'
     PC_STABLE_URL='http://10.42.194.11/workshop_staging/euphrates-5.11.2.1-stable-prism_central.tar'
-    FILES_METAURL='http://10.42.194.11/workshop_staging/afs-3.6.1.2.json'
-    FILES_URL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.1.2-stable.qcow2'
-    FILE_ANALYTICS_METAURL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0-metadata.json'
-    FILE_ANALYTICS_URL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0.qcow2'
+    FILES_METAURL='http://10.42.194.11/workshop_staging/afs-3.6.3.json'
+    FILES_URL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.3-stable.qcow2'
+    FILE_ANALYTICS_METAURL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1-metadata.json'
+    FILE_ANALYTICS_URL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1.qcow2'
     JQ_REPOS=(\
          'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -294,16 +366,16 @@ case "${OCTET[0]}.${OCTET[1]}" in
     OBJECTS_OFFLINE_REPO='http://10.42.194.11/workshop_staging/objects'
     ;;
   10.38 ) # HPOC us-west = PHX 1-Node Clusters
-    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
-    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.17-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.17.0.3.json'
+    PC_DEV_URL='http://10.42.194.11/workshop_staging/euphrates-5.17.0.3-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.42.194.11/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.42.194.11/workshop_staging/pcdeploy-5.11.2.1.json'
     PC_STABLE_URL='http://10.42.194.11/workshop_staging/euphrates-5.11.2.1-stable-prism_central.tar'
-    FILES_METAURL='http://10.42.194.11/workshop_staging/afs-3.6.1.2.json'
-    FILES_URL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.1.2-stable.qcow2'
-    FILE_ANALYTICS_METAURL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0-metadata.json'
-    FILE_ANALYTICS_URL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0.qcow2'
+    FILES_METAURL='http://10.42.194.11/workshop_staging/afs-3.6.3.json'
+    FILES_URL='http://10.42.194.11/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.3-stable.qcow2'
+    FILE_ANALYTICS_METAURL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1-metadata.json'
+    FILE_ANALYTICS_URL='http://10.42.194.11/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1.qcow2'
     JQ_REPOS=(\
            'http://10.42.194.11/workshop_staging/jq-linux64.dms' \
            'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \
@@ -338,16 +410,16 @@ case "${OCTET[0]}.${OCTET[1]}" in
     fi
       ;;
   10.136 ) # HPOC us-west = BLR
-    PC_DEV_METAURL='http://10.136.239.13/workshop_staging/euphrates-5.17-stable-prism_central-metadata.json'
-    PC_DEV_URL='http://10.136.239.13/workshop_staging/euphrates-5.17-stable-prism_central.tar'
+    PC_DEV_METAURL='http://10.136.239.13/workshop_staging/pcdeploy-5.17.0.3.json'
+    PC_DEV_URL='http://10.136.239.13/workshop_staging/euphrates-5.17.0.3-stable-prism_central.tar'
     PC_CURRENT_METAURL='http://10.136.239.13/workshop_staging/pcdeploy-5.16.1.2.json'
     PC_CURRENT_URL='http://10.136.239.13/workshop_staging/euphrates-5.16.1.2-stable-prism_central.tar'
     PC_STABLE_METAURL='http://10.136.239.13/workshop_staging/pcdeploy-5.11.2.1.json'
     PC_STABLE_URL='http://10.136.239.13/workshop_staging/euphrates-5.11.2.1-stable-prism_central.tar'
-    FILES_METAURL='http://10.136.239.13/workshop_staging/afs-3.6.1.2.json'
-    FILES_URL='http://10.136.239.13/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.1.2-stable.qcow2'
-    FILE_ANALYTICS_METAURL='http://10.136.239.13/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0-metadata.json'
-    FILE_ANALYTICS_URL='http://10.136.239.13/workshop_staging/nutanix-file_analytics-el7.6-release-2.1.0.qcow2'
+    FILES_METAURL='http://10.136.239.13/workshop_staging/afs-3.6.3.json'
+    FILES_URL='http://10.136.239.13/workshop_staging/nutanix-afs-el7.3-release-afs-3.6.3-stable.qcow2'
+    FILE_ANALYTICS_METAURL='http://10.136.239.13/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1-metadata.json'
+    FILE_ANALYTICS_URL='http://10.136.239.13/workshop_staging/nutanix-file_analytics-el7.7-release-2.1.1.1.qcow2'
     JQ_REPOS=(\
          'http://10.136.239.13/workshop_staging/jq-linux64.dms' \
          'https://s3.amazonaws.com/get-ahv-images/jq-linux64.dms' \

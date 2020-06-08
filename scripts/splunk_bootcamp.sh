@@ -33,7 +33,7 @@ case ${1} in
     && pe_auth \
     && files_install \
     && sleep 30 \
-    && create_file_server "${NW1_NAME}" "${NW2_NAME}" \
+    && create_file_server "${NW1_NAME}" "${NW1_NAME}" \
     && sleep 30 \
     && file_analytics_install \
     && sleep 30 \
@@ -72,10 +72,10 @@ case ${1} in
   PC | pc )
     . lib.pc.sh
 
-    export BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
-    export BUCKETS_VIP="${IPV4_PREFIX}.17"
-    export OBJECTS_NW_START="${IPV4_PREFIX}.18"
-    export OBJECTS_NW_END="${IPV4_PREFIX}.21"
+    #export BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
+    #export BUCKETS_VIP="${IPV4_PREFIX}.17"
+    #export OBJECTS_NW_START="${IPV4_PREFIX}.18"
+    #export OBJECTS_NW_END="${IPV4_PREFIX}.21"
 
     export QCOW2_IMAGES=(\
       Windows2016.qcow2 \

@@ -18,20 +18,7 @@ case ${1} in
   PE | pe )
     . lib.pe.sh
 
-    #export PC_DEV_VERSION='5.10.2'
-    #export PC_DEV_METAURL='http://10.42.8.50/images/pcdeploy-5.10.2.json'
-    #export         PC_URL='http://10.42.8.50/images/euphrates-5.10.2-stable-prism_central.tar'
-    #export PC_DEV_METAURL='https://s3.amazonaws.com/get-ahv-images/pcdeploy-5.10.1.1.json'
-    #export         PC_URL='https://s3.amazonaws.com/get-ahv-images/euphrates-5.10.1.1-stable-prism_central.tar'
-    #export  FILES_VERSION='3.2.0.1'
-    #export  FILES_METAURL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
-    #export      FILES_URL='http://10.42.8.50/images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
-    #export  FILES_METAURL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable-metadata.json'
-    #export      FILES_URL='https://s3.amazonaws.com/get-ahv-images/nutanix-afs-el7.3-release-afs-3.2.0.1-stable.qcow2'
-
     export AUTH_SERVER='AutoAD'
-    export PrismOpsServer='GTSPrismOpsLabUtilityServer'
-    export SeedPC='GTSseedPC.zp'
 
     export _external_nw_name="${1}"
 
@@ -47,7 +34,7 @@ case ${1} in
     && prism_pro_server_deploy \
     && files_install \
     && sleep 30 \
-    && create_file_server "${NW1_NAME}" "${NW2_NAME}" \
+    && create_file_server "${NW1_NAME}" "${NW1_NAME}" \
     && sleep 30 \
     && file_analytics_install \
     && sleep 30 \
@@ -86,10 +73,10 @@ case ${1} in
   PC | pc )
     . lib.pc.sh
 
-    export BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
-    export BUCKETS_VIP="${IPV4_PREFIX}.17"
-    export OBJECTS_NW_START="${IPV4_PREFIX}.18"
-    export OBJECTS_NW_END="${IPV4_PREFIX}.21"
+    #export BUCKETS_DNS_IP="${IPV4_PREFIX}.16"
+    #export BUCKETS_VIP="${IPV4_PREFIX}.17"
+    #export OBJECTS_NW_START="${IPV4_PREFIX}.18"
+    #export OBJECTS_NW_END="${IPV4_PREFIX}.21"
 
     export QCOW2_IMAGES=(\
       Windows2016.qcow2 \

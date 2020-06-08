@@ -427,7 +427,8 @@ function create_file_analytics_server() {
 
   #_nw_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/subnets/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{"kind":"subnet","filter": "name==Secondary"}' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
 
-  _nw_uuid=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"subnet","filter": "name==Secondary"}' 'https://localhost:9440/api/nutanix/v3/subnets/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+  #_nw_uuid=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"subnet","filter": "name==Secondary"}' 'https://localhost:9440/api/nutanix/v3/subnets/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+  _nw_uuid=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data '{"kind":"subnet","filter": "name==Primary"}' 'https://localhost:9440/api/nutanix/v3/subnets/list' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
 
   # Get the Container UUIDs
   log "Get ${STORAGE_DEFAULT} Container UUID"
@@ -1120,7 +1121,7 @@ acli "vm.on ${PrismOpsServer}"
 function create_era_container() {
 
   log "Creating Era Storage Container"
-  ncli container create name="${STORAGE_ERA}" rf=2 sp-name="${STORAGE_POOL}" enable-compression=true compression-delay=60
+  ncli container create name="${STORAGE_ERA}" rf="${ERA_Container_RF}" sp-name="${STORAGE_POOL}" enable-compression=true compression-delay=60
 
 }
 
@@ -1160,8 +1161,6 @@ acli "vm.on ${ERAServerName}"
 
 function deploy_mssql() {
 
-  num_sql_vms=3
-
   if (( $(source /etc/profile.d/nutanix_env.sh && acli image.list | grep ${MSSQL_SourceVM_Image} | wc --lines) == 0 )); then
     log "Import ${MSSQL_SourceVM_Image} image from ${QCOW2_REPOS}..."
 
@@ -1175,7 +1174,7 @@ function deploy_mssql() {
   acli "vm.create ${MSSQL_SourceVM} memory=2046M num_cores_per_vcpu=1 num_vcpus=2"
   acli "vm.disk_create ${MSSQL_SourceVM} clone_from_image=${MSSQL_SourceVM_Image1}"
   acli "vm.disk_create ${MSSQL_SourceVM} clone_from_image=${MSSQL_SourceVM_Image2}"
-  acli "vm.nic_create ${MSSQL_SourceVM} network=${NW2_NAME}"
+  acli "vm.nic_create ${MSSQL_SourceVM} network=${NW1_NAME}"
   echo "## ${MSSQL_SourceVM} - Powering On ##"
   acli "vm.on ${MSSQL_SourceVM}"
   echo "## SQLVM_Creation_COMPLETE ##"
@@ -1214,7 +1213,7 @@ function deploy_oracle_12c() {
   acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image4}"
   acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image5}"
   acli "vm.disk_create ${Oracle_12c_SourceVM} clone_from_image=${Oracle_12c_SourceVM_Image6}"
-  acli "vm.nic_create ${Oracle_12c_SourceVM} network=${NW2_NAME}"
+  acli "vm.nic_create ${Oracle_12c_SourceVM} network=${NW1_NAME}"
   echo "## ${Oracle_12c_SourceVM} - Powering On ##"
   acli "vm.on ${Oracle_12c_SourceVM}"
   echo "### Oracle12cVM_Creation_COMPLETE ##"
@@ -1256,7 +1255,7 @@ function deploy_oracle_19c() {
   acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image7}"
   acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image8}"
   acli "vm.disk_create ${Oracle_19c_SourceVM} clone_from_image=${Oracle_19c_SourceVM_Image9}"
-  acli "vm.nic_create ${Oracle_19c_SourceVM} network=${NW2_NAME}"
+  acli "vm.nic_create ${Oracle_19c_SourceVM} network=${NW1_NAME}"
   echo "## ${Oracle_19c_SourceVM} - Powering On ##"
   acli "vm.on ${Oracle_19c_SourceVM}"
   echo "### Oracle19cVM_Creation_COMPLETE ##"
@@ -1265,7 +1264,7 @@ function deploy_oracle_19c() {
 
 ###################################################################################################################################################
 # Routine to deploy the Peer Management Center
-###############################################################################################################################################################################
+###################################################################################################################################################
 # MTM TODO When integrating with Nutanix scripts, need to change echo to log and put quotes around text after all acli commands
 function deploy_peer_mgmt_server() {
 
@@ -1292,7 +1291,7 @@ function deploy_peer_mgmt_server() {
   acli "uhura.vm.create_with_customize ${VMNAME} num_vcpus=2 num_cores_per_vcpu=2 memory=4G sysprep_config_path=file:///home/nutanix/peer_staging/unattend_${VMNAME}.xml"
   acli "vm.disk_create ${VMNAME} clone_from_image=${PeerMgmtServer}"
   # MTM TODO replace net1 with appropriate variable
-  acli "vm.nic_create ${VMNAME} network=${NW2_NAME}"
+  acli "vm.nic_create ${VMNAME} network=${NW1_NAME}"
   #log "Power on ${VMNAME} VM..."
   echo "${VMNAME} - Powering on..."
   acli "vm.on ${VMNAME}"
@@ -1326,7 +1325,7 @@ function deploy_peer_agent_server() {
   acli "uhura.vm.create_with_customize ${VMNAME} num_vcpus=2 num_cores_per_vcpu=2 memory=4G sysprep_config_path=file:///home/nutanix/peer_staging/unattend_${VMNAME}.xml"
   acli "vm.disk_create ${VMNAME} clone_from_image=${PeerAgentServer}"
   # MTM TODO replace net1 with appropriate variable
-  acli "vm.nic_create ${VMNAME} network=${NW2_NAME}"
+  acli "vm.nic_create ${VMNAME} network=${NW1_NAME}"
   #log "Power on ${VMNAME} VM..."
   echo "${VMNAME} - Powering on..."
   acli "vm.on ${VMNAME}"
