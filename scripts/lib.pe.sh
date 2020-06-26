@@ -215,6 +215,16 @@ function authentication_source() {
           fi
         done
 
+        # Adding the needed group and users to the AutoDC that may be used. Calm would otherwise have no BootInfra Project        
+        remote_exec 'SSH' 'AUTH_SERVER' \
+          'samba-tool group add "SSP Custom"' \
+          'OPTIONAL'
+        sleep ${_sleep}
+        remote_exec 'SSH' 'AUTH_SERVER' \
+          'for i in `samba-tool user list | grep ^user`; do samba-tool group addmembers "SSP Custom" $i;done' \
+          'OPTIONAL'
+         sleep ${_sleep}
+         
       fi
       ;;
     'OpenLDAP')
