@@ -215,6 +215,16 @@ function authentication_source() {
           fi
         done
 
+        # Adding the needed group and users to the AutoDC that may be used. Calm would otherwise have no BootInfra Project        
+        remote_exec 'SSH' 'AUTH_SERVER' \
+          'samba-tool group add "SSP Custom"' \
+          'OPTIONAL'
+        sleep ${_sleep}
+        remote_exec 'SSH' 'AUTH_SERVER' \
+          'for i in `samba-tool user list | grep ^user`; do samba-tool group addmembers "SSP Custom" $i;done' \
+          'OPTIONAL'
+         sleep ${_sleep}
+         
       fi
       ;;
     'OpenLDAP')
@@ -764,6 +774,26 @@ function cluster_check() {
    # Enable the PE to PC registration
    _json_data="{\"ipAddresses\":[\"${PC_HOST}\"],\"username\":\"${PRISM_ADMIN}\",\"password\":\"${PE_PASSWORD}\",\"port\":null}"
    _response=$(curl -X POST $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/add_to_multicluster -d $_json_data | jq '.value')
+   
+   # Let's sleep a few seconds before moving on
+   sleep 5
+   
+   # Checking if the registration has worked
+   _pc_ip_addr=$(curl $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/cluster_external_state | jq '.[].clusterDetails.ipAddresses[0]' | tr -d \")
+   while [[ -z $_pc_ip_addr ]]
+   do
+      log "Registering PE has failed, retrying"
+      curl -X POST $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/add_to_multicluster -d $_json_data
+      (( _loop++ ))
+      _pc_ip_addr=$(curl $CURL_HTTP_OPTS --user ${PRISM_ADMIN}:${PE_PASSWORD} https://localhost:9440/PrismGateway/services/rest/v1/multicluster/cluster_external_state | jq '.[].clusterDetails.ipAddresses[0]' | tr -d \")
+      sleep 5
+      log "Sleeping for 5 seconds before retrying...$_loop/$_attempts"
+      if [[ $_loop -gt $_attempts ]]; then
+        log "We have tried 10 times and the cluster is not able to register... Exiting the script!!"
+        exit 1
+      fi
+   done
+   log "PE has been registered to PC... Proceeding..."
 }
 
 ###############################################################################################################################################################################

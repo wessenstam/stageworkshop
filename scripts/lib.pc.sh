@@ -128,8 +128,13 @@ function lcm() {
               # Grabbing the versions of the UUID and put them in a versions array
               for uuid in "${uuid_arr[@]}"
                 do
-                  # Get the latest version from the to be updated uuid
-                  version_ar+=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[]==$uuid) .data[] | select (.name=="version") .values[].values[]' reply_json_ver.json | sort |tail -1 | tr -d \"))
+                  # Get the latest version from the to be updated uuid. Put always a value in the array otherwise we loose/have skewed verrsions to products
+                  version=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[]==$uuid) .data[] | select (.name=="version") .values[].values[]' reply_json_ver.json | sort |tail -1 | tr -d \"))
+                  # If no version upgrade available add a blank item in the array
+                  if [[ -z $version ]]; then 
+                    version='NA'
+                  fi
+                  version_ar+=($version)
                 done
               # Copy the right info into the to be used array
         fi
@@ -144,7 +149,7 @@ function lcm() {
        count=0
        while [ $count -lt ${#uuid_arr[@]} ]
        do
-          if [ ! -z ${version_ar[$count]} ]; then
+          if [[ ${version_ar[$count]} != *"NA"* ]]; then
             _json_data+="[\\\"${uuid_arr[$count]}\\\",\\\"${version_ar[$count]}\\\"],"
             log "Found UUID ${uuid_arr[$count]} and version ${version_ar[$count]}"
           fi
