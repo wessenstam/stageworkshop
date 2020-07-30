@@ -99,6 +99,8 @@ case ${1} in
       veeam/VeeamAHVProxy2.0.404.qcow2 \
     )
     export ISO_IMAGES=(\
+      FrameCCA-2.1.6.iso \
+      FrameGuestAgentInstaller_1.0.2.7.iso \
       Nutanix-VirtIO-1.1.5.iso \
       Windows2016.iso \
       veeam/VBR_10.0.0.4442.iso \
