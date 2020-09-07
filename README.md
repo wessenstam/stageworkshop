@@ -86,13 +86,12 @@ Each staging option will deploy:
 - Prism Central
 - configuring AHV networks for your Primary and Secondary VLANs.
 
-Ask questions not covered here to the Global Sales Technical Enablement team via Slack, review the pinned items in each channel first:
-- __#technology-bootcamps:__ for customer and prospect bootcamps
-- __#hands-on-workshops:__ for Nutanix Partner and SE workshops
+Ask questions not covered here to the Global Sales Technical Enablement team via Slack, review the pinned items in the channel first:
+- __#technology-bootcamps:__ 
 
 ### Validate Staged Clusters ###
 
-After staging (~30m), you can re-run the stage_workshop script and select "Validate Staged Clusters" to perform a quick check to ensure all images were uploaded and that Prism Central was provisioned as expected.
+After staging (~1.5 Hrs - 3 Hrs ), you can re-run the stage_workshop script and select "Validate Staged Clusters" to perform a quick check to ensure all images were uploaded and that Prism Central was provisioned as expected.
 
 Example:
 
@@ -109,4 +108,4 @@ Example:
 
 ## Authentication ##
 
-One can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages [AutoDC](documentation/autodc/README.md).
+One can use Windows Server: Active Directory, but for simpler and faster results, the automation leverages also [AutoDC](documentation/autodc/README.md).
