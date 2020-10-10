@@ -18,6 +18,7 @@ WORKSHOPS=(\
 "Databases Era with Oracle Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
 "Databases Era with Postgres Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
 "Databases Era -Stage All- Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
+"Consolidated Storage Bootcamp (AOS 5.15.x|5.16.x|5.17.x|5.18.x/AHV PC 2020.9) = Development" \
 "Files Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
 "Calm IaaS Bootcamp (AOS 5.15.x|5.16.x|5.17.x|5.18.x/AHV PC 2020.8.0.1) = Development" \
 "Calm Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
@@ -25,7 +26,7 @@ WORKSHOPS=(\
 "Citrix Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
 "Private Cloud Splunk on AHV with Objects Bootcamp (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
 "Stage-All Bootcamps (AOS 5.11.x|5.15.x|5.16.x/AHV PC 5.17.0.3) = Current" \
-#"Legacy Bootcamp Staging (AOS 5.11.x/AHV PC 5.11.2.1) = Stable" \
+"POC Workshop Base Staging (AOS 5.15.x|5.16.x|5.17.x|5.18.x/AHV PC 2020.9) = Development" \
 
 ) # Adjust function stage_clusters, below, for file/script mappings as needed
 
@@ -46,7 +47,7 @@ function stage_clusters() {
   # Map to latest and greatest of each point release
   # Metadata URLs MUST be specified in lib.common.sh function: ntnx_download
   # TODO: make WORKSHOPS and map a JSON configuration file?
-  if (( $(echo ${_workshop} | grep -i "PC 2020.8.0.1" | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "PC 2020.9" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_DEV_VERSION}"
   elif (( $(echo ${_workshop} | grep -i "PC 5.17.0.3" | wc ${WC_ARG}) > 0 )); then
     export PC_VERSION="${PC_CURRENT_VERSION}"
@@ -149,6 +150,11 @@ function stage_clusters() {
   if (( $(echo ${_workshop} | grep -i "^Cloud Native CI/CD with Calm and Karbon Bootcamp" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='cicd_bootcamp.sh'
+    _pc_launch=${_pe_launch}
+  fi
+  if (( $(echo ${_workshop} | grep -i "^POC Workshop Base Staging" | wc ${WC_ARG}) > 0 )); then
+    _libraries+='lib.pe.sh lib.pc.sh'
+    _pe_launch='poc_workshop_base_staging.sh'
     _pc_launch=${_pe_launch}
   fi
   if (( $(echo ${_workshop} | grep -i "^In Development Bootcamp Staging" | wc ${WC_ARG}) > 0 )); then

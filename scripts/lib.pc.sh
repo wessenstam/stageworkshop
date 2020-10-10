@@ -429,56 +429,83 @@ function pc_auth() {
   local  _http_body
   local _pc_version
   local       _test
+  local CURL_HTTP_OPTS=" --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure "
 
   # TODO:50 FUTURE: pass AUTH_SERVER argument
 
+set -x
+
   log "Add Directory ${AUTH_DOMAIN}"
   _http_body=$(cat <<EOF
-{"name":"${AUTH_DOMAIN}","domain":"${AUTH_FQDN}","directoryType":"ACTIVE_DIRECTORY","connectionType":"LDAP",
-EOF
-  )
-
-  # shellcheck disable=2206
-  _pc_version=(${PC_VERSION//./ })
-
-  log "Checking if PC_VERSION ${PC_VERSION} >= 5.9"
-  if (( ${_pc_version[0]} >= 5 && ${_pc_version[1]} >= 9 )); then
-    _http_body+=$(cat <<EOF
-"groupSearchType":"RECURSIVE","directoryUrl":"ldap://${AUTH_HOST}:${LDAP_PORT}",
-EOF
-)
-  else
-    _http_body+=" \"directoryUrl\":\"ldaps://${AUTH_HOST}/\","
-  fi
-
-  _http_body+=$(cat <<EOF
-    "serviceAccountUsername":"${AUTH_ADMIN_USER}",
-    "serviceAccountPassword":"${AUTH_ADMIN_PASS}"
+{
+  "api_version": "3.1",
+    "metadata": {
+        "kind": "directory_service"
+    },
+  "spec": {
+    "name": "${AUTH_DOMAIN}",
+    "resources": {
+      "url": "ldap://${AUTH_HOST}:${LDAP_PORT}",
+      "directory_type": "ACTIVE_DIRECTORY",
+      "domain_name": "${AUTH_FQDN}",
+      "service_account": {
+        "username": "${AUTH_ADMIN_USER}",
+        "password": "${AUTH_ADMIN_PASS}"
+      }
+    }
   }
+}
 EOF
   )
 
-  _test=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
-    https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories)
-  log "directories: _test=|${_test}|_http_body=|${_http_body}|"
+  _task_id=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" https://localhost:9440/api/nutanix/v3/directory_services | jq -r '.status.execution_context.task_uuid' | tr -d \")
+
+  #log "Task uuid for the Auth Source Create is " $_task_id " ....."
+
+  #if [ -z "$_task_id" ]; then
+  #     log "Auth Source Create has encountered an error..."
+  #else
+  #     log "Auth Source Create started.."
+  #     set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
+       # Run the progess checker
+  #     loop
+  #fi
+
+  #log "directories: _task_id=|${_task_id}|_http_body=|${_http_body}|"
+
+  sleep 60
 
   log "Add Role Mappings to Groups for PC logins (not projects, which are separate)..."
-  #TODO:20 hardcoded role mappings
-  for _group in 'SSP Admins' 'SSP Power Users' 'SSP Developers' 'SSP Basic Users'; do
+
     _http_body=$(cat <<EOF
-    {
-      "directoryName":"${AUTH_SERVER}",
-      "role":"ROLE_CLUSTER_ADMIN",
-      "entityType":"GROUP",
-      "entityValues":["${_group}"]
-    }
+{
+    "directoryName": "${AUTH_DOMAIN}",
+    "role": "ROLE_CLUSTER_ADMIN",
+    "entityType": "GROUP",
+    "entityValues": [
+        "${AUTH_ADMIN_GROUP}"
+    ]
+}
 EOF
     )
-    _test=$(curl ${CURL_POST_OPTS} \
-      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" \
-      https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${AUTH_SERVER}/role_mappings)
-    log "Cluster Admin=${_group}, _test=|${_test}|"
-  done
+
+  _task_id=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${_http_body}" https://localhost:9440/PrismGateway/services/rest/v1/authconfig/directories/${AUTH_DOMAIN}/role_mappings?entityType=GROUP&role=ROLE_CLUSTER_ADMIN)
+
+  #log "Task uuid for the Auth Source Create is " $_task_id " ....."
+
+  #if [ -z "$_task_id" ]; then
+  #     log "Role Create has encountered an error..."
+  #else
+  #     log "Role Create started.."
+  #     set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
+  #     # Run the progess checker
+  #     loop
+  #fi
+
+  log "Cluster Admin=${AUTH_ADMIN_GROUP}, _task_id=|${_task_id}|_http_body=|${_http_body}| "
+
+set +x
+
 }
 
 ###################################################################################################################################################
