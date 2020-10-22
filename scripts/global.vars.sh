@@ -59,7 +59,7 @@ ERA_Default_PASSWORD="Nutanix/4u"
 ERA_NETWORK="Secondary"
 ERA_Container_RF="2"
 
-MSSQL_SourceVM="Win2016SQLSource"
+MSSQL_SourceVM="MSSQLSourceVM"
 MSSQL_SourceVM_Image1="MSSQL_1"
 MSSQL_SourceVM_Image2="MSSQL_2"
 
