@@ -152,7 +152,7 @@ function stage_clusters() {
     _pe_launch='cicd_bootcamp.sh'
     _pc_launch=${_pe_launch}
   fi
-  if (( $(echo ${_workshop} | grep -i "^POC Workshop Base Staging" | wc ${WC_ARG}) > 0 )); then
+  if (( $(echo ${_workshop} | grep -i "^SE POC Guide (AHV) Staging" | wc ${WC_ARG}) > 0 )); then
     _libraries+='lib.pe.sh lib.pc.sh'
     _pe_launch='poc_workshop_base_staging.sh'
     _pc_launch=${_pe_launch}

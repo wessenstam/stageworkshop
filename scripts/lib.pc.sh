@@ -131,7 +131,7 @@ function lcm() {
                   # Get the latest version from the to be updated uuid. Put always a value in the array otherwise we loose/have skewed verrsions to products
                   version=($(jq --arg uuid "$uuid" '.group_results[].entity_results[] | select (.data[].values[].values[]==$uuid) .data[] | select (.name=="version") .values[].values[]' reply_json_ver.json | sort |tail -1 | tr -d \"))
                   # If no version upgrade available add a blank item in the array
-                  if [[ -z $version ]]; then 
+                  if [[ -z $version ]]; then
                     version='NA'
                   fi
                   version_ar+=($version)
@@ -518,11 +518,15 @@ function pc_cluster_img_import() {
   local      _uuid
   local CURL_HTTP_OPTS=" --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure "
 
-  _cluster_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/clusters/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{}' | jq --arg CLUSTER_NAME "$CLUSTER_NAME" '.entities[]|select (.status.name==$CLUSTER_NAME)| .metadata.uuid' | tr -d \")
+  log "Cluster Name |${CLUSTER_NAME}|"
 
-  #_cluster_uuid=$(curl ${CURL_HTTP_OPTS} --request POST 'https://localhost:9440/api/nutanix/v3/clusters/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{}' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+  ## Get Cluster UUID ##
+  log "-------------------------------------"
+  log "Get Cluster UUID"
 
-  log "Cluster UUID is ${_cluster_uuid}"
+  _cluster_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/clusters/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{}' | jq --arg CLUSTER "${CLUSTER_NAME}" '.entities[]|select (.status.name==$CLUSTER)| .metadata.uuid' | tr -d \")
+
+  log "Cluster UUID |${_cluster_uuid}|"
 
 _http_body=$(cat <<EOF
 {
@@ -651,8 +655,8 @@ function seedPC() {
     unzip /home/nutanix/${SeedPC}
     pushd /home/nutanix/lab/
 
-    #_setup=$(/home/nutanix/lab/setupEnv.sh ${PC_HOST} > /dev/null 2>&1)
-    _setup=$(/home/nutanix/lab/initialize_lab.sh ${PC_HOST} > /dev/null 2>&1)
+    #_setup=$(/home/nutanix/lab/initialize_lab.sh ${PC_HOST} > /dev/null 2>&1)
+    _setup=$(/home/nutanix/lab/initialize_lab.sh ${PC_HOST} admin ${PE_PASSWORD} ${PE_HOST} nutanix ${PE_PASSWORD} > /dev/null 2>&1)
     log "Running Setup Script|$_setup"
 
     popd
@@ -671,10 +675,7 @@ function ssp_auth() {
   local _ssp_connect
 
   log "Find ${AUTH_SERVER} uuid"
-  _ldap_uuid=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} \
-    --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{ "kind": "directory_service" }' \
-    https://localhost:9440/api/nutanix/v3/directory_services/list \
-    | jq -r .entities[0].metadata.uuid)
+  _ldap_uuid=$(PATH=${PATH}:${HOME}; curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{ "kind": "directory_service" }' 'https://localhost:9440/api/nutanix/v3/directory_services/list' | jq -r .entities[0].metadata.uuid)
   log "_ldap_uuid=|${_ldap_uuid}|"
 
   # TODO:110 get directory service name _ldap_name
@@ -793,9 +794,7 @@ EOF
   }
 EOF
     )
-    _ssp_connect=$(curl ${CURL_POST_OPTS} \
-      --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data "${_http_body}" \
-      https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
+    _ssp_connect=$(curl ${CURL_POST_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X PUT --data "${_http_body}" https://localhost:9440/api/nutanix/v3/directory_services/${_ldap_uuid})
     log "_ssp_connect=|${_ssp_connect}|"
 
 }
@@ -911,10 +910,328 @@ EOF
   fi
 }
 
+#########################################################################################################################################
+# Routine to Deploy VMs for POC Workshop
+#########################################################################################################################################
 
+function deploy_pocworkshop_vms() {
+  local CURL_HTTP_OPTS=" --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure "
+
+  #set -x
+
+  log "Starting SE POC Guide Base VM Deployments"
+  log "PE Cluster IP |${PE_HOST}|"
+  log "PE Cluster IP |${PC_HOST}|"
+  log "Cluster Name |${CLUSTER_NAME}|"
+
+  ## Get Cluster UUID ##
+  log "-------------------------------------"
+  log "Get Cluster UUID"
+
+  _cluster_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/clusters/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{}' | jq --arg CLUSTER "Unnamed" '.entities[]|select (.status.name!=$CLUSTER)| .metadata.uuid' | tr -d \")
+
+  log "Cluster UUID |${_cluster_uuid}|"
+
+  ## Get Primary Network UUID ##
+  log "-------------------------------------"
+  log "Get cluster network UUID"
+
+  _nw_uuid=$(curl ${CURL_HTTP_OPTS} --request POST 'https://localhost:9440/api/nutanix/v3/subnets/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{"kind":"subnet","filter": "name==Primary"}' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+
+  log "NW UUID = ${_nw_uuid}"
+
+  ## Get Windows Image UUID ##
+  log "-------------------------------------"
+  log "Get Windows Image UUID"
+
+  _windows2016_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/images/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{"kind":"image","filter":"name==Windows2016.qcow2"}' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+
+  log "Windows Image UUID |${_windows2016_uuid}|"
+
+  ## Get CentOS7 Image UUID ##
+  log "-------------------------------------"
+  log "Get CentOS7 Image UUID"
+
+  _centos7_uuid=$(curl ${CURL_HTTP_OPTS} -X POST 'https://localhost:9440/api/nutanix/v3/images/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{"kind":"image","filter":"name==CentOS7.qcow2"}' | jq -r '.entities[] | .metadata.uuid' | tr -d \")
+
+  log "CentOS7 Image UUID |${_centos7_uuid}|"
+
+  ## VM Name Vars ##
+  VMS=(\
+     1 \
+     2 \
+     3 \
+     4 \
+     5 \
+  )
+
+  ## Creating the VMs ##
+  log "-------------------------------------"
+  Log "Creating the Windows and Linux VMs for use in the SE POC Guide"
+
+  ## Creating the First WinServer VM ##
+
+  VMName="WinServer"
+
+  Log "Creating ${VMName}"
+
+HTTP_JSON_BODY=$(cat <<EOF
+{
+    "api_version": "3.1.0",
+    "metadata": {
+        "categories": {},
+        "kind": "vm"
+    },
+    "spec": {
+        "cluster_reference": {
+            "kind": "cluster",
+            "uuid": "${_cluster_uuid}"
+        },
+        "name": "${VMName}",
+        "resources": {
+            "memory_size_mib": 4096,
+            "num_sockets": 2,
+            "num_vcpus_per_socket": 1,
+            "power_state": "ON",
+            "guest_customization": {
+                "sysprep": {
+                    "install_type": "PREPARED",
+                    "unattend_xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjx1bmF0dGVuZCB4bWxucz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp1bmF0dGVuZCI+DQogICA8c2V0dGluZ3MgcGFzcz0ib29iZVN5c3RlbSI+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik1pY3Jvc29mdC1XaW5kb3dzLVNoZWxsLVNldHVwIiB4bWxuczp3Y209Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vV01JQ29uZmlnLzIwMDIvU3RhdGUiIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIHByb2Nlc3NvckFyY2hpdGVjdHVyZT0iYW1kNjQiIHB1YmxpY0tleVRva2VuPSIzMWJmMzg1NmFkMzY0ZTM1IiBsYW5ndWFnZT0ibmV1dHJhbCIgdmVyc2lvblNjb3BlPSJub25TeFMiPg0KICAgICAgICAgPE9PQkU+DQogICAgICAgICAgICA8SGlkZUVVTEFQYWdlPnRydWU8L0hpZGVFVUxBUGFnZT4NCiAgICAgICAgICAgIDxIaWRlT0VNUmVnaXN0cmF0aW9uU2NyZWVuPnRydWU8L0hpZGVPRU1SZWdpc3RyYXRpb25TY3JlZW4+DQogICAgICAgICAgICA8SGlkZU9ubGluZUFjY291bnRTY3JlZW5zPnRydWU8L0hpZGVPbmxpbmVBY2NvdW50U2NyZWVucz4NCiAgICAgICAgICAgIDxIaWRlV2lyZWxlc3NTZXR1cEluT09CRT50cnVlPC9IaWRlV2lyZWxlc3NTZXR1cEluT09CRT4NCiAgICAgICAgICAgIDxOZXR3b3JrTG9jYXRpb24+V29yazwvTmV0d29ya0xvY2F0aW9uPg0KICAgICAgICAgICAgPFNraXBNYWNoaW5lT09CRT50cnVlPC9Ta2lwTWFjaGluZU9PQkU+DQogICAgICAgICA8L09PQkU+DQogICAgICAgICA8VXNlckFjY291bnRzPg0KICAgICAgICAgICAgPEFkbWluaXN0cmF0b3JQYXNzd29yZD4NCiAgICAgICAgICAgICAgIDxWYWx1ZT5udXRhbml4LzR1PC9WYWx1ZT4NCiAgICAgICAgICAgICAgIDxQbGFpblRleHQ+dHJ1ZTwvUGxhaW5UZXh0Pg0KICAgICAgICAgICAgPC9BZG1pbmlzdHJhdG9yUGFzc3dvcmQ+DQogICAgICAgICA8L1VzZXJBY2NvdW50cz4gIA0KICAgICAgPC9jb21wb25lbnQ+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik1pY3Jvc29mdC1XaW5kb3dzLUludGVybmF0aW9uYWwtQ29yZSIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiBwcm9jZXNzb3JBcmNoaXRlY3R1cmU9ImFtZDY0IiBwdWJsaWNLZXlUb2tlbj0iMzFiZjM4NTZhZDM2NGUzNSIgbGFuZ3VhZ2U9Im5ldXRyYWwiIHZlcnNpb25TY29wZT0ibm9uU3hTIj4NCiAgICAgICAgIDxJbnB1dExvY2FsZT5lbi1VUzwvSW5wdXRMb2NhbGU+DQogICAgICAgICA8U3lzdGVtTG9jYWxlPmVuLVVTPC9TeXN0ZW1Mb2NhbGU+DQogICAgICAgICA8VUlMYW5ndWFnZUZhbGxiYWNrPmVuLXVzPC9VSUxhbmd1YWdlRmFsbGJhY2s+DQogICAgICAgICA8VUlMYW5ndWFnZT5lbi1VUzwvVUlMYW5ndWFnZT4NCiAgICAgICAgIDxVc2VyTG9jYWxlPmVuLVVTPC9Vc2VyTG9jYWxlPg0KICAgICAgPC9jb21wb25lbnQ+DQogICA8L3NldHRpbmdzPg0KICAgPHNldHRpbmdzIHBhc3M9InNwZWNpYWxpemUiPg0KICAgICAgPGNvbXBvbmVudCBuYW1lPSJNaWNyb3NvZnQtV2luZG93cy1TaGVsbC1TZXR1cCIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiBwcm9jZXNzb3JBcmNoaXRlY3R1cmU9ImFtZDY0IiBwdWJsaWNLZXlUb2tlbj0iMzFiZjM4NTZhZDM2NGUzNSIgbGFuZ3VhZ2U9Im5ldXRyYWwiIHZlcnNpb25TY29wZT0ibm9uU3hTIj4NCiAgICAgICAgIDxDb21wdXRlck5hbWU+KjwvQ29tcHV0ZXJOYW1lPg0KICAgICAgICAgPFJlZ2lzdGVyZWRPcmdhbml6YXRpb24+TnV0YW5peDwvUmVnaXN0ZXJlZE9yZ2FuaXphdGlvbj4NCiAgICAgICAgIDxSZWdpc3RlcmVkT3duZXI+QWNyb3BvbGlzPC9SZWdpc3RlcmVkT3duZXI+DQogICAgICAgICA8VGltZVpvbmU+VVRDPC9UaW1lWm9uZT4NCiAgICAgIDwvY29tcG9uZW50Pg0KICAgICAgPGNvbXBvbmVudCBuYW1lPSJNaWNyb3NvZnQtV2luZG93cy1VbmF0dGVuZGVkSm9pbiIgcHJvY2Vzc29yQXJjaGl0ZWN0dXJlPSJhbWQ2NCIgcHVibGljS2V5VG9rZW49IjMxYmYzODU2YWQzNjRlMzUiIGxhbmd1YWdlPSJuZXV0cmFsIiB2ZXJzaW9uU2NvcGU9Im5vblN4UyIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj4NCiAgICAgICAgICAgIDxJZGVudGlmaWNhdGlvbj4NCiAgICAgICAgICAgICAgICA8VW5zZWN1cmVKb2luPmZhbHNlPC9VbnNlY3VyZUpvaW4+DQogICAgICAgICAgICAgICAgPENyZWRlbnRpYWxzPg0KICAgICAgICAgICAgICAgICAgICA8RG9tYWluPm50bnhsYWIubG9jYWw8L0RvbWFpbj4NCiAgICAgICAgICAgICAgICAgICAgPFBhc3N3b3JkPm51dGFuaXgvNHU8L1Bhc3N3b3JkPg0KICAgICAgICAgICAgICAgICAgICA8VXNlcm5hbWU+YWRtaW5pc3RyYXRvcjwvVXNlcm5hbWU+DQogICAgICAgICAgICAgICAgPC9DcmVkZW50aWFscz4NCiAgICAgICAgICAgICAgICA8Sm9pbkRvbWFpbj5udG54bGFiLmxvY2FsPC9Kb2luRG9tYWluPg0KICAgICAgICAgICAgPC9JZGVudGlmaWNhdGlvbj4NCiAgICAgIDwvY29tcG9uZW50Pg0KICAgICAgPGNvbXBvbmVudCBuYW1lPSJNaWNyb3NvZnQtV2luZG93cy1UZXJtaW5hbFNlcnZpY2VzLUxvY2FsU2Vzc2lvbk1hbmFnZXIiIHhtbG5zPSIiIHB1YmxpY0tleVRva2VuPSIzMWJmMzg1NmFkMzY0ZTM1IiBsYW5ndWFnZT0ibmV1dHJhbCIgdmVyc2lvblNjb3BlPSJub25TeFMiIHByb2Nlc3NvckFyY2hpdGVjdHVyZT0iYW1kNjQiPg0KICAgICAgICAgPGZEZW55VFNDb25uZWN0aW9ucz5mYWxzZTwvZkRlbnlUU0Nvbm5lY3Rpb25zPg0KICAgICAgPC9jb21wb25lbnQ+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik1pY3Jvc29mdC1XaW5kb3dzLVRlcm1pbmFsU2VydmljZXMtUkRQLVdpblN0YXRpb25FeHRlbnNpb25zIiB4bWxucz0iIiBwdWJsaWNLZXlUb2tlbj0iMzFiZjM4NTZhZDM2NGUzNSIgbGFuZ3VhZ2U9Im5ldXRyYWwiIHZlcnNpb25TY29wZT0ibm9uU3hTIiBwcm9jZXNzb3JBcmNoaXRlY3R1cmU9ImFtZDY0Ij4NCiAgICAgICAgIDxVc2VyQXV0aGVudGljYXRpb24+MDwvVXNlckF1dGhlbnRpY2F0aW9uPg0KICAgICAgPC9jb21wb25lbnQ+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik5ldHdvcmtpbmctTVBTU1ZDLVN2YyIgcHJvY2Vzc29yQXJjaGl0ZWN0dXJlPSJhbWQ2NCIgcHVibGljS2V5VG9rZW49IjMxYmYzODU2YWQzNjRlMzUiIGxhbmd1YWdlPSJuZXV0cmFsIiB2ZXJzaW9uU2NvcGU9Im5vblN4UyIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj4NCiAgICAgICAgICAgIDxEb21haW5Qcm9maWxlX0VuYWJsZUZpcmV3YWxsPmZhbHNlPC9Eb21haW5Qcm9maWxlX0VuYWJsZUZpcmV3YWxsPg0KICAgICAgICAgICAgPFByaXZhdGVQcm9maWxlX0VuYWJsZUZpcmV3YWxsPmZhbHNlPC9Qcml2YXRlUHJvZmlsZV9FbmFibGVGaXJld2FsbD4NCiAgICAgICAgICAgIDxQdWJsaWNQcm9maWxlX0VuYWJsZUZpcmV3YWxsPmZhbHNlPC9QdWJsaWNQcm9maWxlX0VuYWJsZUZpcmV3YWxsPg0KICAgICAgPC9jb21wb25lbnQ+DQogICA8L3NldHRpbmdzPg0KPC91bmF0dGVuZD4="
+                }
+            },
+            "disk_list": [
+                {
+                    "device_properties": {
+                        "device_type": "DISK",
+                        "disk_address": {
+                            "device_index": 0,
+                            "adapter_type": "SCSI"
+                        }
+                    },
+                    "data_source_reference": {
+                        "kind": "image",
+                        "uuid": "${_windows2016_uuid}"
+                    }
+                },
+                {
+                    "device_properties": {
+                        "device_type": "CDROM"
+                    }
+                }
+            ],
+            "nic_list": [
+                {
+                    "nic_type": "NORMAL_NIC",
+                    "is_connected": true,
+                    "ip_endpoint_list": [
+                        {
+                            "ip_type": "DHCP"
+                        }
+                    ],
+                    "subnet_reference": {
+                        "kind": "subnet",
+                        "name": "Primary",
+                        "uuid": "${_nw_uuid}"
+                    }
+                }
+            ]
+        }
+    }
+}
+EOF
+)
+
+  _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" 'https://localhost:9440/api/nutanix/v3/vms' | jq -r '.status.execution_context.task_uuid' | tr -d \")
+
+  if [ -z "$_task_id" ]; then
+       log "${VMName} Deployment has encountered an error..."
+  else
+       log "${VMName} Deployment started.."
+       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
+       # Run the progess checker
+       loop
+  fi
+
+  log "${VMName} Deployment Completed"
+
+  ## Creating WinServer VMs 1-5 ##
+
+  for _vm in "${VMS[@]}" ; do
+
+  VMName="WinServer-${_vm}"
+
+  log "Creating ${VMName} Now"
+
+HTTP_JSON_BODY=$(cat <<EOF
+{
+    "api_version": "3.1.0",
+    "metadata": {
+        "categories": {},
+        "kind": "vm"
+    },
+    "spec": {
+        "cluster_reference": {
+            "kind": "cluster",
+            "uuid": "${_cluster_uuid}"
+        },
+        "name": "${VMName}",
+        "resources": {
+            "memory_size_mib": 4096,
+            "num_sockets": 2,
+            "num_vcpus_per_socket": 1,
+            "power_state": "ON",
+            "guest_customization": {
+                "sysprep": {
+                    "install_type": "PREPARED",
+                    "unattend_xml": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjx1bmF0dGVuZCB4bWxucz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp1bmF0dGVuZCI+DQogICA8c2V0dGluZ3MgcGFzcz0ib29iZVN5c3RlbSI+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik1pY3Jvc29mdC1XaW5kb3dzLVNoZWxsLVNldHVwIiB4bWxuczp3Y209Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vV01JQ29uZmlnLzIwMDIvU3RhdGUiIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiIHByb2Nlc3NvckFyY2hpdGVjdHVyZT0iYW1kNjQiIHB1YmxpY0tleVRva2VuPSIzMWJmMzg1NmFkMzY0ZTM1IiBsYW5ndWFnZT0ibmV1dHJhbCIgdmVyc2lvblNjb3BlPSJub25TeFMiPg0KICAgICAgICAgPE9PQkU+DQogICAgICAgICAgICA8SGlkZUVVTEFQYWdlPnRydWU8L0hpZGVFVUxBUGFnZT4NCiAgICAgICAgICAgIDxIaWRlT0VNUmVnaXN0cmF0aW9uU2NyZWVuPnRydWU8L0hpZGVPRU1SZWdpc3RyYXRpb25TY3JlZW4+DQogICAgICAgICAgICA8SGlkZU9ubGluZUFjY291bnRTY3JlZW5zPnRydWU8L0hpZGVPbmxpbmVBY2NvdW50U2NyZWVucz4NCiAgICAgICAgICAgIDxIaWRlV2lyZWxlc3NTZXR1cEluT09CRT50cnVlPC9IaWRlV2lyZWxlc3NTZXR1cEluT09CRT4NCiAgICAgICAgICAgIDxOZXR3b3JrTG9jYXRpb24+V29yazwvTmV0d29ya0xvY2F0aW9uPg0KICAgICAgICAgICAgPFNraXBNYWNoaW5lT09CRT50cnVlPC9Ta2lwTWFjaGluZU9PQkU+DQogICAgICAgICA8L09PQkU+DQogICAgICAgICA8VXNlckFjY291bnRzPg0KICAgICAgICAgICAgPEFkbWluaXN0cmF0b3JQYXNzd29yZD4NCiAgICAgICAgICAgICAgIDxWYWx1ZT5udXRhbml4LzR1PC9WYWx1ZT4NCiAgICAgICAgICAgICAgIDxQbGFpblRleHQ+dHJ1ZTwvUGxhaW5UZXh0Pg0KICAgICAgICAgICAgPC9BZG1pbmlzdHJhdG9yUGFzc3dvcmQ+DQogICAgICAgICA8L1VzZXJBY2NvdW50cz4gIA0KICAgICAgPC9jb21wb25lbnQ+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik1pY3Jvc29mdC1XaW5kb3dzLUludGVybmF0aW9uYWwtQ29yZSIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiBwcm9jZXNzb3JBcmNoaXRlY3R1cmU9ImFtZDY0IiBwdWJsaWNLZXlUb2tlbj0iMzFiZjM4NTZhZDM2NGUzNSIgbGFuZ3VhZ2U9Im5ldXRyYWwiIHZlcnNpb25TY29wZT0ibm9uU3hTIj4NCiAgICAgICAgIDxJbnB1dExvY2FsZT5lbi1VUzwvSW5wdXRMb2NhbGU+DQogICAgICAgICA8U3lzdGVtTG9jYWxlPmVuLVVTPC9TeXN0ZW1Mb2NhbGU+DQogICAgICAgICA8VUlMYW5ndWFnZUZhbGxiYWNrPmVuLXVzPC9VSUxhbmd1YWdlRmFsbGJhY2s+DQogICAgICAgICA8VUlMYW5ndWFnZT5lbi1VUzwvVUlMYW5ndWFnZT4NCiAgICAgICAgIDxVc2VyTG9jYWxlPmVuLVVTPC9Vc2VyTG9jYWxlPg0KICAgICAgPC9jb21wb25lbnQ+DQogICA8L3NldHRpbmdzPg0KICAgPHNldHRpbmdzIHBhc3M9InNwZWNpYWxpemUiPg0KICAgICAgPGNvbXBvbmVudCBuYW1lPSJNaWNyb3NvZnQtV2luZG93cy1TaGVsbC1TZXR1cCIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiBwcm9jZXNzb3JBcmNoaXRlY3R1cmU9ImFtZDY0IiBwdWJsaWNLZXlUb2tlbj0iMzFiZjM4NTZhZDM2NGUzNSIgbGFuZ3VhZ2U9Im5ldXRyYWwiIHZlcnNpb25TY29wZT0ibm9uU3hTIj4NCiAgICAgICAgIDxDb21wdXRlck5hbWU+KjwvQ29tcHV0ZXJOYW1lPg0KICAgICAgICAgPFJlZ2lzdGVyZWRPcmdhbml6YXRpb24+TnV0YW5peDwvUmVnaXN0ZXJlZE9yZ2FuaXphdGlvbj4NCiAgICAgICAgIDxSZWdpc3RlcmVkT3duZXI+QWNyb3BvbGlzPC9SZWdpc3RlcmVkT3duZXI+DQogICAgICAgICA8VGltZVpvbmU+VVRDPC9UaW1lWm9uZT4NCiAgICAgIDwvY29tcG9uZW50Pg0KICAgICAgPGNvbXBvbmVudCBuYW1lPSJNaWNyb3NvZnQtV2luZG93cy1VbmF0dGVuZGVkSm9pbiIgcHJvY2Vzc29yQXJjaGl0ZWN0dXJlPSJhbWQ2NCIgcHVibGljS2V5VG9rZW49IjMxYmYzODU2YWQzNjRlMzUiIGxhbmd1YWdlPSJuZXV0cmFsIiB2ZXJzaW9uU2NvcGU9Im5vblN4UyIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj4NCiAgICAgICAgICAgIDxJZGVudGlmaWNhdGlvbj4NCiAgICAgICAgICAgICAgICA8VW5zZWN1cmVKb2luPmZhbHNlPC9VbnNlY3VyZUpvaW4+DQogICAgICAgICAgICAgICAgPENyZWRlbnRpYWxzPg0KICAgICAgICAgICAgICAgICAgICA8RG9tYWluPm50bnhsYWIubG9jYWw8L0RvbWFpbj4NCiAgICAgICAgICAgICAgICAgICAgPFBhc3N3b3JkPm51dGFuaXgvNHU8L1Bhc3N3b3JkPg0KICAgICAgICAgICAgICAgICAgICA8VXNlcm5hbWU+YWRtaW5pc3RyYXRvcjwvVXNlcm5hbWU+DQogICAgICAgICAgICAgICAgPC9DcmVkZW50aWFscz4NCiAgICAgICAgICAgICAgICA8Sm9pbkRvbWFpbj5udG54bGFiLmxvY2FsPC9Kb2luRG9tYWluPg0KICAgICAgICAgICAgPC9JZGVudGlmaWNhdGlvbj4NCiAgICAgIDwvY29tcG9uZW50Pg0KICAgICAgPGNvbXBvbmVudCBuYW1lPSJNaWNyb3NvZnQtV2luZG93cy1UZXJtaW5hbFNlcnZpY2VzLUxvY2FsU2Vzc2lvbk1hbmFnZXIiIHhtbG5zPSIiIHB1YmxpY0tleVRva2VuPSIzMWJmMzg1NmFkMzY0ZTM1IiBsYW5ndWFnZT0ibmV1dHJhbCIgdmVyc2lvblNjb3BlPSJub25TeFMiIHByb2Nlc3NvckFyY2hpdGVjdHVyZT0iYW1kNjQiPg0KICAgICAgICAgPGZEZW55VFNDb25uZWN0aW9ucz5mYWxzZTwvZkRlbnlUU0Nvbm5lY3Rpb25zPg0KICAgICAgPC9jb21wb25lbnQ+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik1pY3Jvc29mdC1XaW5kb3dzLVRlcm1pbmFsU2VydmljZXMtUkRQLVdpblN0YXRpb25FeHRlbnNpb25zIiB4bWxucz0iIiBwdWJsaWNLZXlUb2tlbj0iMzFiZjM4NTZhZDM2NGUzNSIgbGFuZ3VhZ2U9Im5ldXRyYWwiIHZlcnNpb25TY29wZT0ibm9uU3hTIiBwcm9jZXNzb3JBcmNoaXRlY3R1cmU9ImFtZDY0Ij4NCiAgICAgICAgIDxVc2VyQXV0aGVudGljYXRpb24+MDwvVXNlckF1dGhlbnRpY2F0aW9uPg0KICAgICAgPC9jb21wb25lbnQ+DQogICAgICA8Y29tcG9uZW50IG5hbWU9Ik5ldHdvcmtpbmctTVBTU1ZDLVN2YyIgcHJvY2Vzc29yQXJjaGl0ZWN0dXJlPSJhbWQ2NCIgcHVibGljS2V5VG9rZW49IjMxYmYzODU2YWQzNjRlMzUiIGxhbmd1YWdlPSJuZXV0cmFsIiB2ZXJzaW9uU2NvcGU9Im5vblN4UyIgeG1sbnM6d2NtPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL1dNSUNvbmZpZy8yMDAyL1N0YXRlIiB4bWxuczp4c2k9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIj4NCiAgICAgICAgICAgIDxEb21haW5Qcm9maWxlX0VuYWJsZUZpcmV3YWxsPmZhbHNlPC9Eb21haW5Qcm9maWxlX0VuYWJsZUZpcmV3YWxsPg0KICAgICAgICAgICAgPFByaXZhdGVQcm9maWxlX0VuYWJsZUZpcmV3YWxsPmZhbHNlPC9Qcml2YXRlUHJvZmlsZV9FbmFibGVGaXJld2FsbD4NCiAgICAgICAgICAgIDxQdWJsaWNQcm9maWxlX0VuYWJsZUZpcmV3YWxsPmZhbHNlPC9QdWJsaWNQcm9maWxlX0VuYWJsZUZpcmV3YWxsPg0KICAgICAgPC9jb21wb25lbnQ+DQogICA8L3NldHRpbmdzPg0KPC91bmF0dGVuZD4="
+                }
+            },
+            "disk_list": [
+                {
+                    "device_properties": {
+                        "device_type": "DISK",
+                        "disk_address": {
+                            "device_index": 0,
+                            "adapter_type": "SCSI"
+                        }
+                    },
+                    "data_source_reference": {
+                        "kind": "image",
+                        "uuid": "${_windows2016_uuid}"
+                    }
+                },
+                {
+                    "device_properties": {
+                        "device_type": "CDROM"
+                    }
+                }
+            ],
+            "nic_list": [
+                {
+                    "nic_type": "NORMAL_NIC",
+                    "is_connected": true,
+                    "ip_endpoint_list": [
+                        {
+                            "ip_type": "DHCP"
+                        }
+                    ],
+                    "subnet_reference": {
+                        "kind": "subnet",
+                        "name": "Primary",
+                        "uuid": "${_nw_uuid}"
+                    }
+                }
+            ]
+        }
+    }
+}
+EOF
+)
+
+  # Run the upgrade to have the latest versions
+  _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" 'https://localhost:9440/api/nutanix/v3/vms' | jq -r '.status.execution_context.task_uuid' | tr -d \")
+
+  if [ -z "$_task_id" ]; then
+       log "${VMName} Deployment has encountered an error..."
+  else
+       log "${VMName} Deployment started.."
+       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
+       # Run the progess checker
+       loop
+  fi
+
+  log "${VMName} Deployment Completed"
+
+  done
+
+  ## Creating the CentOS VM ##
+
+  VMName="CentOS"
+
+  Log "Creating ${VMName}"
+
+HTTP_JSON_BODY=$(cat <<EOF
+{
+    "api_version": "3.1.0",
+    "metadata": {
+        "categories": {},
+        "kind": "vm"
+    },
+    "spec": {
+        "cluster_reference": {
+            "kind": "cluster",
+            "uuid": "${_cluster_uuid}"
+        },
+        "name": "${VMName}",
+        "resources": {
+            "memory_size_mib": 4096,
+            "num_sockets": 2,
+            "num_vcpus_per_socket": 1,
+            "power_state": "ON",
+            "disk_list": [
+                {
+                    "device_properties": {
+                        "device_type": "DISK",
+                        "disk_address": {
+                            "device_index": 0,
+                            "adapter_type": "SCSI"
+                        }
+                    },
+                    "data_source_reference": {
+                        "kind": "image",
+                        "uuid": "${_centos7_uuid}"
+                    }
+                },
+                {
+                    "device_properties": {
+                        "device_type": "CDROM"
+                    }
+                }
+            ],
+            "nic_list": [
+                {
+                    "nic_type": "NORMAL_NIC",
+                    "is_connected": true,
+                    "ip_endpoint_list": [
+                        {
+                            "ip_type": "DHCP"
+                        }
+                    ],
+                    "subnet_reference": {
+                        "kind": "subnet",
+                        "name": "Primary",
+                        "uuid": "${_nw_uuid}"
+                    }
+                }
+            ]
+        }
+    }
+}
+EOF
+)
+
+  _task_id=$(curl ${CURL_HTTP_OPTS} --user ${PRISM_ADMIN}:${PE_PASSWORD} -X POST --data "${HTTP_JSON_BODY}" 'https://localhost:9440/api/nutanix/v3/vms' | jq -r '.status.execution_context.task_uuid' | tr -d \")
+
+  if [ -z "$_task_id" ]; then
+       log "${VMName} Deployment has encountered an error..."
+  else
+       log "${VMName} Deployment started.."
+       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
+       # Run the progess checker
+       loop
+  fi
+
+  log "${VMName} Deployment Completed"
+
+
+
+
+#set +x
+
+}
 
 #########################################################################################################################################
-# Routine to to configure Era
+# Routine to configure Era
 #########################################################################################################################################
 
 function configure_era() {
@@ -1398,129 +1715,6 @@ done
 log "Era Config Complete"
 
 #set +x
-
-}
-
-#########################################################################################################################################
-# Routine to Clone MSSQL Source VMs
-#########################################################################################################################################
-
-function clone_mssql_source_vms() {
-  local CURL_HTTP_OPTS=" --max-time 25 --silent --header Content-Type:application/json --header Accept:application/json  --insecure "
-
-log "Start Cloning ${MSSQL_SourceVM}"
-
-log "PE Cluster IP |${PE_HOST}|"
-log "PC IP |${PC_HOST}|"
-
-set -x
-
-## Get Source VM UUID ##
-log "-------------------------------------"
-log "Get ${MSSQL_SourceVM} ID"
-
-  _mssql_sourcevm_id=$(curl ${CURL_HTTP_OPTS} --request POST 'https://localhost:9440/api/nutanix/v3/vms/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data '{"kind":"vm","filter": "vm_name==Win2016SQLSource"}'  | jq -r '.entities[] | .metadata.uuid' | tr -d \")
-
-log "${MSSQL_SourceVM} ID: |${_mssql_sourcevm_id}|"
-
-## Deploy UserXX Clones ##
-log "-------------------------------------"
-log "Cloning ${MSSQL_SourceVM}"
-
-for _user in "${USERS[@]}" ; do
-
-  ClonedVM="${_user}_${MSSQL_SourceVM}"
-
-  log "Cloning ${MSSQL_SourceVM} for $_user started.."
-  log "Cloned VMs Name will be ${ClonedVM}"
-
-HTTP_JSON_BODY=$(cat <<EOF
-{
-  "spec_list": [
-    {
-      "name": "${ClonedVM}"
-    }
-  ]
-}
-EOF
-)
-
-log "Cloning VM Now"
-log "-------------------------------------"
-log $HTTP_JSON_BODY
-
-  _task_id=$(curl ${CURL_HTTP_OPTS} --request POST "https://${PE_HOST}:9440/PrismGateway/services/rest/v2.0/vms/${_mssql_sourcevm_id}/clone" --user ${PRISM_ADMIN}:${PE_PASSWORD} --data "${HTTP_JSON_BODY}" | jq -r '.task_uuid' | tr -d \")
-
-  log "Task uuid for Cloning ${MSSQL_SourceVM} is $_task_id  ....."
-  #sleep 240
-  if [ -z "$_task_id" ]; then
-       log "Cloning ${MSSQL_SourceVM} has encountered an error..."
-  else
-       log "Cloning ${MSSQL_SourceVM} started.."
-       set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
-       # Run the progess checker
-       loop
-  fi
-
-## Get Newly Cloned VM"s UUID ##
-sleep 60
-log "Get ${ClonedVM} ID"
-
-HTTP_JSON_BODY=$(cat <<EOF
-{
-  "kind":"vm",
-  "vm_name==${ClonedVM}"
-}
-EOF
-)
-
-  log "Getting UUID Now"
-  log $HTTP_JSON_BODY
-
-  _cloned_vm_id=$(curl ${CURL_HTTP_OPTS} --request POST 'https://localhost:9440/api/nutanix/v3/vms/list' --user ${PRISM_ADMIN}:${PE_PASSWORD} --data "${HTTP_JSON_BODY}"  | jq -r '.entities[] | .metadata.uuid' | tr -d \")
-
-log "${ClonedVM} ID: |${_cloned_vm_id}|"
-
-## Power Cloned VM On ##
-
-log "Powering on VM Now"
-
-HTTP_JSON_BODY=$(cat <<EOF
-{
-    "spec": {
-        "name": "${ClonedVM}",
-        "resources": {
-            "hardware_clock_timezone": "UTC",
-            "power_state": "ON"
-        }
-    },
-    "api_version": "3.0",
-    "metadata": {
-        "kind": "vm",
-        "spec_version": 0
-    }
-}
-EOF
-)
-
-_task_id=$(curl ${CURL_HTTP_OPTS} --request PUT "https://${PE_HOST}:9440/api/nutanix/v3/vms/${_cloned_vm_id}" --user ${PRISM_ADMIN}:${PE_PASSWORD} --data "${HTTP_JSON_BODY}" | jq -r '.status.execution_context.task_uuid' | tr -d \")
-
-log "Task uuid for Powering on VM is $_task_id  ....."
-
-if [ -z "$_task_id" ]; then
-     log "Powering on VM has encountered an error..."
-else
-     log "Powering on VM started.."
-     set _loops=0 # Reset the loop counter so we restart the amount of loops we need to run
-     # Run the progess checker
-     loop
-fi
-
-done
-
-log "Cloning ${MSSQL_SourceVM} Comnplete"
-
-set +x
 
 }
 
