@@ -673,7 +673,7 @@ function ntnx_download() {
 
   if (( $? == 0 )) ; then
     log "Success! Delete ${_ncli_softwaretype} sources to free CVM space..."
-    rm -f ${_source_url##*/} ${_meta_url##*/}
+    /usr/bin/rm -f ${_source_url##*/} ${_meta_url##*/}
   else
     _error=3
     log "Error ${_error}: failed ncli upload of ${_ncli_softwaretype}."
