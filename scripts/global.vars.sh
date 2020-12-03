@@ -89,8 +89,8 @@ Oracle_19c_SourceVM_Image9="19c-disk9"
 # 3rd Party images used at GTS or Add-On Labs
 ###################################################
 #Peer Software
-PeerMgmtServer='Windows2016-PeerMgmt-18feb20'
-PeerAgentServer='Windows2016-PeerAgent-18feb20'
+PeerMgmtServer='Windows2016-PeerMgmt-30sep20'
+PeerAgentServer='Windows2016-PeerAgent-30sep20'
 PMC="PeerMgmt"
 AGENTA="PeerAgent-Files"
 AGENTB="PeerAgent-Win"
